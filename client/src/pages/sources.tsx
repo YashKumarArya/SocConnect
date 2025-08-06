@@ -98,7 +98,7 @@ export default function Sources() {
 
   const onSubmit = (values: z.infer<typeof sourceFormSchema>) => {
     const { endpoint, ...sourceData } = values;
-    const config = endpoint ? { ...sourceData.config, endpoint } : sourceData.config;
+    const config = endpoint ? { ...(sourceData.config || {}), endpoint } : (sourceData.config || {});
     
     createSourceMutation.mutate({
       ...sourceData,

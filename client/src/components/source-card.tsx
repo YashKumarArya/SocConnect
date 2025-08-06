@@ -66,7 +66,7 @@ export function SourceCard({
     }
   };
 
-  const isEnabled = source.config?.enabled !== false;
+  const isEnabled = (source.config as any)?.enabled !== false;
   const IconComponent = getSourceIcon(source.type);
   
   // Mock some realistic data for demonstration
@@ -114,7 +114,7 @@ export function SourceCard({
             {source.name}
           </h3>
           <p className="text-sm text-slate-400 mb-3" data-testid={`${testId}-type`}>
-            {source.type} • {source.config?.endpoint ? 'Configured' : 'Configuration needed'}
+            {source.type} • {(source.config as any)?.endpoint ? 'Configured' : 'Configuration needed'}
           </p>
         </div>
 
@@ -131,11 +131,11 @@ export function SourceCard({
               {isEnabled ? eventsPerHour.toLocaleString() : '0'}
             </span>
           </div>
-          {source.config?.endpoint && (
+          {(source.config as any)?.endpoint && (
             <div className="flex items-center justify-between text-sm">
               <span className="text-slate-400">Endpoint:</span>
-              <span className="text-slate-300 text-xs truncate max-w-32" title={source.config.endpoint}>
-                {source.config.endpoint}
+              <span className="text-slate-300 text-xs truncate max-w-32" title={(source.config as any).endpoint}>
+                {(source.config as any).endpoint}
               </span>
             </div>
           )}
