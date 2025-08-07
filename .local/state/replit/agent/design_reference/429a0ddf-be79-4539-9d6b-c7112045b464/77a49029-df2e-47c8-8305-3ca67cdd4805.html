@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOC Platform - Security Operations Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/heroicons@2.0.18/24/outline/index.js" type="module"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        'slate-850': '#1a202c',
+                        'slate-750': '#2d3748',
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s infinite',
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        }
+                    }
+                }
+            },
+            darkMode: 'class'
+        }
+    </script>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen">
+    <!-- @COMPONENT: MainLayout -->
+    <div class="flex h-screen overflow-hidden">
+        
+        <!-- Sidebar Navigation -->
+        <!-- @COMPONENT: Sidebar -->
+        <nav class="hidden lg:flex lg:flex-shrink-0 lg:w-64 bg-slate-800 border-r border-slate-700">
+            <div class="flex flex-col w-full">
+                <!-- Logo -->
+                <div class="flex items-center px-6 py-4 border-b border-slate-700">
+                    <div class="w-8 h-8 bg-sky-500 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        </svg>
+                    </div>
+                    <span class="ml-3 text-xl font-semibold text-white">SOC Platform</span>
+                </div>
+                
+                <!-- Navigation Menu -->
+                <div class="flex-1 px-3 py-4 space-y-1">
+                    <a href="#" class="flex items-center px-3 py-2 text-sm font-medium rounded-md bg-slate-700 text-white group" data-section="dashboard">
+                        <svg class="mr-3 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6a2 2 0 01-2 2H10a2 2 0 01-2-2V5zM8 15h8"></path>
+                        </svg>
+                        Dashboard
+                    </a>
+                    
+                    <a href="#" class="flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-300 hover:bg-slate-700 hover:text-white group" data-section="incidents">
+                        <svg class="mr-3 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.268 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                        Incidents
+                        <span class="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1" data-mock="true">5</span>
+                    </a>
+                    
+                    <a href="#" class="flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-300 hover:bg-slate-700 hover:text-white group" data-section="alerts">
+                        <svg class="mr-3 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4.07 4.93l15.86 15.86M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                        </svg>
+                        Alerts
+                        <span class="ml-auto bg-amber-500 text-white text-xs rounded-full px-2 py-1" data-mock="true">23</span>
+                    </a>
+                    
+                    <a href="#" class="flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-300 hover:bg-slate-700 hover:text-white group" data-section="sources">
+                        <svg class="mr-3 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h6a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h6a2 2 0 002-2v-4a2 2 0 00-2-2m8-8h6a2 2 0 012 2v4a2 2 0 01-2 2h-6"></path>
+                        </svg>
+                        Sources
+                    </a>
+                    
+                    <a href="#" class="flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-300 hover:bg-slate-700 hover:text-white group" data-section="metrics">
+                        <svg class="mr-3 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        Analytics
+                    </a>
+                    
+                    <a href="#" class="flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-300 hover:bg-slate-700 hover:text-white group" data-section="feedback">
+                        <svg class="mr-3 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m-7 8l4-4h14a2 2 0 002-2V6a2 2 0 00-2-2H3a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        Feedback
+                    </a>
+                </div>
+                
+                <!-- User Profile -->
+                <div class="px-3 py-4 border-t border-slate-700">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-slate-600 rounded-full flex items-center justify-center">
+                            <span class="text-sm font-medium text-white" data-mock="true">JS</span>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-white" data-bind="user.name" data-mock="true">John Smith</p>
+                            <p class="text-xs text-slate-400" data-mock="true">Security Analyst</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        <!-- @END_COMPONENT: Sidebar -->
+        
+        <!-- Mobile menu button -->
+        <div class="lg:hidden fixed top-4 left-4 z-50">
+            <button class="bg-slate-800 p-2 rounded-md text-slate-400 hover:text-white hover:bg-slate-700" id="mobile-menu-btn">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <!-- Main Content Area -->
+        <div class="flex flex-col flex-1 overflow-hidden">
+            <!-- Header -->
+            <!-- @COMPONENT: Header -->
+            <header class="bg-slate-800 border-b border-slate-700 px-4 lg:px-8 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="ml-12 lg:ml-0">
+                        <h1 class="text-2xl font-semibold text-white">Security Operations Dashboard</h1>
+                        <p class="text-sm text-slate-400 mt-1">Real-time monitoring and incident response</p>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <!-- Real-time status indicator -->
+                        <div class="flex items-center space-x-2">
+                            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse-slow"></div>
+                            <span class="text-sm text-slate-300">Live</span>
+                        </div>
+                        
+                        <!-- Search -->
+                        <div class="hidden md:block">
+                            <div class="relative">
+                                <input type="text" placeholder="Search incidents..." class="bg-slate-700 border border-slate-600 rounded-md pl-10 pr-4 py-2 text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent w-64">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
+                                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Notifications -->
+                        <button class="relative p-2 text-slate-400 hover:text-white">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19.5A2.5 2.5 0 01.5 17H6a.5.5 0 01.5.5v2zM9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span class="absolute top-0 right-0 block h-2 w-2 bg-red-400 rounded-full"></span>
+                        </button>
+                    </div>
+                </div>
+            </header>
+            <!-- @END_COMPONENT: Header -->
+            
+            <!-- Main Dashboard Content -->
+            <!-- @COMPONENT: MainContent -->
+            <main class="flex-1 overflow-y-auto bg-slate-900 p-4 lg:p-8">
+                
+                <!-- Dashboard Section -->
+                <div id="dashboard-section" class="space-y-6 animate-fade-in">
+                    <!-- Key Metrics Row -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="bg-slate-800 rounded-lg p-6 border border-slate-700">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-slate-400 text-sm font-medium">Active Incidents</p>
+                                    <p class="text-3xl font-bold text-white mt-2" data-bind="metrics.activeIncidents" data-mock="true">5</p>
+                                </div>
+                                <div class="w-12 h-12 bg-red-500/10 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.268 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex items-center text-sm">
+                                <span class="text-red-400">+2</span>
+                                <span class="text-slate-400 ml-2">from last hour</span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-slate-800 rounded-lg p-6 border border-slate-700">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-slate-400 text-sm font-medium">Alerts Today</p>
+                                    <p class="text-3xl font-bold text-white mt-2" data-bind="metrics.alertsToday" data-mock="true">23</p>
+                                </div>
+                                <div class="w-12 h-12 bg-amber-500/10 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex items-center text-sm">
+                                <span class="text-green-400">-5</span>
+                                <span class="text-slate-400 ml-2">from yesterday</span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-slate-800 rounded-lg p-6 border border-slate-700">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-slate-400 text-sm font-medium">Response Time</p>
+                                    <p class="text-3xl font-bold text-white mt-2" data-bind="metrics.avgResponseTime" data-mock="true">4.2m</p>
+                                </div>
+                                <div class="w-12 h-12 bg-sky-500/10 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex items-center text-sm">
+                                <span class="text-green-400">-1.2m</span>
+                                <span class="text-slate-400 ml-2">improvement</span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-slate-800 rounded-lg p-6 border border-slate-700">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-slate-400 text-sm font-medium">Model Accuracy</p>
+                                    <p class="text-3xl font-bold text-white mt-2" data-bind="metrics.modelAccuracy" data-mock="true">94.7%</p>
+                                </div>
+                                <div class="w-12 h-12 bg-emerald-500/10 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex items-center text-sm">
+                                <span class="text-emerald-400">+0.3%</span>
+                                <span class="text-slate-400 ml-2">this week</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Charts and Recent Activity -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Activity Chart -->
+                        <div class="bg-slate-800 rounded-lg p-6 border border-slate-700">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-lg font-semibold text-white">Incident Trends</h3>
+                                <select class="bg-slate-700 border border-slate-600 rounded-md px-3 py-1 text-sm text-white">
+                                    <option>Last 7 days</option>
+                                    <option>Last 30 days</option>
+                                    <option>Last 90 days</option>
+                                </select>
+                            </div>
+                            <!-- Mock chart area -->
+                            <div class="h-64 bg-slate-750 rounded-lg flex items-center justify-center border border-slate-600">
+                                <div class="text-center text-slate-400">
+                                    <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                    </svg>
+                                    <p class="text-sm" data-implementation="Integrate Chart.js or D3.js for real-time incident trending">Chart Component</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Incidents -->
+                        <div class="bg-slate-800 rounded-lg p-6 border border-slate-700">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-lg font-semibold text-white">Recent Incidents</h3>
+                                <button class="text-sky-400 hover:text-sky-300 text-sm font-medium">View All</button>
+                            </div>
+                            <div class="space-y-4">
+                                <!-- @MAP: recentIncidents.map(incident => ( -->
+                                <div class="flex items-start space-x-3 p-3 bg-slate-750 rounded-lg border border-slate-600" data-mock="true">
+                                    <div class="w-3 h-3 bg-red-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-white" data-bind="incident.title" data-mock="true">Suspicious login from unknown location</p>
+                                        <p class="text-xs text-slate-400 mt-1" data-bind="incident.timestamp" data-mock="true">2 minutes ago</p>
+                                        <div class="flex items-center space-x-2 mt-2">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-900 text-red-200" data-bind="incident.severity" data-mock="true">Critical</span>
+                                            <span class="text-xs text-slate-400" data-bind="incident.status" data-mock="true">Open</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start space-x-3 p-3 bg-slate-750 rounded-lg border border-slate-600" data-mock="true">
+                                    <div class="w-3 h-3 bg-amber-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-white" data-mock="true">Malware detection in endpoint</p>
+                                        <p class="text-xs text-slate-400 mt-1" data-mock="true">15 minutes ago</p>
+                                        <div class="flex items-center space-x-2 mt-2">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-900 text-amber-200" data-mock="true">High</span>
+                                            <span class="text-xs text-slate-400" data-mock="true">Investigating</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start space-x-3 p-3 bg-slate-750 rounded-lg border border-slate-600" data-mock="true">
+                                    <div class="w-3 h-3 bg-sky-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-white" data-mock="true">Unusual network traffic pattern</p>
+                                        <p class="text-xs text-slate-400 mt-1" data-mock="true">1 hour ago</p>
+                                        <div class="flex items-center space-x-2 mt-2">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-sky-900 text-sky-200" data-mock="true">Medium</span>
+                                            <span class="text-xs text-slate-400" data-mock="true">Auto-resolved</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- @END_MAP )) -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Incidents Section -->
+                <div id="incidents-section" class="hidden space-y-6 animate-fade-in">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                        <h2 class="text-2xl font-bold text-white">Incident Management</h2>
+                        <div class="mt-4 sm:mt-0 flex space-x-3">
+                            <select class="bg-slate-700 border border-slate-600 rounded-md px-4 py-2 text-sm text-white">
+                                <option>All Incidents</option>
+                                <option>Critical</option>
+                                <option>High</option>
+                                <option>Medium</option>
+                                <option>Low</option>
+                            </select>
+                            <button class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-md text-sm font-medium">Export Report</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Incidents Table -->
+                    <div class="bg-slate-800 rounded-lg border border-slate-700 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-700">
+                            <h3 class="text-lg font-medium text-white">Active Incidents</h3>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-slate-750">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">ID</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Description</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Severity</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Created</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-700">
+                                    <!-- @MAP: incidents.map(incident => ( -->
+                                    <tr class="hover:bg-slate-750" data-mock="true">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-slate-300" data-bind="incident.id" data-mock="true">#INC-001</td>
+                                        <td class="px-6 py-4 text-sm text-white" data-bind="incident.description" data-mock="true">
+                                            <div>
+                                                <p class="font-medium">Unauthorized access attempt</p>
+                                                <p class="text-slate-400">Multiple failed login attempts detected</p>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-900 text-red-200" data-bind="incident.severity" data-mock="true">Critical</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-900 text-amber-200" data-bind="incident.status" data-mock="true">Open</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300" data-bind="incident.createdAt" data-mock="true">2m ago</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            <button class="text-sky-400 hover:text-sky-300 mr-3" data-event="click:viewIncident" data-implementation="Open incident detail modal">View</button>
+                                            <button class="text-emerald-400 hover:text-emerald-300 mr-3" data-event="click:assignIncident" data-implementation="Show assign analyst dialog">Assign</button>
+                                            <button class="text-red-400 hover:text-red-300" data-event="click:escalateIncident" data-implementation="Escalate incident workflow">Escalate</button>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr class="hover:bg-slate-750" data-mock="true">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-slate-300" data-mock="true">#INC-002</td>
+                                        <td class="px-6 py-4 text-sm text-white" data-mock="true">
+                                            <div>
+                                                <p class="font-medium">Malware signature detected</p>
+                                                <p class="text-slate-400">Trojan.Generic found on workstation</p>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-900 text-amber-200" data-mock="true">High</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-sky-900 text-sky-200" data-mock="true">Investigating</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300" data-mock="true">15m ago</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            <button class="text-sky-400 hover:text-sky-300 mr-3">View</button>
+                                            <button class="text-emerald-400 hover:text-emerald-300 mr-3">Assign</button>
+                                            <button class="text-red-400 hover:text-red-300">Escalate</button>
+                                        </td>
+                                    </tr>
+                                    <!-- @END_MAP )) -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Alerts Section -->
+                <div id="alerts-section" class="hidden space-y-6 animate-fade-in">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                        <h2 class="text-2xl font-bold text-white">Alert Monitoring</h2>
+                        <div class="mt-4 sm:mt-0">
+                            <button class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-md text-sm font-medium">Configure Alerts</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Alert Stream -->
+                    <div class="bg-slate-800 rounded-lg border border-slate-700 p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-medium text-white">Live Alert Stream</h3>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                <span class="text-sm text-slate-300">Real-time</span>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-3 max-h-96 overflow-y-auto">
+                            <!-- @MAP: alerts.map(alert => ( -->
+                            <div class="flex items-center justify-between p-4 bg-slate-750 rounded-lg border-l-4 border-red-500" data-mock="true">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-8 h-8 bg-red-500/10 rounded-lg flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.268 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-white" data-bind="alert.title" data-mock="true">Failed login attempt</p>
+                                        <p class="text-xs text-slate-400" data-bind="alert.source" data-mock="true">Source: Windows Security • IP: 192.168.1.100</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-xs text-slate-400" data-bind="alert.timestamp" data-mock="true">30s ago</span>
+                                    <button class="text-sky-400 hover:text-sky-300 text-sm" data-event="click:createIncident" data-implementation="Create incident from alert">Create Incident</button>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-4 bg-slate-750 rounded-lg border-l-4 border-amber-500" data-mock="true">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-8 h-8 bg-amber-500/10 rounded-lg flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5z"></path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-white" data-mock="true">Network anomaly detected</p>
+                                        <p class="text-xs text-slate-400" data-mock="true">Source: Network Monitor • Bandwidth spike: 450MB/s</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-xs text-slate-400" data-mock="true">1m ago</span>
+                                    <button class="text-sky-400 hover:text-sky-300 text-sm">Create Incident</button>
+                                </div>
+                            </div>
+                            <!-- @END_MAP )) -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sources Section -->
+                <div id="sources-section" class="hidden space-y-6 animate-fade-in">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                        <h2 class="text-2xl font-bold text-white">Data Sources</h2>
+                        <button class="mt-4 sm:mt-0 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-md text-sm font-medium">Add Source</button>
+                    </div>
+                    
+                    <!-- Sources Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- @MAP: sources.map(source => ( -->
+                        <div class="bg-slate-800 rounded-lg border border-slate-700 p-6" data-mock="true">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-10 h-10 bg-sky-500/10 rounded-lg flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                    </svg>
+                                </div>
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-900 text-green-200" data-bind="source.status" data-mock="true">Active</span>
+                            </div>
+                            <h3 class="text-lg font-medium text-white mb-2" data-bind="source.name" data-mock="true">Windows Security Logs</h3>
+                            <p class="text-sm text-slate-400 mb-4" data-bind="source.description" data-mock="true">Event logs from Windows domain controllers and workstations</p>
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-slate-400">Last Event:</span>
+                                <span class="text-white" data-bind="source.lastEvent" data-mock="true">2m ago</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm mt-2">
+                                <span class="text-slate-400">Events/hr:</span>
+                                <span class="text-white" data-bind="source.eventsPerHour" data-mock="true">1,247</span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-slate-800 rounded-lg border border-slate-700 p-6" data-mock="true">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-10 h-10 bg-emerald-500/10 rounded-lg flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h6a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h6a2 2 0 002-2v-4a2 2 0 00-2-2m8-8h6a2 2 0 012 2v4a2 2 0 01-2 2h-6"></path>
+                                    </svg>
+                                </div>
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-900 text-green-200" data-mock="true">Active</span>
+                            </div>
+                            <h3 class="text-lg font-medium text-white mb-2" data-mock="true">Network Firewall</h3>
+                            <p class="text-sm text-slate-400 mb-4" data-mock="true">Traffic logs and blocked connection attempts</p>
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-slate-400">Last Event:</span>
+                                <span class="text-white" data-mock="true">5s ago</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm mt-2">
+                                <span class="text-slate-400">Events/hr:</span>
+                                <span class="text-white" data-mock="true">3,891</span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-slate-800 rounded-lg border border-slate-700 p-6" data-mock="true">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-10 h-10 bg-amber-500/10 rounded-lg flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                    </svg>
+                                </div>
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-900 text-amber-200" data-mock="true">Warning</span>
+                            </div>
+                            <h3 class="text-lg font-medium text-white mb-2" data-mock="true">Endpoint Protection</h3>
+                            <p class="text-sm text-slate-400 mb-4" data-mock="true">Antivirus and endpoint detection alerts</p>
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-slate-400">Last Event:</span>
+                                <span class="text-white" data-mock="true">3h ago</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm mt-2">
+                                <span class="text-slate-400">Events/hr:</span>
+                                <span class="text-white" data-mock="true">156</span>
+                            </div>
+                        </div>
+                        <!-- @END_MAP )) -->
+                    </div>
+                </div>
+                
+                <!-- Analytics/Metrics Section -->
+                <div id="metrics-section" class="hidden space-y-6 animate-fade-in">
+                    <h2 class="text-2xl font-bold text-white">Performance Analytics</h2>
+                    
+                    <!-- Model Performance Metrics -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-slate-800 rounded-lg border border-slate-700 p-6">
+                            <h3 class="text-lg font-medium text-white mb-4">Model Performance</h3>
+                            <div class="space-y-4">
+                                <!-- @MAP: modelMetrics.map(metric => ( -->
+                                <div class="flex items-center justify-between" data-mock="true">
+                                    <span class="text-slate-400">Precision</span>
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-32 bg-slate-700 rounded-full h-2">
+                                            <div class="bg-emerald-500 h-2 rounded-full" style="width: 94%"></div>
+                                        </div>
+                                        <span class="text-white font-medium" data-bind="metric.precision" data-mock="true">94.7%</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center justify-between" data-mock="true">
+                                    <span class="text-slate-400">Recall</span>
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-32 bg-slate-700 rounded-full h-2">
+                                            <div class="bg-sky-500 h-2 rounded-full" style="width: 91%"></div>
+                                        </div>
+                                        <span class="text-white font-medium" data-mock="true">91.3%</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center justify-between" data-mock="true">
+                                    <span class="text-slate-400">Latency</span>
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-32 bg-slate-700 rounded-full h-2">
+                                            <div class="bg-amber-500 h-2 rounded-full" style="width: 23%"></div>
+                                        </div>
+                                        <span class="text-white font-medium" data-bind="metric.latency" data-mock="true">23ms</span>
+                                    </div>
+                                </div>
+                                <!-- @END_MAP )) -->
+                            </div>
+                        </div>
+                        
+                        <div class="bg-slate-800 rounded-lg border border-slate-700 p-6">
+                            <h3 class="text-lg font-medium text-white mb-4">Response Times</h3>
+                            <div class="h-48 bg-slate-750 rounded-lg flex items-center justify-center border border-slate-600">
+                                <div class="text-center text-slate-400">
+                                    <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <p class="text-sm" data-implementation="Implement response time trend chart">Response Time Chart</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Feedback Section -->
+                <div id="feedback-section" class="hidden space-y-6 animate-fade-in">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                        <h2 class="text-2xl font-bold text-white">Feedback & Reviews</h2>
+                        <button class="mt-4 sm:mt-0 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-md text-sm font-medium">Submit Feedback</button>
+                    </div>
+                    
+                    <!-- Feedback List -->
+                    <div class="bg-slate-800 rounded-lg border border-slate-700 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-700">
+                            <h3 class="text-lg font-medium text-white">Recent Feedback</h3>
+                        </div>
+                        
+                        <div class="p-6 space-y-4">
+                            <!-- @MAP: feedbacks.map(feedback => ( -->
+                            <div class="flex space-x-4 p-4 bg-slate-750 rounded-lg" data-mock="true">
+                                <div class="w-10 h-10 bg-slate-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <span class="text-sm font-medium text-white" data-bind="feedback.user.initials" data-mock="true">AM</span>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <span class="font-medium text-white" data-bind="feedback.user.name" data-mock="true">Alice Martinez</span>
+                                        <span class="text-slate-400 text-sm" data-bind="feedback.timestamp" data-mock="true">• 2 hours ago</span>
+                                    </div>
+                                    <p class="text-slate-300 text-sm mb-3" data-bind="feedback.content" data-mock="true">
+                                        The new incident classification model has significantly improved our response times. False positives are down by 30%.
+                                    </p>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-xs text-slate-400">Incident:</span>
+                                        <a href="#" class="text-sky-400 hover:text-sky-300 text-xs font-medium" data-bind="feedback.incident.id" data-mock="true">#INC-001</a>
+                                        <div class="flex text-amber-400">
+                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                                            </svg>
+                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                                            </svg>
+                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                                            </svg>
+                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                                            </svg>
+                                            <svg class="w-4 h-4 text-slate-600" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- @END_MAP )) -->
+                        </div>
+                    </div>
+                </div>
+                
+            </main>
+            <!-- @END_COMPONENT: MainContent -->
+        </div>
+        
+    </div>
+    <!-- @END_COMPONENT: MainLayout -->
+    
+    <!-- Mobile Navigation Overlay -->
+    <div id="mobile-overlay" class="fixed inset-0 z-40 lg:hidden hidden">
+        <div class="fixed inset-0 bg-slate-900 bg-opacity-75" id="mobile-backdrop"></div>
+        <div class="fixed inset-y-0 left-0 max-w-xs w-full bg-slate-800 shadow-xl" id="mobile-menu">
+            <!-- Mobile menu content (copy of sidebar) -->
+            <div class="flex flex-col h-full">
+                <div class="flex items-center px-6 py-4 border-b border-slate-700">
+                    <div class="w-8 h-8 bg-sky-500 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        </svg>
+                    </div>
+                    <span class="ml-3 text-xl font-semibold text-white">SOC Platform</span>
+                </div>
+                
+                <div class="flex-1 px-3 py-4 space-y-1">
+                    <!-- Mobile navigation links -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // @STATE: currentSection:string = 'dashboard'
+            // @STATE: mobileMenuOpen:boolean = false
+            
+            // Section navigation
+            const navLinks = document.querySelectorAll('nav a[data-section]');
+            const sections = document.querySelectorAll('[id$="-section"]');
+            
+            function showSection(sectionId) {
+                sections.forEach(section => section.classList.add('hidden'));
+                const targetSection = document.getElementById(sectionId + '-section');
+                if (targetSection) {
+                    targetSection.classList.remove('hidden');
+                }
+                
+                // Update active nav link
+                navLinks.forEach(link => {
+                    link.classList.remove('bg-slate-700', 'text-white');
+                    link.classList.add('text-slate-300', 'hover:bg-slate-700', 'hover:text-white');
+                });
+                
+                const activeLink = document.querySelector(`[data-section="${sectionId}"]`);
+                if (activeLink) {
+                    activeLink.classList.remove('text-slate-300', 'hover:bg-slate-700', 'hover:text-white');
+                    activeLink.classList.add('bg-slate-700', 'text-white');
+                }
+            }
+            
+            // Navigation event listeners
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const sectionId = link.getAttribute('data-section');
+                    showSection(sectionId);
+                });
+            });
+            
+            // Mobile menu toggle
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileOverlay = document.getElementById('mobile-overlay');
+            const mobileBackdrop = document.getElementById('mobile-backdrop');
+            
+            if (mobileMenuBtn && mobileOverlay && mobileBackdrop) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    mobileOverlay.classList.remove('hidden');
+                });
+                
+                mobileBackdrop.addEventListener('click', () => {
+                    mobileOverlay.classList.add('hidden');
+                });
+            }
+            
+            // TODO: Implement real-time WebSocket connections for live updates
+            // TODO: Connect to backend APIs for data fetching
+            // TODO: Implement search functionality
+            // TODO: Add form validation and error handling
+            // TODO: Implement data export functionality
+            // TODO: Add modal dialogs for incident details
+            // TODO: Implement filtering and pagination
+            
+            // @FUNCTIONALITY: Real-time incident monitoring should use WebSocket connection to backend
+            // @FUNCTIONALITY: Alert stream should auto-refresh and show live updates
+            // @FUNCTIONALITY: All data should be fetched from corresponding API endpoints
+            
+        })();
+    </script>
+</body>
+</html>

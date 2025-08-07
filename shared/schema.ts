@@ -21,7 +21,7 @@ export const sources = pgTable("sources", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
-// Raw alerts table
+// Raw alerts table`
 export const rawAlerts = pgTable("raw_alerts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   sourceId: varchar("source_id").notNull().references(() => sources.id, { onDelete: "cascade" }),
