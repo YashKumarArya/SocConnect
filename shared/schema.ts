@@ -21,40 +21,44 @@ export const sources = pgTable("sources", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
-// Raw alerts table`
+// Raw alerts table
 export const rawAlerts = pgTable("raw_alerts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   sourceId: varchar("source_id").notNull().references(() => sources.id, { onDelete: "cascade" }),
-  payload: jsonb("payload").notNull(),
+  severity: text("severity"),
+  type: text("type"),
+  description: text("description"),
+  rawData: jsonb("raw_data").notNull(),
   receivedAt: timestamp("received_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 // Normalized alerts table
 export const normalizedAlerts = pgTable("normalized_alerts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  rawAlertId: varchar("raw_alert_id").notNull().references(() => rawAlerts.id, { onDelete: "cascade" }),
-  timestamp: timestamp("timestamp", { withTimezone: true }).notNull(),
-  alertType: text("alert_type"),
-  severity: text("severity"),
-  metadata: jsonb("metadata"),
-  normalizedAt: timestamp("normalized_at", { withTimezone: true }).defaultNow().notNull(),
+  featureVectorId: varchar("feature_vector_id").notNull().references(() => featureVectors.id, { onDelete: "cascade" }),
+  decision: text("decision").notNull().$type<'AUTO' | 'MANUAL'>(),
+  confidence: real("confidence").notNull(),
+  status: text("status").notNull().default('pending'),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  closedAt: timestamp("closed_at", { withTimezone: true }),
 });
 
 // Feature vectors table
 export const featureVectors = pgTable("feature_vectors", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  normalizedAlertId: varchar("normalized_alert_id").notNull().references(() => normalizedAlerts.id, { onDelete: "cascade" }),
-  vector: jsonb("vector").notNull(),
-  extractedAt: timestamp("extracted_at", { withTimezone: true }).defaultNow().notNull(),
+  rawAlertId: varchar("raw_alert_id").notNull().references(() => rawAlerts.id, { onDelete: "cascade" }),
+  features: jsonb("features").notNull(),
+  computedAt: timestamp("computed_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 // Incidents table
 export const incidents = pgTable("incidents", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  featureVectorId: varchar("feature_vector_id").notNull().references(() => featureVectors.id, { onDelete: "cascade" }),
-  decision: text("decision").notNull().$type<'AUTO' | 'MANUAL'>(),
-  confidence: real("confidence").notNull(),
-  status: text("status").notNull().default('open'),
+  title: text("title").notNull(),
+  description: text("description"),
+  severity: text("severity").notNull().$type<'low' | 'medium' | 'high' | 'critical'>(),
+  status: text("status").notNull().$type<'open' | 'investigating' | 'monitoring' | 'resolved'>().default('open'),
+  assignedTo: varchar("assigned_to").references(() => users.id),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   closedAt: timestamp("closed_at", { withTimezone: true }),
 });
@@ -72,9 +76,11 @@ export const actions = pgTable("actions", {
 // Feedback table
 export const feedback = pgTable("feedback", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  incidentId: varchar("incident_id").notNull().references(() => incidents.id, { onDelete: "cascade" }),
+  alertId: varchar("alert_id").references(() => normalizedAlerts.id, { onDelete: "cascade" }),
+  incidentId: varchar("incident_id").references(() => incidents.id, { onDelete: "cascade" }),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  feedback: jsonb("feedback").notNull(),
+  feedback: text("feedback").notNull(),
+  rating: integer("rating"),
   submittedAt: timestamp("submitted_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

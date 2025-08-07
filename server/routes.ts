@@ -2,6 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
+import { AlertProcessor } from "./alertProcessor";
+import { AlertNormalizer } from "./normalization";
 import { insertSourceSchema, insertRawAlertSchema, insertIncidentSchema, insertActionSchema, insertFeedbackSchema, insertModelMetricSchema } from "@shared/schema";
 import { ZodError } from "zod";
 
@@ -130,6 +132,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Invalid alert data', details: error.errors });
       }
       res.status(500).json({ error: 'Failed to create alert' });
+    }
+  });
+
+  // New normalization endpoints
+  app.post('/api/alerts/normalize', async (req, res) => {
+    try {
+      const { alertData, sourceId, sourceType } = req.body;
+      
+      if (!alertData || !sourceId) {
+        return res.status(400).json({ error: 'Missing required fields: alertData, sourceId' });
+      }
+
+      const result = await AlertProcessor.processIncomingAlert(alertData, sourceId, sourceType);
+      
+      broadcast({ type: 'alert_normalized', data: result });
+      res.status(201).json(result);
+    } catch (error) {
+      console.error('Normalization error:', error);
+      res.status(500).json({ error: 'Failed to normalize alert' });
+    }
+  });
+
+  app.post('/api/alerts/bulk-normalize', async (req, res) => {
+    try {
+      const { alerts } = req.body;
+      
+      if (!Array.isArray(alerts)) {
+        return res.status(400).json({ error: 'alerts must be an array' });
+      }
+
+      const results = await AlertProcessor.processBulkAlerts(alerts);
+      
+      broadcast({ type: 'alerts_bulk_normalized', data: { count: results.length } });
+      res.status(201).json({ processed: results.length, results });
+    } catch (error) {
+      console.error('Bulk normalization error:', error);
+      res.status(500).json({ error: 'Failed to normalize alerts' });
+    }
+  });
+
+  app.post('/api/alerts/simulate/:sourceType', async (req, res) => {
+    try {
+      const { sourceType } = req.params;
+      const count = parseInt(req.query.count as string) || 5;
+      
+      const results = await AlertProcessor.simulateIncomingAlerts(sourceType, count);
+      
+      broadcast({ type: 'alerts_simulated', data: { sourceType, count: results.length } });
+      res.status(201).json({ 
+        message: `Generated ${results.length} ${sourceType} alerts`,
+        results 
+      });
+    } catch (error) {
+      console.error('Simulation error:', error);
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to simulate alerts' });
+    }
+  });
+
+  // Test endpoint to validate normalization without storing
+  app.post('/api/alerts/test-normalize', async (req, res) => {
+    try {
+      const { alertData, sourceType } = req.body;
+      
+      if (!alertData) {
+        return res.status(400).json({ error: 'Missing alertData' });
+      }
+
+      const normalized = AlertNormalizer.normalize(alertData, sourceType);
+      res.json({ normalized, original: alertData });
+    } catch (error) {
+      console.error('Test normalization error:', error);
+      res.status(500).json({ error: 'Failed to test normalization' });
     }
   });
 

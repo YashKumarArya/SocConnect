@@ -400,7 +400,8 @@ export class MemStorage implements IStorage {
     normalizedAlertIds.slice(0, 20).forEach(alertId => {
       const feedback: Feedback = {
         id: randomUUID(),
-        alertId,
+        alertId: alertId,
+        incidentId: null,
         userId: userIds[Math.floor(Math.random() * userIds.length)],
         feedback: feedbackTemplates[Math.floor(Math.random() * feedbackTemplates.length)],
         rating: Math.floor(Math.random() * 5) + 1, // 1-5 rating
@@ -416,15 +417,18 @@ export class MemStorage implements IStorage {
     }
 
     metricDates.forEach(date => {
-      const metrics: ModelMetrics = {
+      const metrics: ModelMetric = {
         id: randomUUID(),
-        modelVersion: "v2.1.0",
         accuracy: 0.85 + Math.random() * 0.1, // 85-95% accuracy
         precision: 0.80 + Math.random() * 0.15, // 80-95% precision  
         recall: 0.75 + Math.random() * 0.2, // 75-95% recall
         f1Score: 0.78 + Math.random() * 0.17, // 78-95% F1
         falsePositiveRate: Math.random() * 0.1, // 0-10% FPR
-        recordedAt: date,
+        runTs: date,
+        alertsProcessed: Math.floor(Math.random() * 1000) + 100,
+        autoActions: Math.floor(Math.random() * 50),
+        manualReviews: Math.floor(Math.random() * 20),
+        latencyMs: Math.floor(Math.random() * 500) + 100,
       };
       this.modelMetrics.set(metrics.id, metrics);
     });
@@ -516,7 +520,7 @@ export class MemStorage implements IStorage {
       id, 
       createdAt: new Date(), 
       closedAt: null,
-      status: insertIncident.status || 'open'
+      status: (insertIncident.status as 'open' | 'investigating' | 'monitoring' | 'resolved') || 'open'
     };
     this.incidents.set(id, incident);
     return incident;
