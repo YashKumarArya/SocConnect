@@ -66,6 +66,19 @@ export const api = {
   createAlert: (alert: any) =>
     apiRequest('POST', '/api/alerts', alert),
 
+  // Alert Normalization & Simulation
+  getDatasetStats: () =>
+    fetch('/api/alerts/dataset-stats').then(res => res.json()),
+    
+  simulateAlerts: (sourceType: string, count: number = 10) =>
+    apiRequest('POST', `/api/alerts/simulate/${sourceType}`, { count }),
+    
+  simulateRealTimeAlerts: (sourceType: string, durationMinutes: number = 5) =>
+    apiRequest('POST', `/api/alerts/simulate-realtime/${sourceType}`, { durationMinutes }),
+    
+  getSampleAlert: (sourceType: string) =>
+    fetch(`/api/alerts/sample/${sourceType}`).then(res => res.json()),
+
   // Feedback
   getFeedback: () =>
     fetch('/api/feedback').then(res => res.json()),

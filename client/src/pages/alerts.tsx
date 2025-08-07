@@ -1,7 +1,8 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Shield, Settings, Plus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { AlertTriangle, Shield, Settings, Play, Database, TrendingUp } from "lucide-react";
 import { api } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -14,10 +15,16 @@ export default function Alerts() {
   const { toast } = useToast();
   const { lastMessage } = useWebSocket();
   const [liveAlerts, setLiveAlerts] = useState<any[]>([]);
+  const [selectedSource, setSelectedSource] = useState<string>('crowdstrike');
 
   const { data: alerts, isLoading } = useQuery({
     queryKey: ['/api/alerts'],
     queryFn: api.getAlerts,
+  });
+
+  const { data: datasetStats, isLoading: statsLoading } = useQuery({
+    queryKey: ['/api/alerts/dataset-stats'],
+    queryFn: api.getDatasetStats,
   });
 
   const createIncidentMutation = useMutation({
@@ -33,6 +40,43 @@ export default function Alerts() {
       toast({
         title: "Error",
         description: "Failed to create incident",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const simulateAlertsMutation = useMutation({
+    mutationFn: ({ sourceType, count }: { sourceType: string; count: number }) => 
+      api.simulateAlerts(sourceType, count),
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/alerts'] });
+      toast({
+        title: "Success",
+        description: `Generated ${data.results?.length || data.length || 10} alerts from ${selectedSource}`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to simulate alerts",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const realTimeSimulationMutation = useMutation({
+    mutationFn: ({ sourceType, duration }: { sourceType: string; duration: number }) => 
+      api.simulateRealTimeAlerts(sourceType, duration),
+    onSuccess: () => {
+      toast({
+        title: "Real-time simulation started",
+        description: `Simulating ${selectedSource} alerts for ${5} minutes`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to start real-time simulation",
         variant: "destructive",
       });
     },
@@ -89,15 +133,145 @@ export default function Alerts() {
     );
   }
 
+  // Source type options with logos/descriptions
+  const sourceTypes = [
+    { id: 'crowdstrike', name: 'CrowdStrike', description: 'EDR & Threat Intelligence', color: 'red' },
+    { id: 'sentinelone', name: 'SentinelOne', description: 'Autonomous Security Platform', color: 'purple' },
+    { id: 'email', name: 'Email Security', description: 'Email Threat Protection', color: 'blue' },
+    { id: 'firewall', name: 'Firewall', description: 'Network Security', color: 'orange' },
+  ];
+
+  const handleSimulateAlerts = () => {
+    simulateAlertsMutation.mutate({ sourceType: selectedSource, count: 10 });
+  };
+
+  const handleStartRealTimeSimulation = () => {
+    realTimeSimulationMutation.mutate({ sourceType: selectedSource, duration: 5 });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-2xl font-bold text-white" data-testid="alerts-title">Alert Monitoring</h2>
-        <Button className="mt-4 sm:mt-0 soc-button-primary" data-testid="configure-alerts">
-          <Settings className="w-4 h-4 mr-2" />
-          Configure Alerts
-        </Button>
+        <div>
+          <h2 className="text-2xl font-bold text-white" data-testid="alerts-title">Alert Monitoring</h2>
+          {!statsLoading && datasetStats && (
+            <p className="text-slate-400 text-sm mt-1">
+              {datasetStats.stats.total.toLocaleString()} alerts loaded from {datasetStats.sources.length} security tools
+            </p>
+          )}
+        </div>
+        <div className="flex items-center space-x-2 mt-4 sm:mt-0">
+          <Button 
+            variant="outline" 
+            className="soc-button-secondary" 
+            data-testid="configure-alerts"
+          >
+            <Settings className="w-4 h-4 mr-2" />
+            Configure
+          </Button>
+          <Button 
+            className="soc-button-primary" 
+            onClick={handleSimulateAlerts}
+            disabled={simulateAlertsMutation.isPending}
+            data-testid="simulate-alerts"
+          >
+            <Play className="w-4 h-4 mr-2" />
+            {simulateAlertsMutation.isPending ? 'Generating...' : 'Simulate Alerts'}
+          </Button>
+        </div>
       </div>
+
+      {/* Dataset Statistics */}
+      <Card className="soc-card" data-testid="dataset-stats">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-lg font-medium text-white">Security Data Sources</CardTitle>
+          <div className="flex items-center space-x-2">
+            <Database className="w-5 h-5 text-sky-400" />
+            <span className="text-sm text-sky-400">Real Data Loaded</span>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {statsLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="p-4 bg-slate-750 rounded-lg border border-slate-600">
+                  <Skeleton className="h-16 w-full" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {sourceTypes.map((source) => {
+                const count = datasetStats?.stats[source.id] || 0;
+                const isSelected = selectedSource === source.id;
+                return (
+                  <div 
+                    key={source.id}
+                    className={`p-4 bg-slate-750 rounded-lg border transition-all cursor-pointer ${
+                      isSelected ? 'border-sky-500 bg-sky-500/5' : 'border-slate-600 hover:border-slate-500'
+                    }`}
+                    onClick={() => setSelectedSource(source.id)}
+                    data-testid={`source-${source.id}`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className={`w-3 h-3 bg-${source.color}-500 rounded-full`}></div>
+                      <Badge className={`text-xs ${
+                        isSelected ? 'bg-sky-500/20 text-sky-400' : 'bg-slate-600 text-slate-300'
+                      }`}>
+                        {isSelected ? 'Selected' : 'Available'}
+                      </Badge>
+                    </div>
+                    <h3 className="text-white font-medium text-sm mb-1">{source.name}</h3>
+                    <p className="text-slate-400 text-xs mb-2">{source.description}</p>
+                    <div className="text-2xl font-bold text-white">
+                      {count.toLocaleString()}
+                    </div>
+                    <p className="text-xs text-slate-400">alerts loaded</p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Alert Simulation Controls */}
+      <Card className="soc-card" data-testid="simulation-controls">
+        <CardHeader>
+          <CardTitle className="text-lg font-medium text-white">Alert Simulation & Testing</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0">
+            <div>
+              <p className="text-white font-medium">
+                Generate alerts from <span className="text-sky-400">{sourceTypes.find(s => s.id === selectedSource)?.name}</span>
+              </p>
+              <p className="text-slate-400 text-sm mt-1">
+                Test your SOC with real security alerts from production datasets
+              </p>
+            </div>
+            <div className="flex items-center space-x-3">
+              <Button 
+                variant="outline" 
+                onClick={handleStartRealTimeSimulation}
+                disabled={realTimeSimulationMutation.isPending}
+                data-testid="start-realtime"
+              >
+                <TrendingUp className="w-4 h-4 mr-2" />
+                {realTimeSimulationMutation.isPending ? 'Starting...' : 'Real-time (5min)'}
+              </Button>
+              <Button 
+                onClick={handleSimulateAlerts}
+                disabled={simulateAlertsMutation.isPending}
+                data-testid="generate-alerts"
+              >
+                <Play className="w-4 h-4 mr-2" />
+                {simulateAlertsMutation.isPending ? 'Generating...' : 'Generate 10 Alerts'}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Live Alert Stream */}
       <Card className="soc-card" data-testid="live-alert-stream">
@@ -131,9 +305,9 @@ export default function Alerts() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-slate-400 text-sm font-medium">Alerts Today</p>
+                <p className="text-slate-400 text-sm font-medium">Alerts in System</p>
                 <p className="text-3xl font-bold text-white mt-2" data-testid="alerts-today-count">
-                  {alerts?.length || 0}
+                  {datasetStats?.stats.total.toLocaleString() || alerts?.length || 0}
                 </p>
               </div>
               <div className="w-12 h-12 bg-amber-500/10 rounded-lg flex items-center justify-center">
@@ -141,8 +315,8 @@ export default function Alerts() {
               </div>
             </div>
             <div className="mt-4 flex items-center text-sm">
-              <span className="text-green-400">-12%</span>
-              <span className="text-slate-400 ml-2">from yesterday</span>
+              <span className="text-sky-400">Real data</span>
+              <span className="text-slate-400 ml-2">from 4 sources</span>
             </div>
           </CardContent>
         </Card>
@@ -151,9 +325,9 @@ export default function Alerts() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-slate-400 text-sm font-medium">Critical Alerts</p>
+                <p className="text-slate-400 text-sm font-medium">Live Alerts</p>
                 <p className="text-3xl font-bold text-white mt-2" data-testid="critical-alerts-count">
-                  {liveAlerts.filter(alert => alert.severity === 'critical').length}
+                  {liveAlerts.length}
                 </p>
               </div>
               <div className="w-12 h-12 bg-red-500/10 rounded-lg flex items-center justify-center">
@@ -161,8 +335,8 @@ export default function Alerts() {
               </div>
             </div>
             <div className="mt-4 flex items-center text-sm">
-              <span className="text-red-400">+2</span>
-              <span className="text-slate-400 ml-2">in last hour</span>
+              <span className="text-green-400">+{liveAlerts.filter(alert => alert.severity === 'critical').length}</span>
+              <span className="text-slate-400 ml-2">critical alerts</span>
             </div>
           </CardContent>
         </Card>
@@ -171,18 +345,18 @@ export default function Alerts() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-slate-400 text-sm font-medium">Response Rate</p>
-                <p className="text-3xl font-bold text-white mt-2" data-testid="response-rate-value">
-                  96.5%
+                <p className="text-slate-400 text-sm font-medium">Selected Source</p>
+                <p className="text-lg font-bold text-white mt-2" data-testid="response-rate-value">
+                  {sourceTypes.find(s => s.id === selectedSource)?.name}
                 </p>
               </div>
               <div className="w-12 h-12 bg-emerald-500/10 rounded-lg flex items-center justify-center">
-                <Shield className="w-6 h-6 text-emerald-500" />
+                <Database className="w-6 h-6 text-emerald-500" />
               </div>
             </div>
             <div className="mt-4 flex items-center text-sm">
-              <span className="text-emerald-400">+1.2%</span>
-              <span className="text-slate-400 ml-2">this week</span>
+              <span className="text-emerald-400">{datasetStats?.stats[selectedSource]?.toLocaleString() || '0'}</span>
+              <span className="text-slate-400 ml-2">alerts available</span>
             </div>
           </CardContent>
         </Card>
