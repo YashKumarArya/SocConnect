@@ -1,5 +1,6 @@
 import { storage } from "./storage";
 import { AlertNormalizer, type NormalizedAlertData } from "./normalization";
+import { AlertDataLoader } from "./alertDataLoader";
 import { type RawAlert, type InsertRawAlert } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -67,27 +68,99 @@ export class AlertProcessor {
     sourceType: string, 
     count: number = 5
   ): Promise<AlertProcessingResult[]> {
+    // Load real alert data
+    const dataLoader = AlertDataLoader.getInstance();
+    await dataLoader.ensureDataLoaded();
+
     // First, find or create a source for this simulation
     const sources = await storage.getSources();
     let source = sources.find(s => s.type.toLowerCase() === sourceType.toLowerCase());
     
     if (!source) {
       source = await storage.createSource({
-        name: `${sourceType} Simulator`,
+        name: `${sourceType} Real Data Simulator`,
         type: sourceType,
-        config: { simulated: true, endpoint: `https://api.${sourceType.toLowerCase()}.example.com` }
+        config: { simulated: true, dataSource: 'real_alerts', endpoint: `https://api.${sourceType.toLowerCase()}.example.com` }
       });
     }
 
-    const sampleAlerts = this.generateSampleAlerts(sourceType, count);
-    const results: AlertProcessingResult[] = [];
+    try {
+      // Use real alert data instead of generated samples
+      const realAlerts = dataLoader.getRandomAlerts(sourceType, count);
+      const results: AlertProcessingResult[] = [];
 
-    for (const alertData of sampleAlerts) {
-      const result = await this.processIncomingAlert(alertData, source.id, sourceType);
-      results.push(result);
+      console.log(`🎯 Simulating ${count} real ${sourceType} alerts...`);
+      
+      for (const alertData of realAlerts) {
+        const result = await this.processIncomingAlert(alertData, source.id, sourceType);
+        results.push(result);
+      }
+
+      const successCount = results.filter(r => r.success).length;
+      console.log(`✅ Successfully processed ${successCount}/${count} ${sourceType} alerts`);
+
+      return results;
+    } catch (error) {
+      console.log(`⚠️  No real data available for ${sourceType}, falling back to generated samples`);
+      // Fallback to generated data if real data is not available
+      const sampleAlerts = this.generateSampleAlerts(sourceType, count);
+      const results: AlertProcessingResult[] = [];
+
+      for (const alertData of sampleAlerts) {
+        const result = await this.processIncomingAlert(alertData, source.id, sourceType);
+        results.push(result);
+      }
+
+      return results;
     }
+  }
 
-    return results;
+  static async simulateRealTimeAlerts(
+    sourceType: string,
+    durationMinutes: number = 5,
+    alertsPerMinute: number = 2
+  ): Promise<void> {
+    const dataLoader = AlertDataLoader.getInstance();
+    await dataLoader.ensureDataLoaded();
+
+    console.log(`🔄 Starting real-time simulation: ${sourceType} alerts for ${durationMinutes} minutes (${alertsPerMinute}/min)`);
+    
+    const intervalMs = (60 * 1000) / alertsPerMinute; // Convert to milliseconds between alerts
+    const totalAlerts = durationMinutes * alertsPerMinute;
+    let processedCount = 0;
+
+    const interval = setInterval(async () => {
+      try {
+        if (processedCount >= totalAlerts) {
+          clearInterval(interval);
+          console.log(`🏁 Real-time simulation completed: ${processedCount} alerts processed`);
+          return;
+        }
+
+        const result = await this.simulateIncomingAlerts(sourceType, 1);
+        if (result[0]?.success) {
+          processedCount++;
+          console.log(`⚡ Real-time alert ${processedCount}/${totalAlerts}: ${result[0].normalizedData.title}`);
+        }
+      } catch (error) {
+        console.error('❌ Real-time simulation error:', error);
+      }
+    }, intervalMs);
+
+    // Return immediately, simulation runs in background
+    return;
+  }
+
+  static async getDatasetStats(): Promise<any> {
+    const dataLoader = AlertDataLoader.getInstance();
+    await dataLoader.ensureDataLoaded();
+    return dataLoader.getDatasetStats();
+  }
+
+  static async getSampleAlert(sourceType: string): Promise<any> {
+    const dataLoader = AlertDataLoader.getInstance();
+    await dataLoader.ensureDataLoaded();
+    return dataLoader.getSampleAlert(sourceType);
   }
 
   private static generateSampleAlerts(sourceType: string, count: number): any[] {

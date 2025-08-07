@@ -179,14 +179,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const results = await AlertProcessor.simulateIncomingAlerts(sourceType, count);
       
-      broadcast({ type: 'alerts_simulated', data: { sourceType, count: results.length } });
+      broadcast({ type: 'alerts_simulated', data: { sourceType, count: results.length, usingRealData: true } });
       res.status(201).json({ 
-        message: `Generated ${results.length} ${sourceType} alerts`,
-        results 
+        message: `Generated ${results.length} ${sourceType} alerts using real data`,
+        results,
+        usingRealData: true
       });
     } catch (error) {
       console.error('Simulation error:', error);
       res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to simulate alerts' });
+    }
+  });
+
+  // Real-time alert simulation
+  app.post('/api/alerts/simulate-realtime/:sourceType', async (req, res) => {
+    try {
+      const { sourceType } = req.params;
+      const durationMinutes = parseInt(req.query.duration as string) || 5;
+      const alertsPerMinute = parseInt(req.query.rate as string) || 2;
+      
+      // Start real-time simulation (runs in background)
+      AlertProcessor.simulateRealTimeAlerts(sourceType, durationMinutes, alertsPerMinute);
+      
+      broadcast({ 
+        type: 'realtime_simulation_started', 
+        data: { sourceType, durationMinutes, alertsPerMinute } 
+      });
+      
+      res.status(202).json({ 
+        message: `Real-time simulation started for ${sourceType}`,
+        duration: `${durationMinutes} minutes`,
+        rate: `${alertsPerMinute} alerts per minute`,
+        totalExpected: durationMinutes * alertsPerMinute
+      });
+    } catch (error) {
+      console.error('Real-time simulation error:', error);
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to start real-time simulation' });
+    }
+  });
+
+  // Get dataset statistics
+  app.get('/api/alerts/dataset-stats', async (req, res) => {
+    try {
+      const stats = await AlertProcessor.getDatasetStats();
+      res.json({
+        message: 'Alert dataset statistics',
+        stats,
+        sources: Object.keys(stats).filter(k => k !== 'total')
+      });
+    } catch (error) {
+      console.error('Dataset stats error:', error);
+      res.status(500).json({ error: 'Failed to get dataset statistics' });
+    }
+  });
+
+  // Get a sample alert from real data
+  app.get('/api/alerts/sample/:sourceType', async (req, res) => {
+    try {
+      const { sourceType } = req.params;
+      const sampleAlert = await AlertProcessor.getSampleAlert(sourceType);
+      
+      if (!sampleAlert) {
+        return res.status(404).json({ error: `No sample data available for ${sourceType}` });
+      }
+      
+      res.json({
+        sourceType,
+        sampleAlert,
+        message: `Sample ${sourceType} alert from real dataset`
+      });
+    } catch (error) {
+      console.error('Sample alert error:', error);
+      res.status(500).json({ error: 'Failed to get sample alert' });
     }
   });
 
