@@ -195,7 +195,7 @@ export const api = {
     apiRequest('POST', '/api/auth/logout'),
     
   getCurrentUser: () =>
-    fetch('/api/auth/me', { credentials: 'include' }).then(res => {
+    fetch('/api/auth/user', { credentials: 'include' }).then(res => {
       if (!res.ok) return null;
       return res.json();
     }),
