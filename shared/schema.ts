@@ -3,21 +3,11 @@ import { pgTable, text, varchar, timestamp, jsonb, integer, real, uuid, boolean,
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Session storage table for authentication
-export const sessions = pgTable(
-  "sessions",
-  {
-    sid: varchar("sid").primaryKey(),
-    sess: jsonb("sess").notNull(),
-    expire: timestamp("expire").notNull(),
-  },
-  (table) => [index("IDX_session_expire").on(table.expire)],
-);
-
 // Users table for authentication
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: varchar("email").unique(),
+  email: varchar("email").unique().notNull(),
+  password: varchar("password").notNull(),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
@@ -118,9 +108,23 @@ export const insertUserSchema = createInsertSchema(users).omit({
   updatedAt: true,
 });
 
-export const upsertUserSchema = createInsertSchema(users).omit({
+export const registerUserSchema = createInsertSchema(users).omit({
+  id: true,
+  role: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  confirmPassword: z.string().min(1, "Password confirmation is required"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+export const loginUserSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(1, "Password is required"),
 });
 
 export const insertSourceSchema = createInsertSchema(sources).omit({
@@ -154,8 +158,9 @@ export const insertModelMetricSchema = createInsertSchema(modelMetrics).omit({
 
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type UpsertUser = z.infer<typeof upsertUserSchema>;
-export type User = typeof users.$inferSelect;
+export type RegisterUser = z.infer<typeof registerUserSchema>;
+export type LoginUser = z.infer<typeof loginUserSchema>;
+export type User = Omit<typeof users.$inferSelect, 'password'>; // Exclude password from public User type
 export type InsertSource = z.infer<typeof insertSourceSchema>;
 export type Source = typeof sources.$inferSelect;
 export type InsertRawAlert = z.infer<typeof insertRawAlertSchema>;

@@ -1,12 +1,12 @@
-import { type User, type InsertUser, type UpsertUser, type Source, type InsertSource, type RawAlert, type InsertRawAlert, type Incident, type InsertIncident, type Action, type InsertAction, type Feedback, type InsertFeedback, type ModelMetric, type InsertModelMetric, type NormalizedAlert, type FeatureVector } from "@shared/schema";
+import { type User, type InsertUser, type Source, type InsertSource, type RawAlert, type InsertRawAlert, type Incident, type InsertIncident, type Action, type InsertAction, type Feedback, type InsertFeedback, type ModelMetric, type InsertModelMetric, type NormalizedAlert, type FeatureVector } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
   // Users
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
-  upsertUser(user: UpsertUser): Promise<User>;
+  getUserByEmailWithPassword(email: string): Promise<(User & { password: string }) | undefined>;
+  createUser(user: InsertUser): Promise<User & { password: string }>;
 
   // Sources
   getSources(): Promise<Source[]>;
@@ -54,7 +54,7 @@ export interface IStorage {
 }
 
 export class MemStorage implements IStorage {
-  private users: Map<string, User>;
+  private users: Map<string, User & { password: string }>;
   private sources: Map<string, Source>;
   private rawAlerts: Map<string, RawAlert>;
   private featureVectors: Map<string, FeatureVector>;
@@ -80,35 +80,42 @@ export class MemStorage implements IStorage {
   }
 
   private initializeDemoData() {
-    // Create demo users with different roles
+    // Create demo users with different roles and default passwords
     const users = [
       {
-        username: "john.smith",
         email: "john.smith@company.com",
+        password: "password123", // In real app, this would be hashed
+        firstName: "John",
+        lastName: "Smith",
         role: "analyst" as const,
       },
       {
-        username: "sarah.johnson",
-        email: "sarah.johnson@company.com", 
+        email: "sarah.johnson@company.com",
+        password: "admin123",
+        firstName: "Sarah", 
+        lastName: "Johnson",
         role: "admin" as const,
       },
       {
-        username: "mike.wilson",
         email: "mike.wilson@company.com",
+        password: "password123",
+        firstName: "Mike",
+        lastName: "Wilson",
         role: "analyst" as const,
       }
     ];
 
     const userIds: string[] = [];
     users.forEach(userData => {
-      const user: User = {
+      const user: User & { password: string } = {
         id: randomUUID(),
         email: userData.email,
-        firstName: userData.username.split(' ')[0] || userData.username,
-        lastName: userData.username.split(' ')[1] || null,
+        password: userData.password,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
         profileImageUrl: null,
         role: userData.role as 'analyst' | 'admin',
-        createdAt: new Date(Date.now() - Math.random() * 86400000 * 30), // Random date within last 30 days
+        createdAt: new Date(Date.now() - Math.random() * 86400000 * 30),
         updatedAt: new Date(),
       };
       this.users.set(user.id, user);
@@ -439,20 +446,37 @@ export class MemStorage implements IStorage {
   }
 
   async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+    const userWithPassword = this.users.get(id);
+    if (!userWithPassword) return undefined;
+    
+    // Return user without password for public API
+    const { password, ...user } = userWithPassword;
+    return user;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
+    const userWithPassword = Array.from(this.users.values()).find(
+      (user) => user.email === email,
+    );
+    if (!userWithPassword) return undefined;
+    
+    // Return user without password for public API
+    const { password, ...user } = userWithPassword;
+    return user;
+  }
+
+  async getUserByEmailWithPassword(email: string): Promise<(User & { password: string }) | undefined> {
     return Array.from(this.users.values()).find(
       (user) => user.email === email,
     );
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
+  async createUser(insertUser: InsertUser): Promise<User & { password: string }> {
     const id = randomUUID();
-    const user: User = { 
+    const user: User & { password: string } = { 
       id, 
-      email: insertUser.email || null,
+      email: insertUser.email,
+      password: insertUser.password,
       firstName: insertUser.firstName || null,
       lastName: insertUser.lastName || null,
       profileImageUrl: insertUser.profileImageUrl || null,
@@ -462,33 +486,6 @@ export class MemStorage implements IStorage {
     };
     this.users.set(id, user);
     return user;
-  }
-
-  async upsertUser(userData: UpsertUser): Promise<User> {
-    const existing = userData.id ? this.users.get(userData.id) : undefined;
-    if (existing) {
-      const updated: User = {
-        ...existing,
-        ...userData,
-        role: (userData.role || existing.role) as 'analyst' | 'admin',
-        updatedAt: new Date(),
-      };
-      this.users.set(updated.id, updated);
-      return updated;
-    } else {
-      const newUser: User = {
-        id: userData.id || randomUUID(),
-        email: userData.email || null,
-        firstName: userData.firstName || null,
-        lastName: userData.lastName || null,
-        profileImageUrl: userData.profileImageUrl || null,
-        role: (userData.role || 'analyst') as 'analyst' | 'admin',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      this.users.set(newUser.id, newUser);
-      return newUser;
-    }
   }
 
   async getSources(): Promise<Source[]> {

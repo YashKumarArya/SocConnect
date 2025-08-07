@@ -7,15 +7,27 @@ import { AlertNormalizer } from "./normalization";
 import { ThreatIntelligenceService } from "./threatIntelligence";
 import { AnalyticsService } from "./analyticsService";
 import { ExportService } from "./exportService";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { isAuthenticated } from "./auth";
+import session from "express-session";
+import { AuthService } from "./auth";
+import { registerUserSchema, loginUserSchema } from "@shared/schema";
 import { insertSourceSchema, insertRawAlertSchema, insertIncidentSchema, insertActionSchema, insertFeedbackSchema, insertModelMetricSchema } from "@shared/schema";
 import { ZodError } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
 
-  // Setup authentication middleware
-  await setupAuth(app);
+  // Setup session middleware
+  app.use(session({
+    secret: process.env.SESSION_SECRET || 'development-secret-change-in-production',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: false, // Set to true in production with HTTPS
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
+    },
+  }));
 
   // WebSocket server for real-time updates
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
@@ -43,11 +55,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
 
   // Auth routes
+  app.post('/api/auth/register', async (req, res) => {
+    try {
+      const validatedData = registerUserSchema.parse(req.body);
+      const user = await AuthService.registerUser(validatedData);
+      
+      // Log user in automatically after registration
+      req.session.userId = user.id;
+      
+      res.status(201).json(user);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ error: 'Invalid registration data', details: error.errors });
+      }
+      res.status(400).json({ error: error instanceof Error ? error.message : 'Registration failed' });
+    }
+  });
+
+  app.post('/api/auth/login', async (req, res) => {
+    try {
+      const validatedData = loginUserSchema.parse(req.body);
+      const user = await AuthService.loginUser(validatedData.email, validatedData.password);
+      
+      // Store user session
+      req.session.userId = user.id;
+      
+      res.json(user);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ error: 'Invalid login data', details: error.errors });
+      }
+      res.status(401).json({ error: error instanceof Error ? error.message : 'Login failed' });
+    }
+  });
+
+  app.post('/api/auth/logout', (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        console.error('Session destruction error:', err);
+        return res.status(500).json({ error: 'Logout failed' });
+      }
+      res.clearCookie('connect.sid'); // Default session cookie name
+      res.json({ message: 'Logged out successfully' });
+    });
+  });
+
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
+      res.json(req.user);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });

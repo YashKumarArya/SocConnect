@@ -11,6 +11,8 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
+import Login from "@/pages/login";
+import Register from "@/pages/register";
 import Dashboard from "@/pages/dashboard";
 import Incidents from "@/pages/incidents";
 import Alerts from "@/pages/alerts";
@@ -43,9 +45,16 @@ function Router() {
     );
   }
 
-  // Show landing page if not authenticated
+  // Show landing page, login, or register if not authenticated
   if (!isAuthenticated) {
-    return <Landing />;
+    return (
+      <Switch>
+        <Route path="/login" component={Login} />
+        <Route path="/register" component={Register} />
+        <Route path="/" component={Landing} />
+        <Route component={Landing} />
+      </Switch>
+    );
   }
 
   const handleSectionChange = (section: string) => {

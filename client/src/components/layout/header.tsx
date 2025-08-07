@@ -19,8 +19,19 @@ interface HeaderProps {
 }
 
 export function Header({ onMobileMenuToggle, connectionStatus, user }: HeaderProps) {
-  const handleLogout = () => {
-    window.location.href = "/api/logout";
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      // Reload page to trigger authentication check
+      window.location.reload();
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Fallback: reload anyway
+      window.location.reload();
+    }
   };
 
   const getUserInitials = (user: UserType) => {
