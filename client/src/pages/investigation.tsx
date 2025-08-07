@@ -198,7 +198,7 @@ export default function Investigation() {
         >
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className={`text-3xl font-bold mb-2 ${getSeverityColor(criticalIncident?.severity)}`}>
+              <h1 className={`text-3xl font-bold mb-2 ${getSeverityColor(criticalIncident?.severity || 'low')}`}>
                 {criticalIncident ? 
                   `${criticalIncident.severity.toUpperCase()} Alert: ${criticalIncident.title}` :
                   "No Active Incidents"
@@ -242,7 +242,7 @@ export default function Investigation() {
               </CardHeader>
               <CardContent>
                 <div className="text-center mb-4">
-                  <div className={`text-4xl font-bold mb-1 ${getSeverityColor(criticalIncident?.severity)}`}>
+                  <div className={`text-4xl font-bold mb-1 ${getSeverityColor(criticalIncident?.severity || 'low')}`}>
                     {criticalIncident ? 
                       (criticalIncident.severity === 'critical' ? '95' : 
                        criticalIncident.severity === 'high' ? '78' :
@@ -260,7 +260,7 @@ export default function Investigation() {
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between">
                     <span className="text-gray-400">Severity Level:</span>
-                    <span className={getSeverityColor(criticalIncident?.severity)}>
+                    <span className={getSeverityColor(criticalIncident?.severity || 'low')}>
                       {criticalIncident?.severity?.toUpperCase() || 'N/A'}
                     </span>
                   </div>

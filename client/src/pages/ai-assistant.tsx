@@ -130,7 +130,7 @@ export default function AIAssistant() {
     }
     
     if (input.includes('threat') || input.includes('intelligence')) {
-      return `Threat Intelligence Summary:\n\n• Active IOCs: ${indicators.length}\n• High Confidence: ${indicators.filter(i => i.confidence === 'High').length}\n• Sources Monitored: ${sources?.length || 0}\n\nLatest indicators suggest potential APT activity. Recommend immediate network monitoring and endpoint analysis.`;
+      return `Threat Intelligence Summary:\n\n• Active IOCs: ${indicators.length}\n• High Confidence: ${indicators.filter((i: any) => i.confidence === 'High').length}\n• Sources Monitored: ${sources?.length || 0}\n\nLatest indicators suggest potential APT activity. Recommend immediate network monitoring and endpoint analysis.`;
     }
     
     if (input.includes('source') || input.includes('status')) {
@@ -461,7 +461,7 @@ export default function AIAssistant() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {indicators.map((ioc) => (
+                  {indicators.map((ioc: any) => (
                     <div key={ioc.id} className="flex items-center justify-between p-3 bg-[hsl(0,0%,6%)]/60 rounded-lg border border-[hsl(330,100%,50%)]/10">
                       <div className="flex items-center space-x-3">
                         <Badge variant="outline" className="border-[hsl(330,100%,50%)]/20 text-[hsl(330,100%,50%)]">

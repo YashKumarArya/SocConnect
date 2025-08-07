@@ -40,14 +40,17 @@ export default function Header({ onRequestDemo }: HeaderProps) {
       });
 
       // Logo glow pulse (without rotation)
-      gsap.to(logoRef.current?.querySelector('.logo-glow'), {
-        scale: 1.1,
-        opacity: 0.8,
-        repeat: -1,
-        yoyo: true,
-        duration: 2,
-        ease: "power2.inOut"
-      });
+      const logoGlow = logoRef.current?.querySelector('.logo-glow');
+      if (logoGlow) {
+        gsap.to(logoGlow, {
+          scale: 1.1,
+          opacity: 0.8,
+          repeat: -1,
+          yoyo: true,
+          duration: 2,
+          ease: "power2.inOut"
+        });
+      }
 
     }, headerRef);
 
