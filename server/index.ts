@@ -37,9 +37,12 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Initialize Kafka service for enterprise security event streaming
+  // Initialize Kafka service for enterprise security event streaming (non-blocking)
   log('🎯 Initializing Kafka service for SOC operations...');
-  await kafkaService.initialize();
+  // Don't await Kafka initialization to prevent blocking app startup
+  kafkaService.initialize().catch(error => {
+    log('⚠️ Kafka initialization failed, continuing without Kafka:', error.message);
+  });
   
   const server = await registerRoutes(app);
 
