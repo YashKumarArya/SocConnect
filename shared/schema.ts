@@ -101,6 +101,58 @@ export const modelMetrics = pgTable("model_metrics", {
   latencyMs: integer("latency_ms").notNull(),
 });
 
+// OCSF Events table - Store raw OCSF events for compliance and analysis
+export const ocsfEvents = pgTable("ocsf_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  classUid: integer("class_uid").notNull(),
+  className: text("class_name").notNull(),
+  categoryUid: integer("category_uid").notNull(),
+  categoryName: text("category_name").notNull(),
+  activityId: integer("activity_id").notNull(),
+  activityName: text("activity_name").notNull(),
+  severityId: integer("severity_id").notNull(),
+  severity: text("severity"),
+  time: timestamp("time", { withTimezone: true }).notNull(),
+  message: text("message"),
+  rawData: jsonb("raw_data").notNull(),
+  observables: jsonb("observables"), // Store OCSF observables as JSON
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  classUidIdx: index("ocsf_events_class_uid_idx").on(table.classUid),
+  severityIdIdx: index("ocsf_events_severity_id_idx").on(table.severityId),
+  timeIdx: index("ocsf_events_time_idx").on(table.time),
+}));
+
+// Enhanced normalized alerts table to support both custom and OCSF events
+export const enhancedNormalizedAlerts = pgTable("enhanced_normalized_alerts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sourceId: text("source_id").notNull(), // Source identifier
+  originalId: text("original_id").notNull(), // Original event ID
+  timestamp: timestamp("timestamp", { withTimezone: true }).notNull(),
+  severity: text("severity").notNull().$type<'low' | 'medium' | 'high' | 'critical'>(),
+  alertType: text("alert_type").notNull().$type<'malware' | 'intrusion' | 'policy_violation' | 'anomaly' | 'threat_intel'>(),
+  title: text("title").notNull(),
+  description: text("description"),
+  // Network fields
+  sourceIp: text("source_ip"),
+  destinationIp: text("destination_ip"),
+  // System fields
+  username: text("username"),
+  ruleId: text("rule_id"),
+  // Storage
+  rawData: jsonb("raw_data"),
+  ocsfEventId: varchar("ocsf_event_id").references(() => ocsfEvents.id), // Link to OCSF event if applicable
+  status: text("status").notNull().$type<'open' | 'investigating' | 'closed' | 'false_positive'>().default('open'),
+  assignedTo: varchar("assigned_to").references(() => users.id),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  closedAt: timestamp("closed_at", { withTimezone: true }),
+}, (table) => ({
+  severityIdx: index("enhanced_alerts_severity_idx").on(table.severity),
+  statusIdx: index("enhanced_alerts_status_idx").on(table.status),
+  timestampIdx: index("enhanced_alerts_timestamp_idx").on(table.timestamp),
+  sourceIdx: index("enhanced_alerts_source_idx").on(table.sourceId),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -156,6 +208,16 @@ export const insertModelMetricSchema = createInsertSchema(modelMetrics).omit({
   id: true,
 });
 
+export const insertOCSFEventSchema = createInsertSchema(ocsfEvents).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertEnhancedNormalizedAlertSchema = createInsertSchema(enhancedNormalizedAlerts).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type RegisterUser = z.infer<typeof registerUserSchema>;
@@ -175,3 +237,7 @@ export type Feedback = typeof feedback.$inferSelect;
 export type InsertFeedback = z.infer<typeof insertFeedbackSchema>;
 export type ModelMetric = typeof modelMetrics.$inferSelect;
 export type InsertModelMetric = z.infer<typeof insertModelMetricSchema>;
+export type OCSFEvent = typeof ocsfEvents.$inferSelect;
+export type InsertOCSFEvent = z.infer<typeof insertOCSFEventSchema>;
+export type EnhancedNormalizedAlert = typeof enhancedNormalizedAlerts.$inferSelect;
+export type InsertEnhancedNormalizedAlert = z.infer<typeof insertEnhancedNormalizedAlertSchema>;

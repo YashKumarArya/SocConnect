@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Source, type InsertSource, type RawAlert, type InsertRawAlert, type Incident, type InsertIncident, type Action, type InsertAction, type Feedback, type InsertFeedback, type ModelMetric, type InsertModelMetric, type NormalizedAlert, type FeatureVector } from "@shared/schema";
+import { type User, type InsertUser, type Source, type InsertSource, type RawAlert, type InsertRawAlert, type Incident, type InsertIncident, type Action, type InsertAction, type Feedback, type InsertFeedback, type ModelMetric, type InsertModelMetric, type NormalizedAlert, type FeatureVector, type OCSFEvent, type InsertOCSFEvent, type EnhancedNormalizedAlert, type InsertEnhancedNormalizedAlert } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -66,6 +66,17 @@ export interface IStorage {
     avgResponseTime: string;
     modelAccuracy: number;
   }>;
+
+  // OCSF Events
+  getOCSFEvents(): Promise<OCSFEvent[]>;
+  getOCSFEvent(id: string): Promise<OCSFEvent | undefined>;
+  createOCSFEvent(event: InsertOCSFEvent): Promise<OCSFEvent>;
+  getOCSFEventsByClass(classUid: number): Promise<OCSFEvent[]>;
+
+  // Enhanced Normalized Alerts
+  getEnhancedNormalizedAlerts(): Promise<EnhancedNormalizedAlert[]>;
+  getEnhancedNormalizedAlert(id: string): Promise<EnhancedNormalizedAlert | undefined>;
+  createEnhancedNormalizedAlert(alert: InsertEnhancedNormalizedAlert): Promise<EnhancedNormalizedAlert>;
 }
 
 export class MemStorage implements IStorage {
@@ -78,6 +89,8 @@ export class MemStorage implements IStorage {
   private actions: Map<string, Action>;
   private feedbacks: Map<string, Feedback>;
   private modelMetrics: Map<string, ModelMetric>;
+  private ocsfEvents: Map<string, OCSFEvent>;
+  private enhancedNormalizedAlerts: Map<string, EnhancedNormalizedAlert>;
 
   constructor() {
     this.users = new Map();
@@ -89,6 +102,8 @@ export class MemStorage implements IStorage {
     this.actions = new Map();
     this.feedbacks = new Map();
     this.modelMetrics = new Map();
+    this.ocsfEvents = new Map();
+    this.enhancedNormalizedAlerts = new Map();
 
     // Initialize with some demo data
     this.initializeDemoData().catch(console.error);
@@ -730,6 +745,67 @@ export class MemStorage implements IStorage {
       avgResponseTime: "4.2m",
       modelAccuracy: latestMetrics?.precision * 100 || 94.7,
     };
+  }
+
+  // OCSF Events methods
+  async getOCSFEvents(): Promise<OCSFEvent[]> {
+    return Array.from(this.ocsfEvents.values())
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async getOCSFEvent(id: string): Promise<OCSFEvent | undefined> {
+    return this.ocsfEvents.get(id);
+  }
+
+  async createOCSFEvent(insertEvent: InsertOCSFEvent): Promise<OCSFEvent> {
+    const id = randomUUID();
+    const event: OCSFEvent = { 
+      ...insertEvent, 
+      id, 
+      createdAt: new Date(),
+      message: insertEvent.message || null,
+      severity: insertEvent.severity || null,
+      observables: insertEvent.observables || null
+    };
+    this.ocsfEvents.set(id, event);
+    return event;
+  }
+
+  async getOCSFEventsByClass(classUid: number): Promise<OCSFEvent[]> {
+    return Array.from(this.ocsfEvents.values())
+      .filter(event => event.classUid === classUid)
+      .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+  }
+
+  // Enhanced Normalized Alerts methods
+  async getEnhancedNormalizedAlerts(): Promise<EnhancedNormalizedAlert[]> {
+    return Array.from(this.enhancedNormalizedAlerts.values())
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }
+
+  async getEnhancedNormalizedAlert(id: string): Promise<EnhancedNormalizedAlert | undefined> {
+    return this.enhancedNormalizedAlerts.get(id);
+  }
+
+  async createEnhancedNormalizedAlert(insertAlert: InsertEnhancedNormalizedAlert): Promise<EnhancedNormalizedAlert> {
+    const id = randomUUID();
+    const alert: EnhancedNormalizedAlert = { 
+      ...insertAlert, 
+      id, 
+      createdAt: new Date(),
+      closedAt: null,
+      assignedTo: insertAlert.assignedTo || null,
+      ocsfEventId: insertAlert.ocsfEventId || null,
+      description: insertAlert.description || null,
+      sourceIp: insertAlert.sourceIp || null,
+      destinationIp: insertAlert.destinationIp || null,
+      username: insertAlert.username || null,
+      ruleId: insertAlert.ruleId || null,
+      rawData: insertAlert.rawData || null,
+      status: (insertAlert.status || 'open') as 'open' | 'investigating' | 'closed' | 'false_positive'
+    };
+    this.enhancedNormalizedAlerts.set(id, alert);
+    return alert;
   }
 }
 

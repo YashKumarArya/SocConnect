@@ -1,6 +1,7 @@
 import { Kafka, Consumer, Producer, logLevel } from 'kafkajs';
 import { storage } from './storage';
 import type { WebSocket } from 'ws';
+import { OCSFTransformationService, type OCSFEvent } from './ocsf';
 
 // Kafka configuration for SOC Dashboard
 const kafka = new Kafka({
@@ -21,7 +22,12 @@ export const KAFKA_TOPICS = {
   INCIDENTS: 'incidents', 
   THREAT_INTEL: 'threat-intelligence',
   SYSTEM_METRICS: 'system-metrics',
-  AUDIT_LOGS: 'audit-logs'
+  AUDIT_LOGS: 'audit-logs',
+  // OCSF Topics
+  OCSF_NETWORK_ACTIVITY: 'ocsf-network-activity',
+  OCSF_SYSTEM_ACTIVITY: 'ocsf-system-activity',
+  OCSF_SECURITY_FINDING: 'ocsf-security-finding',
+  OCSF_AUTHENTICATION: 'ocsf-authentication'
 } as const;
 
 // Standardized Security Event Schema
@@ -88,6 +94,7 @@ class KafkaService {
   // Producer: Ingest security events from various sources
   async publishSecurityEvent(event: SecurityEvent) {
     try {
+      // Publish original event
       await this.producer.send({
         topic: KAFKA_TOPICS.SECURITY_ALERTS,
         messages: [
@@ -98,17 +105,65 @@ class KafkaService {
             headers: {
               source: event.source,
               severity: event.severity,
-              type: event.type
+              type: event.type,
+              format: 'custom'
             }
           }
         ]
       });
+
+      // Transform to OCSF and publish to OCSF topic
+      await this.publishOCSFEvent(event);
 
       console.log(`📨 Published security event: ${event.id} from ${event.source}`);
     } catch (error) {
       console.error('❌ Failed to publish security event:', error);
       // Fallback: store directly in database
       await this.fallbackStoreEvent(event);
+    }
+  }
+
+  // Producer: Publish OCSF-formatted events
+  async publishOCSFEvent(event: SecurityEvent | OCSFEvent) {
+    try {
+      // Transform to OCSF if it's a custom SecurityEvent
+      const ocsfEvent = 'class_uid' in event ? 
+        event : 
+        OCSFTransformationService.transformToOCSF(event);
+
+      const topic = this.getOCSFTopic(ocsfEvent.class_uid);
+
+      await this.producer.send({
+        topic,
+        messages: [
+          {
+            key: ocsfEvent.unmapped?.original_id || `ocsf_${Date.now()}`,
+            value: JSON.stringify(ocsfEvent),
+            timestamp: ocsfEvent.time.toString(),
+            headers: {
+              class_uid: ocsfEvent.class_uid.toString(),
+              class_name: ocsfEvent.class_name,
+              severity_id: ocsfEvent.severity_id.toString(),
+              format: 'ocsf'
+            }
+          }
+        ]
+      });
+
+      console.log(`📨 Published OCSF event: ${ocsfEvent.class_name} (${ocsfEvent.class_uid})`);
+    } catch (error) {
+      console.error('❌ Failed to publish OCSF event:', error);
+    }
+  }
+
+  // Get appropriate OCSF topic based on class UID
+  private getOCSFTopic(classUid: number): string {
+    switch (classUid) {
+      case 4001: return KAFKA_TOPICS.OCSF_NETWORK_ACTIVITY;
+      case 1001: return KAFKA_TOPICS.OCSF_SYSTEM_ACTIVITY;
+      case 2001: return KAFKA_TOPICS.OCSF_SECURITY_FINDING;
+      case 3002: return KAFKA_TOPICS.OCSF_AUTHENTICATION;
+      default: return KAFKA_TOPICS.OCSF_SECURITY_FINDING;
     }
   }
 
@@ -119,28 +174,45 @@ class KafkaService {
         try {
           if (!message.value) return;
 
-          const event = JSON.parse(message.value.toString()) as SecurityEvent;
+          const format = message.headers?.format?.toString() || 'custom';
           
-          // Process based on topic
-          switch (topic) {
-            case KAFKA_TOPICS.SECURITY_ALERTS:
-              await this.processSecurityAlert(event);
-              break;
-            case KAFKA_TOPICS.INCIDENTS:
-              await this.processIncident(event);
-              break;
-            case KAFKA_TOPICS.THREAT_INTEL:
-              await this.processThreatIntel(event);
-              break;
-            default:
-              console.log(`📥 Received event from topic: ${topic}`);
-          }
+          if (format === 'ocsf') {
+            // Process OCSF event
+            const ocsfEvent = JSON.parse(message.value.toString()) as OCSFEvent;
+            await this.processOCSFEvent(ocsfEvent, topic);
+            
+            // Convert to custom format for WebSocket broadcast
+            const customEvent = OCSFTransformationService.transformFromOCSF(ocsfEvent);
+            this.broadcastToClients({
+              type: 'security_event',
+              data: customEvent,
+              ocsf: ocsfEvent
+            });
+          } else {
+            // Process custom SecurityEvent
+            const event = JSON.parse(message.value.toString()) as SecurityEvent;
+            
+            // Process based on topic
+            switch (topic) {
+              case KAFKA_TOPICS.SECURITY_ALERTS:
+                await this.processSecurityAlert(event);
+                break;
+              case KAFKA_TOPICS.INCIDENTS:
+                await this.processIncident(event);
+                break;
+              case KAFKA_TOPICS.THREAT_INTEL:
+                await this.processThreatIntel(event);
+                break;
+              default:
+                console.log(`📥 Received event from topic: ${topic}`);
+            }
 
-          // Send to connected WebSocket clients for real-time updates
-          this.broadcastToClients({
-            type: 'security_event',
-            data: event
-          });
+            // Send to connected WebSocket clients for real-time updates
+            this.broadcastToClients({
+              type: 'security_event',
+              data: event
+            });
+          }
 
           // Call heartbeat to prevent session timeout
           await heartbeat();
@@ -150,6 +222,47 @@ class KafkaService {
         }
       }
     });
+  }
+
+  // Process OCSF events
+  private async processOCSFEvent(ocsfEvent: OCSFEvent, topic: string) {
+    try {
+      // Convert OCSF to custom format for storage
+      const customEvent = OCSFTransformationService.transformFromOCSF(ocsfEvent);
+      
+      // Store in database using existing logic
+      await this.processSecurityAlert(customEvent);
+      
+      // Additional OCSF-specific processing
+      await this.storeOCSFEvent(ocsfEvent);
+      
+      console.log(`🔄 Processed OCSF event: ${ocsfEvent.class_name} from ${topic}`);
+    } catch (error) {
+      console.error('❌ Error processing OCSF event:', error);
+    }
+  }
+
+  // Store OCSF event with full schema
+  private async storeOCSFEvent(ocsfEvent: OCSFEvent) {
+    try {
+      // Store raw OCSF event for compliance and analysis
+      await storage.createOCSFEvent({
+        classUid: ocsfEvent.class_uid,
+        className: ocsfEvent.class_name,
+        categoryUid: ocsfEvent.category_uid,
+        categoryName: ocsfEvent.category_name,
+        activityId: ocsfEvent.activity_id,
+        activityName: ocsfEvent.activity_name,
+        severityId: ocsfEvent.severity_id,
+        severity: ocsfEvent.severity,
+        time: new Date(ocsfEvent.time),
+        message: ocsfEvent.message,
+        rawData: ocsfEvent,
+        observables: JSON.stringify(ocsfEvent.observables || [])
+      });
+    } catch (error) {
+      console.error('❌ Error storing OCSF event:', error);
+    }
   }
 
   // Process security alerts from SIEM, EDR, Firewall systems
@@ -352,5 +465,109 @@ export class SecurityEventIngestion {
 
     await kafkaService.publishSecurityEvent(event);
     return event;
+  }
+
+  // === OCSF Ingestion Endpoints ===
+  
+  // Endpoint for OCSF Network Activity events
+  static async ingestOCSFNetworkActivity(data: any) {
+    // Validate that it's a Network Activity event
+    if (data.class_uid !== 4001) {
+      throw new Error('Invalid OCSF Network Activity event: class_uid must be 4001');
+    }
+    
+    await kafkaService.publishOCSFEvent(data as OCSFEvent);
+    return data;
+  }
+  
+  // Endpoint for OCSF System Activity events
+  static async ingestOCSFSystemActivity(data: any) {
+    // Validate that it's a System Activity event
+    if (data.class_uid !== 1001) {
+      throw new Error('Invalid OCSF System Activity event: class_uid must be 1001');
+    }
+    
+    await kafkaService.publishOCSFEvent(data as OCSFEvent);
+    return data;
+  }
+  
+  // Endpoint for OCSF Security Finding events
+  static async ingestOCSFSecurityFinding(data: any) {
+    // Validate that it's a Security Finding event
+    if (data.class_uid !== 2001) {
+      throw new Error('Invalid OCSF Security Finding event: class_uid must be 2001');
+    }
+    
+    await kafkaService.publishOCSFEvent(data as OCSFEvent);
+    return data;
+  }
+  
+  // Endpoint for OCSF Authentication events
+  static async ingestOCSFAuthentication(data: any) {
+    // Validate that it's an Authentication event
+    if (data.class_uid !== 3002) {
+      throw new Error('Invalid OCSF Authentication event: class_uid must be 3002');
+    }
+    
+    await kafkaService.publishOCSFEvent(data as OCSFEvent);
+    return data;
+  }
+  
+  // Generic OCSF ingestion endpoint
+  static async ingestOCSFEvent(data: any) {
+    // Basic OCSF validation
+    if (!data.class_uid || !data.class_name || !data.time) {
+      throw new Error('Invalid OCSF event: missing required fields (class_uid, class_name, time)');
+    }
+    
+    await kafkaService.publishOCSFEvent(data as OCSFEvent);
+    return data;
+  }
+  
+  // Bulk OCSF ingestion endpoint
+  static async ingestOCSFEventsBulk(events: any[]) {
+    const results = [];
+    
+    for (const event of events) {
+      try {
+        const result = await this.ingestOCSFEvent(event);
+        results.push({ success: true, event: result });
+      } catch (error) {
+        results.push({ 
+          success: false, 
+          error: error instanceof Error ? error.message : 'Unknown error',
+          event
+        });
+      }
+    }
+    
+    return results;
+  }
+
+  // Transform legacy events to OCSF and ingest
+  static async transformAndIngestLegacyEvent(data: any, sourceType: 'siem' | 'edr' | 'firewall') {
+    // First create a custom SecurityEvent
+    let customEvent: SecurityEvent;
+    
+    switch (sourceType) {
+      case 'siem':
+        customEvent = await this.ingestSIEMAlert(data);
+        break;
+      case 'edr':
+        customEvent = await this.ingestEDRAlert(data);
+        break;
+      case 'firewall':
+        customEvent = await this.ingestFirewallAlert(data);
+        break;
+    }
+    
+    // Transform to OCSF and publish
+    const ocsfEvent = OCSFTransformationService.transformToOCSF(customEvent);
+    await kafkaService.publishOCSFEvent(ocsfEvent);
+    
+    return {
+      customEvent,
+      ocsfEvent
+    };
   }
 }

@@ -795,6 +795,187 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // === OCSF (Open Cybersecurity Schema Framework) Endpoints ===
+  
+  // Get all OCSF events
+  app.get('/api/ocsf/events', async (req, res) => {
+    try {
+      const events = await storage.getOCSFEvents();
+      res.json(events);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch OCSF events' });
+    }
+  });
+
+  // Get OCSF events by class
+  app.get('/api/ocsf/events/class/:classUid', async (req, res) => {
+    try {
+      const classUid = parseInt(req.params.classUid);
+      if (isNaN(classUid)) {
+        return res.status(400).json({ error: 'Invalid class UID' });
+      }
+      
+      const events = await storage.getOCSFEventsByClass(classUid);
+      res.json(events);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch OCSF events by class' });
+    }
+  });
+
+  // Get specific OCSF event
+  app.get('/api/ocsf/events/:id', async (req, res) => {
+    try {
+      const event = await storage.getOCSFEvent(req.params.id);
+      if (!event) {
+        return res.status(404).json({ error: 'OCSF event not found' });
+      }
+      res.json(event);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch OCSF event' });
+    }
+  });
+
+  // Ingest OCSF Network Activity events
+  app.post('/api/ocsf/network-activity', async (req, res) => {
+    try {
+      const event = await SecurityEventIngestion.ingestOCSFNetworkActivity(req.body);
+      res.status(201).json({ message: 'OCSF Network Activity event ingested successfully', event });
+    } catch (error) {
+      console.error('OCSF Network Activity ingestion error:', error);
+      res.status(400).json({ error: error instanceof Error ? error.message : 'Failed to ingest OCSF Network Activity event' });
+    }
+  });
+
+  // Ingest OCSF System Activity events
+  app.post('/api/ocsf/system-activity', async (req, res) => {
+    try {
+      const event = await SecurityEventIngestion.ingestOCSFSystemActivity(req.body);
+      res.status(201).json({ message: 'OCSF System Activity event ingested successfully', event });
+    } catch (error) {
+      console.error('OCSF System Activity ingestion error:', error);
+      res.status(400).json({ error: error instanceof Error ? error.message : 'Failed to ingest OCSF System Activity event' });
+    }
+  });
+
+  // Ingest OCSF Security Finding events
+  app.post('/api/ocsf/security-finding', async (req, res) => {
+    try {
+      const event = await SecurityEventIngestion.ingestOCSFSecurityFinding(req.body);
+      res.status(201).json({ message: 'OCSF Security Finding event ingested successfully', event });
+    } catch (error) {
+      console.error('OCSF Security Finding ingestion error:', error);
+      res.status(400).json({ error: error instanceof Error ? error.message : 'Failed to ingest OCSF Security Finding event' });
+    }
+  });
+
+  // Ingest OCSF Authentication events
+  app.post('/api/ocsf/authentication', async (req, res) => {
+    try {
+      const event = await SecurityEventIngestion.ingestOCSFAuthentication(req.body);
+      res.status(201).json({ message: 'OCSF Authentication event ingested successfully', event });
+    } catch (error) {
+      console.error('OCSF Authentication ingestion error:', error);
+      res.status(400).json({ error: error instanceof Error ? error.message : 'Failed to ingest OCSF Authentication event' });
+    }
+  });
+
+  // Generic OCSF event ingestion
+  app.post('/api/ocsf/events', async (req, res) => {
+    try {
+      const event = await SecurityEventIngestion.ingestOCSFEvent(req.body);
+      res.status(201).json({ message: 'OCSF event ingested successfully', event });
+    } catch (error) {
+      console.error('OCSF event ingestion error:', error);
+      res.status(400).json({ error: error instanceof Error ? error.message : 'Failed to ingest OCSF event' });
+    }
+  });
+
+  // Bulk OCSF event ingestion
+  app.post('/api/ocsf/events/bulk', async (req, res) => {
+    try {
+      const { events } = req.body;
+      
+      if (!Array.isArray(events)) {
+        return res.status(400).json({ error: 'events must be an array' });
+      }
+      
+      const results = await SecurityEventIngestion.ingestOCSFEventsBulk(events);
+      const successful = results.filter(r => r.success).length;
+      const failed = results.filter(r => !r.success).length;
+      
+      res.status(201).json({ 
+        message: `Bulk OCSF ingestion completed: ${successful} successful, ${failed} failed`,
+        results,
+        summary: { successful, failed, total: results.length }
+      });
+    } catch (error) {
+      console.error('Bulk OCSF ingestion error:', error);
+      res.status(500).json({ error: 'Failed to process bulk OCSF ingestion' });
+    }
+  });
+
+  // Transform legacy events to OCSF and ingest
+  app.post('/api/ocsf/transform/:sourceType', async (req, res) => {
+    try {
+      const { sourceType } = req.params;
+      
+      if (!['siem', 'edr', 'firewall'].includes(sourceType)) {
+        return res.status(400).json({ error: 'Invalid source type. Must be: siem, edr, or firewall' });
+      }
+      
+      const result = await SecurityEventIngestion.transformAndIngestLegacyEvent(
+        req.body, 
+        sourceType as 'siem' | 'edr' | 'firewall'
+      );
+      
+      res.status(201).json({ 
+        message: `Legacy ${sourceType} event transformed to OCSF and ingested successfully`,
+        customEvent: result.customEvent,
+        ocsfEvent: result.ocsfEvent
+      });
+    } catch (error) {
+      console.error('OCSF transformation error:', error);
+      res.status(400).json({ error: error instanceof Error ? error.message : 'Failed to transform and ingest event' });
+    }
+  });
+
+  // OCSF schema validation endpoint
+  app.post('/api/ocsf/validate', async (req, res) => {
+    try {
+      const { event } = req.body;
+      
+      // Basic OCSF validation
+      const requiredFields = ['class_uid', 'class_name', 'time', 'category_uid', 'category_name'];
+      const missing = requiredFields.filter(field => !event[field]);
+      
+      if (missing.length > 0) {
+        return res.status(400).json({ 
+          valid: false, 
+          errors: [`Missing required fields: ${missing.join(', ')}`]
+        });
+      }
+      
+      // Check if class_uid is valid
+      const validClassUids = [1001, 2001, 3002, 4001]; // System, Finding, Auth, Network
+      if (!validClassUids.includes(event.class_uid)) {
+        return res.status(400).json({ 
+          valid: false, 
+          errors: [`Invalid class_uid: ${event.class_uid}. Supported: ${validClassUids.join(', ')}`]
+        });
+      }
+      
+      res.json({ 
+        valid: true, 
+        message: 'OCSF event is valid',
+        class_name: event.class_name,
+        class_uid: event.class_uid
+      });
+    } catch (error) {
+      console.error('OCSF validation error:', error);
+      res.status(500).json({ error: 'Failed to validate OCSF event' });
+    }
+  });
+
   // Export endpoints
   app.get('/api/export/incidents', async (req, res) => {
     try {
