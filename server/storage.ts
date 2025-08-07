@@ -76,15 +76,15 @@ export class MemStorage implements IStorage {
     this.modelMetrics = new Map();
 
     // Initialize with some demo data
-    this.initializeDemoData();
+    this.initializeDemoData().catch(console.error);
   }
 
-  private initializeDemoData() {
-    // Create demo users with different roles and default passwords
+  private async initializeDemoData() {
+    // Create demo users with different roles and hashed passwords
     const users = [
       {
         email: "john.smith@company.com",
-        password: "password123", // In real app, this would be hashed
+        password: "password123",
         firstName: "John",
         lastName: "Smith",
         role: "analyst" as const,
@@ -106,11 +106,16 @@ export class MemStorage implements IStorage {
     ];
 
     const userIds: string[] = [];
-    users.forEach(userData => {
+    const bcrypt = await import('bcryptjs');
+    
+    for (const userData of users) {
+      // Hash the password
+      const hashedPassword = await bcrypt.hash(userData.password, 12);
+      
       const user: User & { password: string } = {
         id: randomUUID(),
         email: userData.email,
-        password: userData.password,
+        password: hashedPassword,
         firstName: userData.firstName,
         lastName: userData.lastName,
         profileImageUrl: null,
@@ -120,7 +125,7 @@ export class MemStorage implements IStorage {
       };
       this.users.set(user.id, user);
       userIds.push(user.id);
-    });
+    }
 
     // Create comprehensive demo sources with realistic configurations
     const sources = [
