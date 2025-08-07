@@ -1,6 +1,7 @@
 import { storage } from "./storage";
 import { AlertNormalizer, type NormalizedAlertData } from "./normalization";
 import { AlertDataLoader } from "./alertDataLoader";
+import { AlertCorrelationEngine } from "./alertCorrelation";
 import { type RawAlert, type InsertRawAlert } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -9,6 +10,9 @@ export interface AlertProcessingResult {
   normalizedData: NormalizedAlertData;
   success: boolean;
   error?: string;
+  incidentCreated?: boolean;
+  incidentId?: string;
+  correlationConfidence?: number;
 }
 
 export class AlertProcessor {
@@ -26,12 +30,30 @@ export class AlertProcessor {
       const rawAlertData = AlertNormalizer.toRawAlert(normalizedData, sourceId);
       const rawAlert = await storage.createRawAlert(rawAlertData);
       
-      console.log(`✅ Processed ${normalizedData.sourceType} alert: ${normalizedData.title}`);
+      // Step 3: Run correlation analysis to determine if incident should be created
+      const correlationResult = await AlertCorrelationEngine.correlateAlert(rawAlert);
+      
+      let incidentId: string | null = null;
+      let incidentCreated = false;
+      
+      if (correlationResult.shouldCreateIncident) {
+        incidentId = await AlertCorrelationEngine.createIncidentFromCorrelation(correlationResult, rawAlert);
+        incidentCreated = incidentId !== null;
+        
+        if (incidentCreated) {
+          console.log(`🚨 Auto-created incident ${incidentId} for ${normalizedData.sourceType} alert`);
+        }
+      }
+      
+      console.log(`✅ Processed ${normalizedData.sourceType} alert: ${normalizedData.title} (correlation: ${(correlationResult.confidence * 100).toFixed(1)}%)`);
       
       return {
         rawAlert,
         normalizedData,
-        success: true
+        success: true,
+        incidentCreated,
+        incidentId: incidentId || undefined,
+        correlationConfidence: correlationResult.confidence
       };
     } catch (error) {
       console.error('Alert processing failed:', error);

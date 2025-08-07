@@ -6,6 +6,7 @@ import { TrendingUp, Clock, Target, Zap } from "lucide-react";
 import { api } from "@/lib/api";
 import { MetricsChart } from "@/components/metrics-chart";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ExportDialog } from "@/components/export-dialog";
 
 export default function Analytics() {
   const { data: metrics, isLoading: metricsLoading } = useQuery({
@@ -13,48 +14,46 @@ export default function Analytics() {
     queryFn: api.getMetrics,
   });
 
+  const { data: realTimeAnalytics, isLoading: analyticsLoading } = useQuery({
+    queryKey: ['/api/analytics/realtime'],
+    queryFn: () => fetch('/api/analytics/realtime').then(res => res.json()),
+    refetchInterval: 30000, // Refetch every 30 seconds
+  });
+
   const { data: incidents } = useQuery({
     queryKey: ['/api/incidents'],
     queryFn: api.getIncidents,
   });
 
-  // Calculate performance metrics
-  const latestMetric = metrics?.[0];
+  // Calculate performance metrics from real-time data
   const performanceData = [
     {
       name: "Precision",
-      value: latestMetric?.precision ? (latestMetric.precision * 100).toFixed(1) : "94.7",
-      percentage: latestMetric?.precision ? latestMetric.precision * 100 : 94.7,
+      value: realTimeAnalytics?.precision ? (realTimeAnalytics.precision * 100).toFixed(1) : "0.0",
+      percentage: realTimeAnalytics?.precision ? realTimeAnalytics.precision * 100 : 0,
       color: "emerald",
       icon: Target,
     },
     {
       name: "Recall",
-      value: latestMetric?.recall ? (latestMetric.recall * 100).toFixed(1) : "91.3",
-      percentage: latestMetric?.recall ? latestMetric.recall * 100 : 91.3,
+      value: realTimeAnalytics?.recall ? (realTimeAnalytics.recall * 100).toFixed(1) : "0.0",
+      percentage: realTimeAnalytics?.recall ? realTimeAnalytics.recall * 100 : 0,
       color: "sky",
       icon: TrendingUp,
     },
     {
-      name: "Latency",
-      value: latestMetric?.latencyMs ? `${latestMetric.latencyMs}ms` : "23ms",
-      percentage: latestMetric?.latencyMs ? Math.max(0, 100 - latestMetric.latencyMs) : 77,
+      name: "F1 Score",
+      value: realTimeAnalytics?.f1Score ? (realTimeAnalytics.f1Score * 100).toFixed(1) : "0.0",
+      percentage: realTimeAnalytics?.f1Score ? realTimeAnalytics.f1Score * 100 : 0,
       color: "amber",
       icon: Zap,
     },
   ];
 
-  // Calculate response time metrics
-  const avgResponseTime = incidents?.length > 0 
-    ? incidents.reduce((sum: number, inc: any) => {
-        const responseTime = inc.closedAt 
-          ? new Date(inc.closedAt).getTime() - new Date(inc.createdAt).getTime()
-          : Date.now() - new Date(inc.createdAt).getTime();
-        return sum + responseTime;
-      }, 0) / incidents.length / (1000 * 60) // Convert to minutes
-    : 0;
+  // Use real-time calculated response time
+  const avgResponseTime = realTimeAnalytics?.avgResponseTimeMinutes || 0;
 
-  if (metricsLoading) {
+  if (metricsLoading || analyticsLoading) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
@@ -73,7 +72,14 @@ export default function Analytics() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white" data-testid="analytics-title">Performance Analytics</h2>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h2 className="text-2xl font-bold text-white" data-testid="analytics-title">Performance Analytics</h2>
+        <ExportDialog 
+          type="analytics" 
+          triggerText="Export Analytics Report"
+          className="soc-button-primary"
+        />
+      </div>
 
       {/* Model Performance Metrics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -131,10 +137,10 @@ export default function Analytics() {
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-white mb-2" data-testid="automation-rate-value">
-                87.3%
+                {realTimeAnalytics?.automationRate ? (realTimeAnalytics.automationRate * 100).toFixed(1) : '0.0'}%
               </div>
               <p className="text-slate-400 text-sm">Auto-resolved incidents</p>
-              <Progress value={87.3} className="mt-4 bg-slate-700" />
+              <Progress value={realTimeAnalytics?.automationRate ? realTimeAnalytics.automationRate * 100 : 0} className="mt-4 bg-slate-700" />
             </div>
           </CardContent>
         </Card>
@@ -149,12 +155,12 @@ export default function Analytics() {
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-white mb-2" data-testid="threat-detection-value">
-                156
+                {realTimeAnalytics?.incidentsCreatedToday || 0}
               </div>
-              <p className="text-slate-400 text-sm">Threats detected today</p>
+              <p className="text-slate-400 text-sm">Incidents created today</p>
               <div className="mt-4 flex items-center text-sm">
-                <span className="text-red-400">+12%</span>
-                <span className="text-slate-400 ml-2">from yesterday</span>
+                <span className="text-emerald-400">{realTimeAnalytics?.threatDetectionRate ? (realTimeAnalytics.threatDetectionRate * 100).toFixed(0) : '0'}%</span>
+                <span className="text-slate-400 ml-2">detection rate</span>
               </div>
             </div>
           </CardContent>
@@ -168,12 +174,12 @@ export default function Analytics() {
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-white mb-2" data-testid="false-positive-rate-value">
-                2.4%
+                {realTimeAnalytics?.falsePositiveRate ? (realTimeAnalytics.falsePositiveRate * 100).toFixed(1) : '0.0'}%
               </div>
-              <p className="text-slate-400 text-sm">Below industry average</p>
+              <p className="text-slate-400 text-sm">False positive rate</p>
               <div className="mt-4 flex items-center text-sm">
-                <span className="text-green-400">-0.8%</span>
-                <span className="text-slate-400 ml-2">improvement</span>
+                <span className="text-emerald-400">Avg: {realTimeAnalytics?.avgFeedbackRating ? realTimeAnalytics.avgFeedbackRating.toFixed(1) : '0.0'}/5</span>
+                <span className="text-slate-400 ml-2">analyst rating</span>
               </div>
             </div>
           </CardContent>
@@ -189,27 +195,27 @@ export default function Analytics() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="text-center">
               <div className="text-2xl font-bold text-white mb-2" data-testid="alerts-processed">
-                {latestMetric?.alertsProcessed?.toLocaleString() || '1,247'}
+                {realTimeAnalytics?.alertsProcessedToday?.toLocaleString() || '0'}
               </div>
-              <p className="text-slate-400 text-sm">Alerts Processed</p>
+              <p className="text-slate-400 text-sm">Alerts Processed Today</p>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-white mb-2" data-testid="auto-actions">
-                {latestMetric?.autoActions || 89}
+                {Math.round((realTimeAnalytics?.automationRate || 0) * (realTimeAnalytics?.alertsProcessedToday || 0))}
               </div>
               <p className="text-slate-400 text-sm">Auto Actions</p>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-white mb-2" data-testid="manual-reviews">
-                {latestMetric?.manualReviews || 23}
+                {realTimeAnalytics?.manualReviewsToday || 0}
               </div>
-              <p className="text-slate-400 text-sm">Manual Reviews</p>
+              <p className="text-slate-400 text-sm">Manual Reviews Today</p>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-white mb-2" data-testid="avg-processing-time">
-                {latestMetric?.latencyMs ? `${latestMetric.latencyMs}ms` : '23ms'}
+                {realTimeAnalytics?.avgResponseTimeMinutes ? `${realTimeAnalytics.avgResponseTimeMinutes.toFixed(1)}m` : '0.0m'}
               </div>
-              <p className="text-slate-400 text-sm">Avg Processing Time</p>
+              <p className="text-slate-400 text-sm">Avg Response Time</p>
             </div>
           </div>
         </CardContent>

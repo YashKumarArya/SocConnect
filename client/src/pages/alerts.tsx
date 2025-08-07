@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { AlertStream } from "@/components/alert-stream";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ExportDialog } from "@/components/export-dialog";
 import { useEffect, useState } from "react";
 
 export default function Alerts() {
@@ -161,6 +162,11 @@ export default function Alerts() {
           )}
         </div>
         <div className="flex items-center space-x-2 mt-4 sm:mt-0">
+          <ExportDialog 
+            type="alerts" 
+            triggerText="Export"
+            className="soc-button-secondary"
+          />
           <Button 
             variant="outline" 
             className="soc-button-secondary" 

@@ -4,7 +4,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useWebSocket } from "@/hooks/use-websocket";
+import { useRealtimeUpdates } from "@/hooks/use-realtime-updates";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import NotFound from "@/pages/not-found";
@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 function Router() {
   const [currentSection, setCurrentSection] = useState('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { connectionStatus } = useWebSocket();
+  const { connectionStatus } = useRealtimeUpdates();
 
   const handleSectionChange = (section: string) => {
     setCurrentSection(section);

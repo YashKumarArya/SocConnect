@@ -48,6 +48,9 @@ export const api = {
     
   updateIncident: (id: string, incident: any) =>
     apiRequest('PUT', `/api/incidents/${id}`, incident),
+    
+  bulkUpdateIncidents: (incidentIds: string[], operation: string, data?: any) =>
+    apiRequest('PATCH', '/api/incidents/bulk', { incidentIds, operation, data }),
 
   // Actions
   getActions: () =>
@@ -99,4 +102,57 @@ export const api = {
   // Threat Intelligence
   getThreatIntel: () =>
     fetch('/api/threatintel').then(res => res.json()),
+
+  // Export functionality
+  exportIncidents: (format: 'csv' | 'json', filters?: {
+    startDate?: string;
+    endDate?: string;
+    severity?: string[];
+    status?: string[];
+  }) => {
+    const params = new URLSearchParams({ format });
+    if (filters?.startDate) params.append('start_date', filters.startDate);
+    if (filters?.endDate) params.append('end_date', filters.endDate);
+    if (filters?.severity?.length) params.append('severity', filters.severity.join(','));
+    if (filters?.status?.length) params.append('status', filters.status.join(','));
+    
+    return fetch(`/api/export/incidents?${params.toString()}`);
+  },
+
+  exportAlerts: (format: 'csv' | 'json', filters?: {
+    startDate?: string;
+    endDate?: string;
+    severity?: string[];
+    sourceId?: string;
+  }) => {
+    const params = new URLSearchParams({ format });
+    if (filters?.startDate) params.append('start_date', filters.startDate);
+    if (filters?.endDate) params.append('end_date', filters.endDate);
+    if (filters?.severity?.length) params.append('severity', filters.severity.join(','));
+    if (filters?.sourceId) params.append('source_id', filters.sourceId);
+    
+    return fetch(`/api/export/alerts?${params.toString()}`);
+  },
+
+  exportAnalytics: (format: 'csv' | 'json', filters?: {
+    startDate?: string;
+    endDate?: string;
+  }) => {
+    const params = new URLSearchParams({ format });
+    if (filters?.startDate) params.append('start_date', filters.startDate);
+    if (filters?.endDate) params.append('end_date', filters.endDate);
+    
+    return fetch(`/api/export/analytics?${params.toString()}`);
+  },
+
+  exportActions: (format: 'csv' | 'json', filters?: {
+    startDate?: string;
+    endDate?: string;
+  }) => {
+    const params = new URLSearchParams({ format });
+    if (filters?.startDate) params.append('start_date', filters.startDate);
+    if (filters?.endDate) params.append('end_date', filters.endDate);
+    
+    return fetch(`/api/export/actions?${params.toString()}`);
+  },
 };

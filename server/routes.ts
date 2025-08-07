@@ -4,6 +4,9 @@ import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { AlertProcessor } from "./alertProcessor";
 import { AlertNormalizer } from "./normalization";
+import { ThreatIntelligenceService } from "./threatIntelligence";
+import { AnalyticsService } from "./analyticsService";
+import { ExportService } from "./exportService";
 import { insertSourceSchema, insertRawAlertSchema, insertIncidentSchema, insertActionSchema, insertFeedbackSchema, insertModelMetricSchema } from "@shared/schema";
 import { ZodError } from "zod";
 
@@ -146,7 +149,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const result = await AlertProcessor.processIncomingAlert(alertData, sourceId, sourceType);
       
+      // Broadcast alert processing result
       broadcast({ type: 'alert_normalized', data: result });
+      
+      // If incident was auto-created, broadcast incident creation
+      if (result.incidentCreated && result.incidentId) {
+        const incident = await storage.getIncident(result.incidentId);
+        broadcast({ type: 'incident_created', data: incident });
+      }
+      
       res.status(201).json(result);
     } catch (error) {
       console.error('Normalization error:', error);
@@ -322,6 +333,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bulk incident operations
+  app.patch('/api/incidents/bulk', async (req, res) => {
+    try {
+      const { incidentIds, operation, data } = req.body;
+      
+      if (!incidentIds || !Array.isArray(incidentIds) || incidentIds.length === 0) {
+        return res.status(400).json({ error: 'incidentIds array is required' });
+      }
+      
+      if (!operation) {
+        return res.status(400).json({ error: 'operation is required' });
+      }
+
+      const results = [];
+      const errors = [];
+
+      for (const incidentId of incidentIds) {
+        try {
+          let updatedIncident;
+          
+          switch (operation) {
+            case 'assign':
+              if (!data?.assignedTo) {
+                throw new Error('assignedTo is required for assign operation');
+              }
+              updatedIncident = await storage.updateIncident(incidentId, { 
+                assignedTo: data.assignedTo 
+              });
+              
+              // Create action for the assignment
+              await storage.createAction({
+                incidentId,
+                actionType: 'ANALYST_ASSIGNMENT',
+                payload: { assignedTo: data.assignedTo, bulkOperation: true },
+                performedBy: data.performedBy || 'system'
+              });
+              break;
+              
+            case 'escalate':
+              updatedIncident = await storage.updateIncident(incidentId, { 
+                severity: 'critical',
+                status: 'investigating'
+              });
+              
+              // Create action for the escalation
+              await storage.createAction({
+                incidentId,
+                actionType: 'ESCALATE',
+                payload: { escalatedTo: 'senior_analyst', bulkOperation: true },
+                performedBy: data?.performedBy || 'system'
+              });
+              break;
+              
+            case 'close':
+              updatedIncident = await storage.updateIncident(incidentId, { 
+                status: 'resolved',
+                closedAt: new Date()
+              });
+              
+              // Create action for the closure
+              await storage.createAction({
+                incidentId,
+                actionType: 'CLOSE_INCIDENT',
+                payload: { reason: data?.reason || 'Bulk closure', bulkOperation: true },
+                performedBy: data?.performedBy || 'system'
+              });
+              break;
+              
+            case 'update_status':
+              if (!data?.status) {
+                throw new Error('status is required for update_status operation');
+              }
+              updatedIncident = await storage.updateIncident(incidentId, { 
+                status: data.status 
+              });
+              
+              // Create action for the status update
+              await storage.createAction({
+                incidentId,
+                actionType: 'STATUS_CHANGE',
+                payload: { newStatus: data.status, bulkOperation: true },
+                performedBy: data?.performedBy || 'system'
+              });
+              break;
+              
+            default:
+              throw new Error(`Unknown operation: ${operation}`);
+          }
+          
+          if (updatedIncident) {
+            results.push(updatedIncident);
+            broadcast({ type: 'incident_updated', data: updatedIncident });
+          }
+        } catch (error) {
+          errors.push({
+            incidentId,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
+        }
+      }
+
+      res.json({
+        success: true,
+        updated: results.length,
+        errorCount: errors.length,
+        results,
+        errors
+      });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to perform bulk operation' });
+    }
+  });
+
   // Actions endpoints
   app.get('/api/actions', async (req, res) => {
     try {
@@ -403,6 +527,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Real-time analytics endpoint
+  app.get('/api/analytics/realtime', async (req, res) => {
+    try {
+      const analytics = await AnalyticsService.calculateRealTimeMetrics();
+      res.json(analytics);
+    } catch (error) {
+      console.error('Analytics calculation error:', error);
+      res.status(500).json({ error: 'Failed to calculate real-time analytics' });
+    }
+  });
+
   app.post('/api/metrics', async (req, res) => {
     try {
       const validatedData = insertModelMetricSchema.parse(req.body);
@@ -418,13 +553,214 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Threat intelligence endpoint (stub)
-  app.get('/api/threatintel', (req, res) => {
-    const timestamp = new Date();
-    res.json([
-      { id: 'ioc1', type: 'IP', value: '198.51.100.23', firstSeen: timestamp.toISOString() },
-      { id: 'ioc2', type: 'Domain', value: 'malware.example.com', firstSeen: timestamp.toISOString() },
-    ]);
+  // Threat intelligence endpoints
+  app.get('/api/threatintel', async (req, res) => {
+    try {
+      const indicators = await ThreatIntelligenceService.getIndicators();
+      res.json(indicators);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch threat intelligence indicators' });
+    }
+  });
+
+  app.get('/api/threatintel/stats', async (req, res) => {
+    try {
+      const stats = ThreatIntelligenceService.getStats();
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch threat intelligence stats' });
+    }
+  });
+
+  app.get('/api/threatintel/search', async (req, res) => {
+    try {
+      const query = req.query.q as string;
+      if (!query) {
+        return res.status(400).json({ error: 'Query parameter "q" is required' });
+      }
+      
+      const indicators = await ThreatIntelligenceService.searchIndicators(query);
+      res.json(indicators);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to search threat intelligence' });
+    }
+  });
+
+  app.get('/api/threatintel/type/:type', async (req, res) => {
+    try {
+      const { type } = req.params;
+      const indicators = await ThreatIntelligenceService.getIndicatorsByType(type);
+      res.json(indicators);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch indicators by type' });
+    }
+  });
+
+  app.post('/api/threatintel', async (req, res) => {
+    try {
+      const indicator = await ThreatIntelligenceService.addIndicator(req.body);
+      res.status(201).json(indicator);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to add threat intelligence indicator' });
+    }
+  });
+
+  app.put('/api/threatintel/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const indicator = await ThreatIntelligenceService.updateIndicator(id, req.body);
+      if (!indicator) {
+        return res.status(404).json({ error: 'Indicator not found' });
+      }
+      res.json(indicator);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to update threat intelligence indicator' });
+    }
+  });
+
+  app.delete('/api/threatintel/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const success = await ThreatIntelligenceService.deleteIndicator(id);
+      if (!success) {
+        return res.status(404).json({ error: 'Indicator not found' });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to delete threat intelligence indicator' });
+    }
+  });
+
+  // Correlation stats endpoint
+  app.get('/api/correlation/stats', async (req, res) => {
+    try {
+      const incidents = await storage.getIncidents();
+      const actions = await storage.getActions();
+      
+      const autoCreatedIncidents = actions.filter(action => 
+        action.actionType === 'AUTOMATED_DETECTION'
+      ).length;
+      
+      const last24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const recentIncidents = incidents.filter(incident => 
+        new Date(incident.createdAt) > last24Hours
+      );
+      
+      res.json({
+        totalIncidents: incidents.length,
+        autoCreatedIncidents,
+        recentIncidents: recentIncidents.length,
+        correlationAccuracy: 0.87, // This would come from ML metrics in real system
+        avgResponseTime: '4.2m'
+      });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch correlation stats' });
+    }
+  });
+
+  // Export endpoints
+  app.get('/api/export/incidents', async (req, res) => {
+    try {
+      const format = req.query.format as 'csv' | 'json' || 'json';
+      const startDate = req.query.start_date ? new Date(req.query.start_date as string) : undefined;
+      const endDate = req.query.end_date ? new Date(req.query.end_date as string) : undefined;
+      const severity = req.query.severity ? (req.query.severity as string).split(',') : undefined;
+      const status = req.query.status ? (req.query.status as string).split(',') : undefined;
+
+      const options = {
+        format,
+        dateRange: startDate && endDate ? { start: startDate, end: endDate } : undefined,
+        filters: {
+          severity,
+          status
+        }
+      };
+
+      const exportData = await ExportService.exportIncidents(options);
+      const filename = ExportService.getExportFilename('incidents', format);
+
+      res.setHeader('Content-Type', format === 'csv' ? 'text/csv' : 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(exportData);
+    } catch (error) {
+      console.error('Export incidents error:', error);
+      res.status(500).json({ error: 'Failed to export incidents' });
+    }
+  });
+
+  app.get('/api/export/alerts', async (req, res) => {
+    try {
+      const format = req.query.format as 'csv' | 'json' || 'json';
+      const startDate = req.query.start_date ? new Date(req.query.start_date as string) : undefined;
+      const endDate = req.query.end_date ? new Date(req.query.end_date as string) : undefined;
+      const severity = req.query.severity ? (req.query.severity as string).split(',') : undefined;
+      const sourceId = req.query.source_id as string;
+
+      const options = {
+        format,
+        dateRange: startDate && endDate ? { start: startDate, end: endDate } : undefined,
+        filters: {
+          severity,
+          sourceId
+        }
+      };
+
+      const exportData = await ExportService.exportAlerts(options);
+      const filename = ExportService.getExportFilename('alerts', format);
+
+      res.setHeader('Content-Type', format === 'csv' ? 'text/csv' : 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(exportData);
+    } catch (error) {
+      console.error('Export alerts error:', error);
+      res.status(500).json({ error: 'Failed to export alerts' });
+    }
+  });
+
+  app.get('/api/export/analytics', async (req, res) => {
+    try {
+      const format = req.query.format as 'csv' | 'json' || 'json';
+      const startDate = req.query.start_date ? new Date(req.query.start_date as string) : undefined;
+      const endDate = req.query.end_date ? new Date(req.query.end_date as string) : undefined;
+
+      const options = {
+        format,
+        dateRange: startDate && endDate ? { start: startDate, end: endDate } : undefined
+      };
+
+      const exportData = await ExportService.exportAnalytics(options);
+      const filename = ExportService.getExportFilename('analytics', format);
+
+      res.setHeader('Content-Type', format === 'csv' ? 'text/csv' : 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(exportData);
+    } catch (error) {
+      console.error('Export analytics error:', error);
+      res.status(500).json({ error: 'Failed to export analytics' });
+    }
+  });
+
+  app.get('/api/export/actions', async (req, res) => {
+    try {
+      const format = req.query.format as 'csv' | 'json' || 'json';
+      const startDate = req.query.start_date ? new Date(req.query.start_date as string) : undefined;
+      const endDate = req.query.end_date ? new Date(req.query.end_date as string) : undefined;
+
+      const options = {
+        format,
+        dateRange: startDate && endDate ? { start: startDate, end: endDate } : undefined
+      };
+
+      const exportData = await ExportService.exportActions(options);
+      const filename = ExportService.getExportFilename('actions', format);
+
+      res.setHeader('Content-Type', format === 'csv' ? 'text/csv' : 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(exportData);
+    } catch (error) {
+      console.error('Export actions error:', error);
+      res.status(500).json({ error: 'Failed to export actions' });
+    }
   });
 
   return httpServer;

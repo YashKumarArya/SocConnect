@@ -91,6 +91,7 @@ export const modelMetrics = pgTable("model_metrics", {
   alertsProcessed: integer("alerts_processed").notNull(),
   autoActions: integer("auto_actions").notNull(),
   manualReviews: integer("manual_reviews").notNull(),
+  accuracy: real("accuracy").notNull(),
   precision: real("precision").notNull(),
   recall: real("recall").notNull(),
   latencyMs: integer("latency_ms").notNull(),

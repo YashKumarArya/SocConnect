@@ -4,17 +4,23 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertTriangle, Eye, UserPlus, TrendingUp, Search, Download } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import { AlertTriangle, Eye, UserPlus, TrendingUp, Search, Download, X, CheckCircle2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ExportDialog } from "@/components/export-dialog";
 import { useState } from "react";
 
 export default function Incidents() {
   const { toast } = useToast();
   const [filterSeverity, setFilterSeverity] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [selectedIncidents, setSelectedIncidents] = useState<string[]>([]);
+  const [bulkOperation, setBulkOperation] = useState<string>('');
+  const [showBulkDialog, setShowBulkDialog] = useState(false);
 
   const { data: incidents, isLoading } = useQuery({
     queryKey: ['/api/incidents'],
@@ -53,6 +59,27 @@ export default function Incidents() {
       toast({
         title: "Error",
         description: "Failed to create action",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const bulkUpdateMutation = useMutation({
+    mutationFn: ({ incidentIds, operation, data }: { incidentIds: string[]; operation: string; data?: any }) =>
+      api.bulkUpdateIncidents(incidentIds, operation, data),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/incidents'] });
+      setSelectedIncidents([]);
+      setShowBulkDialog(false);
+      toast({
+        title: "Bulk Operation Complete",
+        description: `Updated ${result.updated} incidents${result.errorCount > 0 ? ` (${result.errorCount} errors)` : ''}`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to perform bulk operation",
         variant: "destructive",
       });
     },
@@ -101,6 +128,45 @@ export default function Incidents() {
     });
   };
 
+  const handleSelectIncident = (incidentId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedIncidents(prev => [...prev, incidentId]);
+    } else {
+      setSelectedIncidents(prev => prev.filter(id => id !== incidentId));
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIncidents(filteredIncidents.map((inc: any) => inc.id));
+    } else {
+      setSelectedIncidents([]);
+    }
+  };
+
+  const handleBulkOperation = (operation: string) => {
+    setBulkOperation(operation);
+    setShowBulkDialog(true);
+  };
+
+  const confirmBulkOperation = () => {
+    if (selectedIncidents.length === 0 || !bulkOperation) return;
+    
+    const data: any = { performedBy: 'analyst' };
+    
+    if (bulkOperation === 'assign') {
+      data.assignedTo = 'current_user'; // In real app, this would be selected
+    } else if (bulkOperation === 'close') {
+      data.reason = 'Bulk closure by analyst';
+    }
+    
+    bulkUpdateMutation.mutate({
+      incidentIds: selectedIncidents,
+      operation: bulkOperation,
+      data
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -117,8 +183,56 @@ export default function Incidents() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h2 className="text-2xl font-bold text-white" data-testid="incidents-title">Incident Management</h2>
+        <div className="flex items-center gap-4">
+          <h2 className="text-2xl font-bold text-white" data-testid="incidents-title">Incident Management</h2>
+          {selectedIncidents.length > 0 && (
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="text-xs">
+                {selectedIncidents.length} selected
+              </Badge>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedIncidents([])}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+        </div>
         <div className="flex flex-wrap gap-3">
+          {selectedIncidents.length > 0 && (
+            <>
+              <Button
+                onClick={() => handleBulkOperation('assign')}
+                disabled={bulkUpdateMutation.isPending}
+                className="soc-button-secondary"
+                data-testid="bulk-assign"
+              >
+                <UserPlus className="w-4 h-4 mr-2" />
+                Assign ({selectedIncidents.length})
+              </Button>
+              <Button
+                onClick={() => handleBulkOperation('escalate')}
+                disabled={bulkUpdateMutation.isPending}
+                className="soc-button-warning"
+                data-testid="bulk-escalate"
+              >
+                <TrendingUp className="w-4 h-4 mr-2" />
+                Escalate ({selectedIncidents.length})
+              </Button>
+              <Button
+                onClick={() => handleBulkOperation('close')}
+                disabled={bulkUpdateMutation.isPending}
+                className="soc-button-success"
+                data-testid="bulk-close"
+              >
+                <CheckCircle2 className="w-4 h-4 mr-2" />
+                Close ({selectedIncidents.length})
+              </Button>
+            </>
+          )}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
             <Input
@@ -142,10 +256,11 @@ export default function Incidents() {
               <SelectItem value="low">Low</SelectItem>
             </SelectContent>
           </Select>
-          <Button className="soc-button-primary" data-testid="export-report">
-            <Download className="w-4 h-4 mr-2" />
-            Export Report
-          </Button>
+          <ExportDialog 
+            type="incidents" 
+            triggerText="Export Report"
+            className="soc-button-primary"
+          />
         </div>
       </div>
 
@@ -167,6 +282,13 @@ export default function Incidents() {
               <table className="w-full">
                 <thead className="bg-slate-750">
                   <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider w-12">
+                      <Checkbox
+                        checked={selectedIncidents.length === filteredIncidents.length && filteredIncidents.length > 0}
+                        onCheckedChange={handleSelectAll}
+                        data-testid="select-all-checkbox"
+                      />
+                    </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">ID</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Description</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Severity</th>
@@ -180,6 +302,13 @@ export default function Incidents() {
                     const severity = getSeverityInfo(incident.confidence);
                     return (
                       <tr key={incident.id} className="hover:bg-slate-750" data-testid={`incident-row-${index}`}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <Checkbox
+                            checked={selectedIncidents.includes(incident.id)}
+                            onCheckedChange={(checked) => handleSelectIncident(incident.id, checked as boolean)}
+                            data-testid={`select-incident-${index}`}
+                          />
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-slate-300" data-testid={`incident-id-${index}`}>
                           #{incident.id.slice(-6)}
                         </td>
@@ -251,6 +380,51 @@ export default function Incidents() {
           )}
         </CardContent>
       </Card>
+
+      {/* Bulk Operation Confirmation Dialog */}
+      <Dialog open={showBulkDialog} onOpenChange={setShowBulkDialog}>
+        <DialogContent className="bg-slate-800 border-slate-700">
+          <DialogHeader>
+            <DialogTitle className="text-white">Confirm Bulk Operation</DialogTitle>
+            <DialogDescription className="text-slate-400">
+              You are about to {bulkOperation} {selectedIncidents.length} incident{selectedIncidents.length !== 1 ? 's' : ''}. 
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-slate-750 p-4 rounded-lg">
+              <h4 className="text-white font-medium mb-2">Selected Incidents:</h4>
+              <div className="space-y-1 max-h-32 overflow-y-auto">
+                {selectedIncidents.map((incidentId, index) => {
+                  const incident = filteredIncidents.find((inc: any) => inc.id === incidentId);
+                  return (
+                    <div key={incidentId} className="text-sm text-slate-300">
+                      #{incident?.id.slice(-6)} - {incident?.status || 'Unknown'}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="ghost"
+                onClick={() => setShowBulkDialog(false)}
+                disabled={bulkUpdateMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={confirmBulkOperation}
+                disabled={bulkUpdateMutation.isPending}
+                className="soc-button-primary"
+                data-testid="confirm-bulk-operation"
+              >
+                {bulkUpdateMutation.isPending ? "Processing..." : `Confirm ${bulkOperation}`}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

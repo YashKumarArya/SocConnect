@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Source, type InsertSource, type RawAlert, type InsertRawAlert, type Incident, type InsertIncident, type Action, type InsertAction, type Feedback, type InsertFeedback, type ModelMetric, type InsertModelMetric, type NormalizedAlert } from "@shared/schema";
+import { type User, type InsertUser, type Source, type InsertSource, type RawAlert, type InsertRawAlert, type Incident, type InsertIncident, type Action, type InsertAction, type Feedback, type InsertFeedback, type ModelMetric, type InsertModelMetric, type NormalizedAlert, type FeatureVector } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -104,7 +104,7 @@ export class MemStorage implements IStorage {
         id: randomUUID(),
         username: userData.username,
         email: userData.email,
-        role: userData.role,
+        role: userData.role as 'analyst' | 'admin',
         createdAt: new Date(Date.now() - Math.random() * 86400000 * 30), // Random date within last 30 days
       };
       this.users.set(user.id, user);
@@ -261,7 +261,7 @@ export class MemStorage implements IStorage {
       const rawAlert: RawAlert = {
         id: randomUUID(),
         sourceId,
-        severity: template.severity as "low" | "medium" | "high" | "critical",
+        severity: template.severity,
         type: template.type,
         description: template.description,
         rawData: { ...template.rawData, alert_id: `ALT-${Date.now()}-${i}` },
@@ -422,8 +422,6 @@ export class MemStorage implements IStorage {
         accuracy: 0.85 + Math.random() * 0.1, // 85-95% accuracy
         precision: 0.80 + Math.random() * 0.15, // 80-95% precision  
         recall: 0.75 + Math.random() * 0.2, // 75-95% recall
-        f1Score: 0.78 + Math.random() * 0.17, // 78-95% F1
-        falsePositiveRate: Math.random() * 0.1, // 0-10% FPR
         runTs: date,
         alertsProcessed: Math.floor(Math.random() * 1000) + 100,
         autoActions: Math.floor(Math.random() * 50),
@@ -448,7 +446,12 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
-    const user: User = { ...insertUser, id, createdAt: new Date() };
+    const user: User = { 
+      ...insertUser, 
+      id, 
+      createdAt: new Date(),
+      role: insertUser.role as 'analyst' | 'admin'
+    };
     this.users.set(id, user);
     return user;
   }
@@ -491,7 +494,14 @@ export class MemStorage implements IStorage {
 
   async createRawAlert(insertAlert: InsertRawAlert): Promise<RawAlert> {
     const id = randomUUID();
-    const alert: RawAlert = { ...insertAlert, id, receivedAt: new Date() };
+    const alert: RawAlert = { 
+      ...insertAlert, 
+      id, 
+      receivedAt: new Date(),
+      type: insertAlert.type || null,
+      severity: insertAlert.severity || null,
+      description: insertAlert.description || null
+    };
     this.rawAlerts.set(id, alert);
     return alert;
   }
@@ -520,7 +530,10 @@ export class MemStorage implements IStorage {
       id, 
       createdAt: new Date(), 
       closedAt: null,
-      status: (insertIncident.status as 'open' | 'investigating' | 'monitoring' | 'resolved') || 'open'
+      status: (insertIncident.status as 'open' | 'investigating' | 'monitoring' | 'resolved') || 'open',
+      severity: insertIncident.severity as 'low' | 'medium' | 'high' | 'critical',
+      description: insertIncident.description || null,
+      assignedTo: insertIncident.assignedTo || null
     };
     this.incidents.set(id, incident);
     return incident;
@@ -569,7 +582,14 @@ export class MemStorage implements IStorage {
 
   async createFeedback(insertFeedback: InsertFeedback): Promise<Feedback> {
     const id = randomUUID();
-    const feedback: Feedback = { ...insertFeedback, id, submittedAt: new Date() };
+    const feedback: Feedback = { 
+      ...insertFeedback, 
+      id, 
+      submittedAt: new Date(),
+      alertId: insertFeedback.alertId || null,
+      incidentId: insertFeedback.incidentId || null,
+      rating: insertFeedback.rating || null
+    };
     this.feedbacks.set(id, feedback);
     return feedback;
   }
