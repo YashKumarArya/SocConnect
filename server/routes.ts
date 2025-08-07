@@ -13,6 +13,7 @@ import { AuthService } from "./auth";
 import { registerUserSchema, loginUserSchema } from "@shared/schema";
 import { insertSourceSchema, insertRawAlertSchema, insertIncidentSchema, insertActionSchema, insertFeedbackSchema, insertModelMetricSchema } from "@shared/schema";
 import { ZodError } from "zod";
+import { kafkaService, SecurityEventIngestion } from "./kafka";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -37,8 +38,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   wss.on('connection', (ws) => {
     clients.add(ws);
     
+    // Register client with Kafka service for real-time event streaming
+    kafkaService.addClient(ws);
+    
     ws.on('close', () => {
       clients.delete(ws);
+      kafkaService.removeClient(ws);
     });
 
     // Send welcome message
@@ -726,6 +731,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch correlation stats' });
+    }
+  });
+
+  // ========================================
+  // KAFKA SECURITY EVENT INGESTION ENDPOINTS  
+  // ========================================
+  
+  // SIEM Integration - Ingest alerts from SIEM systems (Splunk, QRadar, etc.)
+  app.post('/api/kafka/siem/alerts', async (req, res) => {
+    try {
+      const event = await SecurityEventIngestion.ingestSIEMAlert(req.body);
+      res.status(201).json({ 
+        message: 'SIEM alert ingested successfully', 
+        eventId: event.id 
+      });
+    } catch (error) {
+      console.error('SIEM alert ingestion error:', error);
+      res.status(500).json({ error: 'Failed to ingest SIEM alert' });
+    }
+  });
+  
+  // EDR Integration - Ingest alerts from EDR systems (CrowdStrike, Microsoft Defender, etc.)
+  app.post('/api/kafka/edr/alerts', async (req, res) => {
+    try {
+      const event = await SecurityEventIngestion.ingestEDRAlert(req.body);
+      res.status(201).json({ 
+        message: 'EDR alert ingested successfully', 
+        eventId: event.id 
+      });
+    } catch (error) {
+      console.error('EDR alert ingestion error:', error);
+      res.status(500).json({ error: 'Failed to ingest EDR alert' });
+    }
+  });
+  
+  // Firewall Integration - Ingest alerts from firewall systems
+  app.post('/api/kafka/firewall/alerts', async (req, res) => {
+    try {
+      const event = await SecurityEventIngestion.ingestFirewallAlert(req.body);
+      res.status(201).json({ 
+        message: 'Firewall alert ingested successfully', 
+        eventId: event.id 
+      });
+    } catch (error) {
+      console.error('Firewall alert ingestion error:', error);
+      res.status(500).json({ error: 'Failed to ingest firewall alert' });
+    }
+  });
+  
+  // Demo endpoint to simulate live security events
+  app.post('/api/kafka/demo/simulate', async (req, res) => {
+    try {
+      console.log('🎭 Starting security event simulation...');
+      await kafkaService.simulateSecurityEvents();
+      res.json({ 
+        message: 'Security event simulation started', 
+        note: 'Events will stream to connected dashboards in real-time' 
+      });
+    } catch (error) {
+      console.error('Event simulation error:', error);
+      res.status(500).json({ error: 'Failed to start event simulation' });
     }
   });
 

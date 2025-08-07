@@ -23,6 +23,21 @@ export interface IStorage {
   // Normalized Alerts
   getNormalizedAlerts(): Promise<NormalizedAlert[]>;
   getNormalizedAlert(id: string): Promise<NormalizedAlert | undefined>;
+  createNormalizedAlert(alert: {
+    sourceId: string;
+    originalId: string;
+    timestamp: Date;
+    severity: string;
+    alertType: string;
+    title: string;
+    description: string;
+    sourceIp?: string;
+    destinationIp?: string;
+    username?: string;
+    ruleId?: string;
+    rawData: any;
+    status: string;
+  }): Promise<NormalizedAlert>;
 
   // Incidents
   getIncidents(): Promise<Incident[]>;
@@ -549,6 +564,54 @@ export class MemStorage implements IStorage {
 
   async getNormalizedAlert(id: string): Promise<NormalizedAlert | undefined> {
     return this.normalizedAlerts.get(id);
+  }
+
+  async createNormalizedAlert(alertData: {
+    sourceId: string;
+    originalId: string;
+    timestamp: Date;
+    severity: string;
+    alertType: string;
+    title: string;
+    description: string;
+    sourceIp?: string;
+    destinationIp?: string;
+    username?: string;
+    ruleId?: string;
+    rawData: any;
+    status: string;
+  }): Promise<NormalizedAlert> {
+    // For Kafka integration, create a simplified normalized alert
+    // In a real implementation, this would involve ML feature extraction
+    const id = randomUUID();
+    
+    // Create a dummy feature vector for the alert
+    const featureVectorId = randomUUID();
+    const featureVector: FeatureVector = {
+      id: featureVectorId,
+      rawAlertId: alertData.originalId,
+      features: {
+        severity_score: alertData.severity === 'critical' ? 10 : alertData.severity === 'high' ? 7 : alertData.severity === 'medium' ? 5 : 2,
+        source_reputation: Math.random() * 10,
+        behavioral_anomaly: Math.random() * 8,
+      },
+      computedAt: new Date(),
+    };
+    this.featureVectors.set(featureVectorId, featureVector);
+    
+    // Create the normalized alert
+    const normalizedAlert: NormalizedAlert = {
+      id,
+      featureVectorId,
+      decision: Math.random() > 0.7 ? "AUTO" : "MANUAL",
+      confidence: Math.random() * 0.4 + 0.6, // 0.6-1.0 confidence
+      status: alertData.status,
+      createdAt: alertData.timestamp,
+      closedAt: null,
+    };
+    
+    this.normalizedAlerts.set(id, normalizedAlert);
+    return normalizedAlert;
   }
 
   async getIncidents(): Promise<Incident[]> {

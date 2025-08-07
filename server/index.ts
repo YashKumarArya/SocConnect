@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { kafkaService } from "./kafka";
 
 const app = express();
 app.use(express.json());
@@ -36,6 +37,10 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Initialize Kafka service for enterprise security event streaming
+  log('🎯 Initializing Kafka service for SOC operations...');
+  await kafkaService.initialize();
+  
   const server = await registerRoutes(app);
 
   // Error handler middleware
