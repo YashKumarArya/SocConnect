@@ -54,7 +54,7 @@ app.use((req, res, next) => {
   }
 
   // Use env.PORT or fallback to 5000
-  const port = parseInt(process.env.PORT || "3001");
+  const port = parseInt(process.env.PORT || "5000");
 
   // Graceful startup with EADDRINUSE check
   server.listen(
