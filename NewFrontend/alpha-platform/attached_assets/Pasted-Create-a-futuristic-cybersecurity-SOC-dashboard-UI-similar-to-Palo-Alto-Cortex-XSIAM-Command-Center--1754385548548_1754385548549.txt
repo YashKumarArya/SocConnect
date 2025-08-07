@@ -1,0 +1,65 @@
+Create a futuristic cybersecurity SOC dashboard UI similar to Palo Alto Cortex XSIAM Command Center with the following specifications:
+
+**General Theme:**
+- Dark mode background (#0B0C10) with neon gradient accents (cyan, teal, and purple).
+- Sleek, modern, futuristic look with clean typography (use 'Inter' or 'Poppins').
+- Responsive layout, centered main visualization.
+
+**Layout Sections:**
+1. **Left Sidebar Navigation:**
+   - Vertical menu on left with items:
+     - Dashboards & Reports
+     - Incident Response
+     - Detection & Threat Intel
+     - Assets
+     - Endpoints
+     - Marketplace
+   - At bottom: Settings, Notifications, Profile info, and Help icon.
+   - Style: Minimalistic icons with text, glowing hover effect.
+
+2. **Main Dashboard Area:**
+   - Greeting text: "Good Evening, [Username]" in white font.
+   - Two main animated sections:
+     - **Left Side Flow (Endpoints → Alerts):**
+       - A column of logos/icons representing sources: NGFW, AWS, Google Cloud, Azure, Office 365, Proofpoint, Apache, Okta, Prisma Cloud, and "+36".
+       - Each icon connects to a central node labeled **1,406 Alerts** using animated curved lines that glow and pulse (CSS animation).
+     - **Right Side Flow (Incidents → Automated/Manual):**
+       - Central node labeled **62 Incidents**, connected by curved glowing lines splitting into:
+         - Automated (46) → glowing green line.
+         - Manual (11) → glowing blue line.
+       - Lines animate continuously to show data flow.
+   - Center circle with pulsating dots to represent the AI engine (rotating subtle animation).
+   
+3. **Stats Below:**
+   - Four small panels with real-time stats:
+     - **Events Ingestion:** "22 GB / 24H" with a small line chart.
+     - **Data Ingestion:** "36 TB / 24H" with a line chart.
+     - **Total Open Incidents:** "12" with severity indicators (C3, H7, M5, L1).
+     - **Prevented Events:** "157.5K" in bold.
+
+**Animations:**
+- Use SVG or Canvas for curved flow lines with gradient glowing effect.
+- Continuous flowing animation along paths (simulate packet movement) using **CSS animations or GSAP**.
+- Pulsating dots in the center circle (scale and opacity animation).
+- Line charts animated using **Chart.js** or CSS keyframes.
+
+**Styling & Colors:**
+- Background: #0B0C10
+- Primary Glow: Neon Teal (#00F6D2)
+- Secondary Glow: Purple (#A259FF)
+- Font Color: White (#FFFFFF)
+- Buttons: Minimal glowing hover effect.
+
+**Technology Stack:**
+- HTML for structure.
+- CSS (with keyframes for glowing animations).
+- JavaScript for dynamic values and GSAP for line animations.
+- Optional: Chart.js for mini graphs.
+
+**Interactivity:**
+- Hover effects on menu and stats.
+- Data flows animate automatically on load.
+- Responsive for large monitors.
+
+**Overall Vibe:**
+- High-tech, futuristic, SOC command center interface with real-time animated data flows.

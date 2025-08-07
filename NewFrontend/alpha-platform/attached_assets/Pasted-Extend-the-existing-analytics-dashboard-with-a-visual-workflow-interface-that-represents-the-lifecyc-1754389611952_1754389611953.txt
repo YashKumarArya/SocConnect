@@ -1,0 +1,72 @@
+Extend the existing analytics dashboard with a visual workflow interface that represents the lifecycle of an alert from vendors to AI processing and its decision outcome. The design should match the landing page theme and include the following components:
+
+1. Workflow Visualization Panel
+Add a dedicated section titled “Alert Processing Pipeline”.
+
+Show a horizontal or vertical flowchart-like UI with the following steps:
+
+Vendor → AI Model → Prediction → Outcome (TP / FP / Escalate).
+
+Use animated connectors to show the real-time status of each alert.
+
+Color-code each stage:
+
+Vendor (Blue)
+
+AI Model Processing (Purple)
+
+TP (Green), FP (Orange), Escalate (Red).
+
+2. Real-Time Alert Stream
+Left Sidebar Widget showing incoming alerts from vendors with:
+
+Alert ID, Vendor Name, Timestamp, Severity.
+
+Clicking an alert highlights it in the processing pipeline.
+
+3. AI Model Prediction Status
+Central Panel showing:
+
+AI model name, prediction confidence, and processing time.
+
+Display outcome: True Positive (TP), False Positive (FP), or Escalate.
+
+Include Explainability View (Why the model predicted TP or FP).
+
+4. Escalation Handling
+If Escalate, show a manual intervention pop-up for analyst:
+
+Options: Approve, Reject, Assign to Analyst.
+
+Add an Escalation Queue Table with:
+
+Alert ID, Reason for Escalation, Assigned Analyst, Time.
+
+5. Automated Actions for TP & FP
+If TP or FP, auto-log the action in the Activity Tracker.
+
+Add an Automation Status Panel showing:
+
+Number of TP handled automatically.
+
+Number of FP dismissed automatically.
+
+Option for analysts to override automation if needed.
+
+6. AI & Analyst Metrics Panel
+Analytics Section showing:
+
+Percentage of TP, FP, and Escalated cases.
+
+Average handling time for automated vs manual.
+
+Confidence distribution for predictions.
+
+7. UX Enhancements
+Smooth animations for status changes (e.g., alert moving from Vendor → AI → Outcome).
+
+Hover tooltips for each stage with alert details.
+
+Dark/Light mode compatibility matching the landing page theme.
+
+Ensure the workflow panel is interactive, real-time updated, and intuitive for data analysts and SOC teams. Include placeholders for dummy alert data, AI predictions, and escalation logs.

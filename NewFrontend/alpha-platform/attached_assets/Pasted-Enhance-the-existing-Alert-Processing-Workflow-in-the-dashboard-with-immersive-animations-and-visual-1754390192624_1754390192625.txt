@@ -1,0 +1,56 @@
+Enhance the existing Alert Processing Workflow in the dashboard with immersive animations and visual effects to create a futuristic and interactive experience. The design should maintain the landing page theme and include the following animation elements:
+
+1. Electricity Flow Animation
+In the Vendor → AI Model → Outcome pipeline, show an animated glowing line representing the alert data flowing.
+
+Use pulsating energy particles or sparks along the connector line to simulate electricity traveling from vendor to AI, then to outcome.
+
+Animation should speed up when processing starts and slow down when idle.
+
+2. Dynamic Status Transitions
+When an alert moves from Vendor to AI, highlight the AI node with a pulsating glow and rotating ring animation.
+
+When the AI predicts TP, FP, or Escalate:
+
+TP (Green glow, expanding ripple effect).
+
+FP (Orange glow, flicker animation).
+
+Escalate (Red glow, pulse + bounce effect).
+
+3. Real-Time Alert Injection Animation
+When a new alert arrives:
+
+Slide-in from the left sidebar with a smooth fade-in effect.
+
+A particle burst effect when it enters the pipeline.
+
+4. AI Model Prediction Effect
+Show a rotating AI brain icon with a neural network pulse effect during prediction.
+
+Add a loading wave animation over the AI node while processing.
+
+5. Escalation Interaction
+When an alert escalates:
+
+Show a vertical electric beam animation linking the workflow to the Manual Intervention Panel.
+
+Add a highlighted card pop-up with smooth zoom-in and hover glow.
+
+6. Automation Feedback
+For TP & FP automation:
+
+Display a light trail animation flowing toward the Automation Panel.
+
+Include confetti burst effect when auto-action completes successfully.
+
+7. Background & UX Enhancements
+Add a subtle animated gradient background (dark theme with neon accents).
+
+Use micro-interactions:
+
+Hovering over pipeline steps triggers a soft glow and tooltip fade-in.
+
+Buttons have ripple click effect.
+
+Ensure all animations are lightweight, smooth, and performance-optimized (CSS animations, GSAP, or Framer Motion). Maintain a futuristic cybersecurity theme with neon blue, purple, and green accents. Use dummy alert data for showcasing animations in the prototype.
