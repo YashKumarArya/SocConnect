@@ -1,13 +1,33 @@
-import { Search, Bell, Menu } from "lucide-react";
+import { Search, Bell, Menu, LogOut, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import type { User as UserType } from "@shared/schema";
 
 interface HeaderProps {
   onMobileMenuToggle: () => void;
   connectionStatus: 'connecting' | 'connected' | 'disconnected';
+  user?: UserType;
 }
 
-export function Header({ onMobileMenuToggle, connectionStatus }: HeaderProps) {
+export function Header({ onMobileMenuToggle, connectionStatus, user }: HeaderProps) {
+  const handleLogout = () => {
+    window.location.href = "/api/logout";
+  };
+
+  const getUserInitials = (user: UserType) => {
+    const firstName = user.firstName || '';
+    const lastName = user.lastName || '';
+    return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U';
+  };
   return (
     <header className="bg-slate-800 border-b border-slate-700 px-4 lg:px-8 py-4">
       <div className="flex items-center justify-between">
@@ -65,6 +85,45 @@ export function Header({ onMobileMenuToggle, connectionStatus }: HeaderProps) {
             <Bell className="w-6 h-6" />
             <span className="absolute top-0 right-0 block h-2 w-2 bg-red-400 rounded-full"></span>
           </Button>
+
+          {/* User Profile */}
+          {user && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.profileImageUrl || undefined} alt="Profile" />
+                    <AvatarFallback className="bg-slate-600 text-white text-sm">
+                      {getUserInitials(user)}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56 bg-slate-800 border-slate-700" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none text-white">
+                      {user.firstName || user.lastName 
+                        ? `${user.firstName || ''} ${user.lastName || ''}`.trim()
+                        : 'User'
+                      }
+                    </p>
+                    <p className="text-xs leading-none text-slate-400">
+                      {user.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-slate-700" />
+                <DropdownMenuItem 
+                  className="text-slate-300 hover:bg-slate-700 hover:text-white cursor-pointer"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
     </header>

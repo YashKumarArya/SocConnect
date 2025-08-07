@@ -1,13 +1,16 @@
 import { Switch, Route } from "wouter";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useRealtimeUpdates } from "@/hooks/use-realtime-updates";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import NotFound from "@/pages/not-found";
+import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import Incidents from "@/pages/incidents";
 import Alerts from "@/pages/alerts";
@@ -20,6 +23,30 @@ function Router() {
   const [currentSection, setCurrentSection] = useState('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { connectionStatus } = useRealtimeUpdates();
+  const { isAuthenticated, isLoading, user } = useAuth();
+  const { toast } = useToast();
+
+  // Handle authentication redirect
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      // Don't show error for initial load
+      return;
+    }
+  }, [isAuthenticated, isLoading]);
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-white text-lg">Loading...</div>
+      </div>
+    );
+  }
+
+  // Show landing page if not authenticated
+  if (!isAuthenticated) {
+    return <Landing />;
+  }
 
   const handleSectionChange = (section: string) => {
     setCurrentSection(section);
@@ -77,6 +104,7 @@ function Router() {
         <Header
           onMobileMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)}
           connectionStatus={connectionStatus}
+          user={user}
         />
         
         {/* Main Content */}

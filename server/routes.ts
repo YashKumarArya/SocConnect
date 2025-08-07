@@ -7,11 +7,15 @@ import { AlertNormalizer } from "./normalization";
 import { ThreatIntelligenceService } from "./threatIntelligence";
 import { AnalyticsService } from "./analyticsService";
 import { ExportService } from "./exportService";
+import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertSourceSchema, insertRawAlertSchema, insertIncidentSchema, insertActionSchema, insertFeedbackSchema, insertModelMetricSchema } from "@shared/schema";
 import { ZodError } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
+
+  // Setup authentication middleware
+  await setupAuth(app);
 
   // WebSocket server for real-time updates
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
@@ -38,8 +42,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   };
 
+  // Auth routes
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
   // Dashboard stats
-  app.get('/api/dashboard/stats', async (req, res) => {
+  app.get('/api/dashboard/stats', isAuthenticated, async (req, res) => {
     try {
       const stats = await storage.getDashboardStats();
       res.json(stats);
@@ -49,7 +65,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Sources endpoints
-  app.get('/api/sources', async (req, res) => {
+  app.get('/api/sources', isAuthenticated, async (req, res) => {
     try {
       const sources = await storage.getSources();
       res.json(sources);
@@ -70,7 +86,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/sources', async (req, res) => {
+  app.post('/api/sources', isAuthenticated, async (req, res) => {
     try {
       const validatedData = insertSourceSchema.parse(req.body);
       const source = await storage.createSource(validatedData);
@@ -283,7 +299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Incidents endpoints
-  app.get('/api/incidents', async (req, res) => {
+  app.get('/api/incidents', isAuthenticated, async (req, res) => {
     try {
       const incidents = await storage.getIncidents();
       res.json(incidents);

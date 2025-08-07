@@ -1,11 +1,12 @@
-import { type User, type InsertUser, type Source, type InsertSource, type RawAlert, type InsertRawAlert, type Incident, type InsertIncident, type Action, type InsertAction, type Feedback, type InsertFeedback, type ModelMetric, type InsertModelMetric, type NormalizedAlert, type FeatureVector } from "@shared/schema";
+import { type User, type InsertUser, type UpsertUser, type Source, type InsertSource, type RawAlert, type InsertRawAlert, type Incident, type InsertIncident, type Action, type InsertAction, type Feedback, type InsertFeedback, type ModelMetric, type InsertModelMetric, type NormalizedAlert, type FeatureVector } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
   // Users
   getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  upsertUser(user: UpsertUser): Promise<User>;
 
   // Sources
   getSources(): Promise<Source[]>;
@@ -102,10 +103,13 @@ export class MemStorage implements IStorage {
     users.forEach(userData => {
       const user: User = {
         id: randomUUID(),
-        username: userData.username,
         email: userData.email,
+        firstName: userData.username.split(' ')[0] || userData.username,
+        lastName: userData.username.split(' ')[1] || null,
+        profileImageUrl: null,
         role: userData.role as 'analyst' | 'admin',
         createdAt: new Date(Date.now() - Math.random() * 86400000 * 30), // Random date within last 30 days
+        updatedAt: new Date(),
       };
       this.users.set(user.id, user);
       userIds.push(user.id);
@@ -438,22 +442,53 @@ export class MemStorage implements IStorage {
     return this.users.get(id);
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
+  async getUserByEmail(email: string): Promise<User | undefined> {
     return Array.from(this.users.values()).find(
-      (user) => user.username === username,
+      (user) => user.email === email,
     );
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
     const user: User = { 
-      ...insertUser, 
       id, 
+      email: insertUser.email || null,
+      firstName: insertUser.firstName || null,
+      lastName: insertUser.lastName || null,
+      profileImageUrl: insertUser.profileImageUrl || null,
+      role: (insertUser.role || 'analyst') as 'analyst' | 'admin',
       createdAt: new Date(),
-      role: insertUser.role as 'analyst' | 'admin'
+      updatedAt: new Date()
     };
     this.users.set(id, user);
     return user;
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const existing = userData.id ? this.users.get(userData.id) : undefined;
+    if (existing) {
+      const updated: User = {
+        ...existing,
+        ...userData,
+        role: (userData.role || existing.role) as 'analyst' | 'admin',
+        updatedAt: new Date(),
+      };
+      this.users.set(updated.id, updated);
+      return updated;
+    } else {
+      const newUser: User = {
+        id: userData.id || randomUUID(),
+        email: userData.email || null,
+        firstName: userData.firstName || null,
+        lastName: userData.lastName || null,
+        profileImageUrl: userData.profileImageUrl || null,
+        role: (userData.role || 'analyst') as 'analyst' | 'admin',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      this.users.set(newUser.id, newUser);
+      return newUser;
+    }
   }
 
   async getSources(): Promise<Source[]> {
