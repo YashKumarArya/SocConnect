@@ -186,7 +186,7 @@ export const api = {
 
   // Authentication
   login: (credentials: { email: string; password: string }) =>
-    apiRequest('POST', '/api/auth/login', credentials),
+    apiRequest('POST', '/api/auth/login', credentials).then(() => ({ success: true })),
     
   register: (userData: { email: string; password: string; firstName?: string; lastName?: string }) =>
     apiRequest('POST', '/api/auth/register', userData),
@@ -195,5 +195,8 @@ export const api = {
     apiRequest('POST', '/api/auth/logout'),
     
   getCurrentUser: () =>
-    fetch('/api/auth/me', { credentials: 'include' }).then(res => res.json()),
+    fetch('/api/auth/me', { credentials: 'include' }).then(res => {
+      if (!res.ok) return null;
+      return res.json();
+    }),
 };

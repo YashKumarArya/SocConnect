@@ -21,7 +21,7 @@ export default function Home() {
     <div className="min-h-screen bg-[hsl(220,15%,5%)] text-white">
       <DemoRequestDialog open={showDemoDialog} onOpenChange={setShowDemoDialog} />
       <LoginDialog open={showLoginDialog} onOpenChange={setShowLoginDialog} />
-      <Header onRequestDemo={() => setShowDemoDialog(true)} />
+      <Header onRequestDemo={() => setShowDemoDialog(true)} onLogin={() => setLocation("/login")} />
       <Hero onRequestDemo={() => setShowDemoDialog(true)} />
       <TrustedBy />
       <DashboardShowcase />

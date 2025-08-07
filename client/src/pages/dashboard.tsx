@@ -9,39 +9,56 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
+  const { isAuthenticated, isUnauthenticated, isLoading: authLoading } = useAuth();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (isUnauthenticated) {
+      setLocation("/login");
+    }
+  }, [isUnauthenticated, setLocation]);
 
   // Real API calls to your backend
   const { data: stats, isLoading: statsLoading, error: statsError } = useQuery({
     queryKey: ['/api/dashboard/stats'],
     queryFn: api.getDashboardStats,
+    enabled: isAuthenticated, // Only run if authenticated
   });
 
-  const { data: incidents, isLoading: incidentsLoading } = useQuery({
+  const { data: incidents, isLoading: incidentsLoading, error: incidentsError } = useQuery({
     queryKey: ['/api/incidents'],
     queryFn: api.getIncidents,
+    retry: false,
+    refetchOnWindowFocus: false,
+    enabled: isAuthenticated, // Only run if authenticated
   });
 
   const { data: datasetStats } = useQuery({
     queryKey: ['/api/alerts/dataset-stats'],
     queryFn: api.getDatasetStats,
+    enabled: isAuthenticated, // Only run if authenticated
   });
 
   const { data: metrics } = useQuery({
     queryKey: ['/api/metrics'],
     queryFn: api.getMetrics,
+    enabled: isAuthenticated, // Only run if authenticated
   });
 
   const { data: sources } = useQuery({
     queryKey: ['/api/sources'],
     queryFn: api.getSources,
+    enabled: isAuthenticated, // Only run if authenticated
   });
 
-  const recentIncidents = incidents?.slice(0, 5) || [];
+  const recentIncidents = Array.isArray(incidents) ? incidents.slice(0, 5) : [];
 
-  if (statsLoading) {
+  // Show loading while checking auth or loading data
+  if (authLoading || !isAuthenticated || statsLoading) {
     return (
       <div className="min-h-screen bg-[hsl(215,28%,5%)] text-white p-6">
         <div className="space-y-6">
