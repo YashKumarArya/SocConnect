@@ -1018,6 +1018,374 @@
             </div>
         </div>
 
+        <!-- Slide 9: Integration Layer Deep Dive -->
+        <div class="slide">
+            <div class="slide-header">
+                <h1 class="slide-title">Integration Layer Deep Dive</h1>
+                <p class="slide-subtitle">Step-by-step data flow and processing pipeline</p>
+            </div>
+
+            <div class="content-grid two-column">
+                <div class="card">
+                    <div class="card-title">
+                        🔗 Source Connectors
+                    </div>
+                    <div class="card-content">
+                        <ul style="list-style: none; padding: 0; font-size: 0.9rem;">
+                            <li style="margin-bottom: 0.5rem;"><strong>SIEM Connectors:</strong> Splunk REST API, QRadar API</li>
+                            <li style="margin-bottom: 0.5rem;"><strong>EDR Connectors:</strong> CrowdStrike Falcon, Microsoft Defender</li>
+                            <li style="margin-bottom: 0.5rem;"><strong>Firewall Connectors:</strong> Palo Alto, FortiGate, pfSense</li>
+                            <li style="margin-bottom: 0.5rem;"><strong>Cloud Security:</strong> AWS CloudTrail, Azure Sentinel</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        ⚙️ Processing Components
+                    </div>
+                    <div class="card-content">
+                        <ul style="list-style: none; padding: 0; font-size: 0.9rem;">
+                            <li style="margin-bottom: 0.5rem;"><strong>Format Normalizer:</strong> Custom → OCSF transformation</li>
+                            <li style="margin-bottom: 0.5rem;"><strong>Event Enricher:</strong> GeoIP, DNS, threat intel lookup</li>
+                            <li style="margin-bottom: 0.5rem;"><strong>Correlation Engine:</strong> Pattern matching & ML scoring</li>
+                            <li style="margin-bottom: 0.5rem;"><strong>Alert Aggregator:</strong> Deduplication & prioritization</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="data-flow-path">
+                <h3 style="color: #e91e63; margin-bottom: 1.5rem;">🔄 Step-by-Step Integration Flow</h3>
+                
+                <div class="flow-step">
+                    <div class="step-number">1</div>
+                    <div>
+                        <strong>Event Collection</strong>
+                        <p style="color: #94a3b8; margin: 0.3rem 0 0 0;">Source connectors poll security systems every 30-300 seconds based on criticality</p>
+                        <div style="color: #6b7280; font-size: 0.8rem; margin-top: 0.2rem;">Protocols: REST API, Syslog, SNMP, File-based polling</div>
+                    </div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="step-number">2</div>
+                    <div>
+                        <strong>Format Detection & Parsing</strong>
+                        <p style="color: #94a3b8; margin: 0.3rem 0 0 0;">Intelligent parsing identifies event format (CEF, LEEF, JSON, XML) and extracts fields</p>
+                        <div style="color: #6b7280; font-size: 0.8rem; margin-top: 0.2rem;">Error handling: Invalid events → quarantine queue for manual review</div>
+                    </div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="step-number">3</div>
+                    <div>
+                        <strong>OCSF Transformation</strong>
+                        <p style="color: #94a3b8; margin: 0.3rem 0 0 0;">Events mapped to OCSF schema classes (Network, System, Security Finding, Authentication)</p>
+                        <div style="color: #6b7280; font-size: 0.8rem; margin-top: 0.2rem;">Preserves original data in 'unmapped' field for forensic analysis</div>
+                    </div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="step-number">4</div>
+                    <div>
+                        <strong>Event Enrichment</strong>
+                        <p style="color: #94a3b8; margin: 0.3rem 0 0 0;">GeoIP lookup, DNS resolution, user/asset context, threat intelligence matching</p>
+                        <div style="color: #6b7280; font-size: 0.8rem; margin-top: 0.2rem;">Timeout: 500ms max per enrichment to maintain real-time performance</div>
+                    </div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="step-number">5</div>
+                    <div>
+                        <strong>ML Feature Extraction</strong>
+                        <p style="color: #94a3b8; margin: 0.3rem 0 0 0;">Generate feature vectors for ML models (behavioral, statistical, contextual features)</p>
+                        <div style="color: #6b7280; font-size: 0.8rem; margin-top: 0.2rem;">Features: time-series patterns, frequency analysis, anomaly scores</div>
+                    </div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="step-number">6</div>
+                    <div>
+                        <strong>Correlation & Scoring</strong>
+                        <p style="color: #94a3b8; margin: 0.3rem 0 0 0;">ML models score events, correlation engine groups related events into incidents</p>
+                        <div style="color: #6b7280; font-size: 0.8rem; margin-top: 0.2rem;">Auto-escalation: Scores > 0.8 create incidents automatically</div>
+                    </div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="step-number">7</div>
+                    <div>
+                        <strong>Storage & Distribution</strong>
+                        <p style="color: #94a3b8; margin: 0.3rem 0 0 0;">Events stored in PostgreSQL, real-time updates broadcast via WebSocket to connected clients</p>
+                        <div style="color: #6b7280; font-size: 0.8rem; margin-top: 0.2rem;">Archive: Hot data 30 days, warm data 1 year, cold data 7 years</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 10: Database Schema & Architecture -->
+        <div class="slide">
+            <div class="slide-header">
+                <h1 class="slide-title">Database Schema & Architecture</h1>
+                <p class="slide-subtitle">PostgreSQL data model with Drizzle ORM</p>
+            </div>
+
+            <div class="content-grid two-column">
+                <div class="card">
+                    <div class="card-title">
+                        🗂️ Core Security Tables
+                    </div>
+                    <div class="card-content" style="font-size: 0.85rem;">
+                        <div style="margin-bottom: 1rem;">
+                            <strong style="color: #e91e63;">users</strong>
+                            <div style="color: #94a3b8;">id, email, password_hash, first_name, last_name, role, created_at</div>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <strong style="color: #e91e63;">sources</strong>
+                            <div style="color: #94a3b8;">id, name, type, config (JSON), enabled, created_at</div>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <strong style="color: #e91e63;">raw_alerts</strong>
+                            <div style="color: #94a3b8;">id, source_id, severity, type, description, raw_data (JSON), received_at</div>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <strong style="color: #e91e63;">normalized_alerts</strong>
+                            <div style="color: #94a3b8;">id, feature_vector_id, decision, confidence, status, created_at</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        📊 ML & Analytics Tables
+                    </div>
+                    <div class="card-content" style="font-size: 0.85rem;">
+                        <div style="margin-bottom: 1rem;">
+                            <strong style="color: #e91e63;">feature_vectors</strong>
+                            <div style="color: #94a3b8;">id, raw_alert_id, features (JSON), computed_at</div>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <strong style="color: #e91e63;">model_metrics</strong>
+                            <div style="color: #94a3b8;">id, accuracy, precision, recall, run_ts, alerts_processed</div>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <strong style="color: #e91e63;">ocsf_events</strong>
+                            <div style="color: #94a3b8;">id, class_uid, class_name, activity_id, severity_id, time, raw_data</div>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <strong style="color: #e91e63;">enhanced_normalized_alerts</strong>
+                            <div style="color: #94a3b8;">id, source_id, title, description, source_ip, username, rule_id</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-grid two-column">
+                <div class="card">
+                    <div class="card-title">
+                        🎯 Incident Management Tables
+                    </div>
+                    <div class="card-content" style="font-size: 0.85rem;">
+                        <div style="margin-bottom: 1rem;">
+                            <strong style="color: #e91e63;">incidents</strong>
+                            <div style="color: #94a3b8;">id, title, description, severity, status, assigned_to, created_at, closed_at</div>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <strong style="color: #e91e63;">actions</strong>
+                            <div style="color: #94a3b8;">id, incident_id, action_type, payload (JSON), performed_by, performed_at</div>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <strong style="color: #e91e63;">feedback</strong>
+                            <div style="color: #94a3b8;">id, alert_id, incident_id, user_id, feedback, rating, submitted_at</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        ⚡ Performance & Indexing
+                    </div>
+                    <div class="card-content" style="font-size: 0.85rem;">
+                        <div style="margin-bottom: 1rem;">
+                            <strong style="color: #22c55e;">Primary Indexes</strong>
+                            <div style="color: #94a3b8;">• raw_alerts.received_at (time-series queries)</div>
+                            <div style="color: #94a3b8;">• incidents.status + severity (dashboard filters)</div>
+                            <div style="color: #94a3b8;">• ocsf_events.class_uid + time (OCSF queries)</div>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <strong style="color: #f59e0b;">Composite Indexes</strong>
+                            <div style="color: #94a3b8;">• (source_id, received_at) for source analytics</div>
+                            <div style="color: #94a3b8;">• (severity, status, created_at) for incident queries</div>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <strong style="color: #6366f1;">JSON Indexes</strong>
+                            <div style="color: #94a3b8;">• GIN index on raw_data for fast JSON queries</div>
+                            <div style="color: #94a3b8;">• GIN index on features for ML vector search</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(233, 30, 99, 0.3); border-radius: 15px; padding: 1.5rem; margin-top: 2rem;">
+                <h3 style="color: #e91e63; margin-bottom: 1rem;">📈 Data Retention & Archival Strategy</h3>
+                <div class="content-grid three-column">
+                    <div style="text-align: center;">
+                        <div style="color: #22c55e; font-size: 1.5rem; font-weight: bold;">Hot Data</div>
+                        <div style="color: #94a3b8; font-size: 0.9rem;">30 Days</div>
+                        <div style="color: #6b7280; font-size: 0.8rem;">Full-text search, real-time queries</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="color: #f59e0b; font-size: 1.5rem; font-weight: bold;">Warm Data</div>
+                        <div style="color: #94a3b8; font-size: 0.9rem;">1 Year</div>
+                        <div style="color: #6b7280; font-size: 0.8rem;">Compressed, indexed queries only</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="color: #6366f1; font-size: 1.5rem; font-weight: bold;">Cold Data</div>
+                        <div style="color: #94a3b8; font-size: 0.9rem;">7 Years</div>
+                        <div style="color: #6b7280; font-size: 0.8rem;">Archive storage, compliance retention</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 11: ML Team Coordination & Data Requirements -->
+        <div class="slide">
+            <div class="slide-header">
+                <h1 class="slide-title">ML Team Coordination</h1>
+                <p class="slide-subtitle">Data requirements & attribute standardization to prevent conflicts</p>
+            </div>
+
+            <div class="content-grid two-column">
+                <div class="card">
+                    <div class="card-title">
+                        🧠 ML Feature Requirements
+                    </div>
+                    <div class="card-content">
+                        <div style="margin-bottom: 1rem;">
+                            <strong style="color: #22c55e;">Required Input Features</strong>
+                            <ul style="list-style: none; padding: 0; margin: 0.5rem 0; font-size: 0.85rem;">
+                                <li style="color: #94a3b8;">• <code>ml_timestamp</code> - Event time in UTC epoch</li>
+                                <li style="color: #94a3b8;">• <code>ml_source_category</code> - SIEM|EDR|Firewall|Cloud</li>
+                                <li style="color: #94a3b8;">• <code>ml_severity_numeric</code> - 1-10 scale (1=low, 10=critical)</li>
+                                <li style="color: #94a3b8;">• <code>ml_event_frequency</code> - Events per hour from same source</li>
+                                <li style="color: #94a3b8;">• <code>ml_user_context</code> - User risk score (0-1)</li>
+                                <li style="color: #94a3b8;">• <code>ml_asset_criticality</code> - Asset importance (0-1)</li>
+                                <li style="color: #94a3b8;">• <code>ml_network_zone</code> - DMZ|Internal|External|Unknown</li>
+                                <li style="color: #94a3b8;">• <code>ml_time_of_day</code> - Business|After-hours|Weekend</li>
+                            </ul>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <strong style="color: #f59e0b;">Optional Enrichment Features</strong>
+                            <ul style="list-style: none; padding: 0; margin: 0.5rem 0; font-size: 0.85rem;">
+                                <li style="color: #94a3b8;">• <code>ml_geolocation_risk</code> - Geographic risk score</li>
+                                <li style="color: #94a3b8;">• <code>ml_threat_intel_match</code> - IOC match confidence</li>
+                                <li style="color: #94a3b8;">• <code>ml_behavioral_anomaly</code> - Deviation from baseline</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        🔧 Expected ML Output Format
+                    </div>
+                    <div class="card-content">
+                        <div style="margin-bottom: 1rem;">
+                            <strong style="color: #e91e63;">Model Response Schema</strong>
+                            <div style="background: #0f172a; border-radius: 8px; padding: 1rem; margin: 0.5rem 0; font-family: monospace; font-size: 0.75rem;">
+<pre style="color: #cbd5e1; margin: 0;">{
+  "ml_model_version": "2.1.3",
+  "ml_prediction_confidence": 0.87,
+  "ml_threat_score": 8.4,
+  "ml_category_prediction": "malware_detection",
+  "ml_recommended_action": "investigate",
+  "ml_reasoning": [
+    "high_frequency_anomaly",
+    "suspicious_network_pattern",
+    "known_bad_ip_correlation"
+  ],
+  "ml_false_positive_likelihood": 0.15,
+  "ml_processing_time_ms": 45
+}</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    🚨 Critical: Attribute Naming Conventions
+                </div>
+                <div class="card-content">
+                    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 1rem; margin: 1rem 0;">
+                        <h4 style="color: #ef4444; margin-bottom: 0.5rem;">⚠️ RESERVED PREFIXES - DO NOT USE</h4>
+                        <ul style="color: #fecaca; font-size: 0.85rem; margin: 0;">
+                            <li><strong>ocsf_*</strong> - Reserved for OCSF schema fields</li>
+                            <li><strong>raw_*</strong> - Reserved for original event data</li>
+                            <li><strong>sys_*</strong> - Reserved for system metadata</li>
+                            <li><strong>db_*</strong> - Reserved for database operations</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 8px; padding: 1rem; margin: 1rem 0;">
+                        <h4 style="color: #22c55e; margin-bottom: 0.5rem;">✅ ML TEAM PREFIXES - USE THESE</h4>
+                        <ul style="color: #86efac; font-size: 0.85rem; margin: 0;">
+                            <li><strong>ml_*</strong> - All ML-related fields and outputs</li>
+                            <li><strong>feat_*</strong> - Feature engineering outputs</li>
+                            <li><strong>pred_*</strong> - Model prediction results</li>
+                            <li><strong>conf_*</strong> - Confidence and metadata</li>
+                        </ul>
+                    </div>
+
+                    <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; padding: 1rem; margin: 1rem 0;">
+                        <h4 style="color: #3b82f6; margin-bottom: 0.5rem;">📋 Data Type Requirements</h4>
+                        <div style="color: #93c5fd; font-size: 0.85rem;">
+                            <div><strong>Timestamps:</strong> Always UTC Unix epoch (seconds, not milliseconds)</div>
+                            <div><strong>Scores:</strong> Normalized 0.0-1.0 float values</div>
+                            <div><strong>Categories:</strong> Lowercase snake_case strings</div>
+                            <div><strong>Arrays:</strong> JSON arrays, max 100 elements</div>
+                            <div><strong>Null handling:</strong> Use null, never empty strings or -1</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-grid two-column">
+                <div class="card">
+                    <div class="card-title">
+                        📊 Model Performance Expectations
+                    </div>
+                    <div class="card-content">
+                        <div style="color: #94a3b8; font-size: 0.9rem;">
+                            <div style="margin-bottom: 0.8rem;"><strong>Latency:</strong> < 100ms per prediction</div>
+                            <div style="margin-bottom: 0.8rem;"><strong>Throughput:</strong> 1000+ predictions/second</div>
+                            <div style="margin-bottom: 0.8rem;"><strong>Accuracy Target:</strong> > 85% on validation set</div>
+                            <div style="margin-bottom: 0.8rem;"><strong>False Positive Rate:</strong> < 15%</div>
+                            <div style="margin-bottom: 0.8rem;"><strong>Model Updates:</strong> Weekly retraining cycle</div>
+                            <div style="margin-bottom: 0.8rem;"><strong>Fallback:</strong> Rule-based system if ML unavailable</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        🔄 Integration Checkpoints
+                    </div>
+                    <div class="card-content">
+                        <div style="color: #94a3b8; font-size: 0.9rem;">
+                            <div style="margin-bottom: 0.8rem;">✅ <strong>Week 1:</strong> Schema validation & test data</div>
+                            <div style="margin-bottom: 0.8rem;">🔄 <strong>Week 2:</strong> Feature pipeline integration</div>
+                            <div style="margin-bottom: 0.8rem;">⏳ <strong>Week 3:</strong> Model endpoint testing</div>
+                            <div style="margin-bottom: 0.8rem;">⏳ <strong>Week 4:</strong> Performance benchmarking</div>
+                            <div style="margin-bottom: 0.8rem;">⏳ <strong>Week 5:</strong> Production deployment</div>
+                            <div style="margin-bottom: 0.8rem;">⏳ <strong>Week 6:</strong> Monitoring & fine-tuning</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="navigation">
             <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ Previous</button>
             <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">Next ▶</button>
