@@ -8,9 +8,11 @@ import { AlertTriangle, Shield, Eye, EyeOff, LogIn } from "lucide-react";
 import { useLocation } from "wouter";
 import { api } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function Login() {
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -35,6 +37,8 @@ export default function Login() {
 
     try {
       await api.login({ email, password });
+      // Invalidate auth queries to refresh user state
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
       // Redirect to dashboard on success
       setLocation("/dashboard");
     } catch (err: any) {
