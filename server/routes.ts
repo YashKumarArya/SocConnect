@@ -23,10 +23,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     secret: process.env.SESSION_SECRET || 'development-secret-change-in-production',
     resave: false,
     saveUninitialized: false,
+    name: 'soc.sid', // Custom session name
     cookie: {
       httpOnly: true,
       secure: false, // Set to true in production with HTTPS
       maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
+      sameSite: 'lax' // Allow cross-origin requests
     },
   }));
 
@@ -84,8 +86,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Store user session
       req.session.userId = user.id;
+      console.log('Setting session userId:', user.id, 'Session ID:', req.sessionID);
       
-      res.json(user);
+      // Save session explicitly
+      req.session.save((err) => {
+        if (err) {
+          console.error('Session save error:', err);
+          return res.status(500).json({ error: 'Failed to save session' });
+        }
+        console.log('Session saved successfully');
+        res.json(user);
+      });
     } catch (error) {
       if (error instanceof ZodError) {
         return res.status(400).json({ error: 'Invalid login data', details: error.errors });
@@ -105,9 +116,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  app.get('/api/auth/user', async (req: any, res) => {
     try {
-      res.json(req.user);
+      console.log('Auth user check - Session ID:', req.sessionID, 'UserId in session:', req.session.userId);
+      
+      if (!req.session.userId) {
+        return res.status(401).json({ message: "Unauthorized - No session" });
+      }
+
+      const user = await storage.getUser(req.session.userId);
+      if (!user) {
+        req.session.userId = undefined;
+        return res.status(401).json({ message: "Unauthorized - User not found" });
+      }
+
+      res.json(user);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
