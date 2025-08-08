@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOC Platform Architecture & Integration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            overflow: hidden;
+        }
+
+        .presentation-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .slide {
+            display: none;
+            padding: 3rem;
+            height: 100vh;
+            overflow-y: auto;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            border-bottom: 3px solid #e91e63;
+            padding-bottom: 1rem;
+        }
+
+        .slide-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, #e91e63, #9c27b0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .slide-subtitle {
+            font-size: 1.2rem;
+            color: #94a3b8;
+            font-weight: 300;
+        }
+
+        .content-grid {
+            display: grid;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .two-column {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .three-column {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .card {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(233, 30, 99, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: #e91e63;
+            box-shadow: 0 0 20px rgba(233, 30, 99, 0.3);
+            transform: translateY(-5px);
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #e91e63;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-content {
+            color: #cbd5e1;
+            line-height: 1.6;
+        }
+
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .flow-box {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            border: 2px solid #e91e63;
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            min-width: 150px;
+            position: relative;
+        }
+
+        .flow-box::after {
+            content: '→';
+            position: absolute;
+            right: -2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5rem;
+            color: #e91e63;
+        }
+
+        .flow-box:last-child::after {
+            display: none;
+        }
+
+        .architecture-diagram {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(233, 30, 99, 0.3);
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .layer {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .layer-title {
+            position: absolute;
+            left: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #e91e63;
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 5px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .component {
+            background: linear-gradient(135deg, #334155, #475569);
+            border: 1px solid #64748b;
+            border-radius: 8px;
+            padding: 0.8rem;
+            text-align: center;
+            min-width: 120px;
+            transition: all 0.3s ease;
+        }
+
+        .component:hover {
+            border-color: #e91e63;
+            box-shadow: 0 0 15px rgba(233, 30, 99, 0.4);
+        }
+
+        .tech-stack {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .tech-item {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            border: 1px solid rgba(233, 30, 99, 0.3);
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .tech-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .navigation {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            display: flex;
+            gap: 1rem;
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            background: #e91e63;
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: #ad1457;
+            transform: scale(1.05);
+        }
+
+        .nav-btn:disabled {
+            background: #374151;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .slide-counter {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: rgba(15, 23, 42, 0.8);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            border: 1px solid rgba(233, 30, 99, 0.3);
+            font-weight: 600;
+            z-index: 1000;
+        }
+
+        .highlight {
+            background: linear-gradient(45deg, #e91e63, #9c27b0);
+            padding: 0.2rem 0.5rem;
+            border-radius: 5px;
+            font-weight: 600;
+        }
+
+        .icon {
+            width: 1.5rem;
+            height: 1.5rem;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .status-active { background: #22c55e; }
+        .status-planned { background: #f59e0b; }
+        .status-future { background: #6366f1; }
+
+        .integration-timeline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 2rem 0;
+            position: relative;
+        }
+
+        .timeline-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #22c55e, #f59e0b, #6366f1);
+        }
+
+        .timeline-point {
+            background: rgba(15, 23, 42, 0.9);
+            border: 3px solid;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            position: relative;
+            z-index: 2;
+        }
+
+        .timeline-point.current { border-color: #22c55e; color: #22c55e; }
+        .timeline-point.planned { border-color: #f59e0b; color: #f59e0b; }
+        .timeline-point.future { border-color: #6366f1; color: #6366f1; }
+
+        .data-flow-path {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .flow-step {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 10px;
+            border-left: 4px solid #e91e63;
+        }
+
+        .step-number {
+            background: #e91e63;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .performance-metrics {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .metric {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 10px;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #e91e63;
+        }
+
+        .metric-label {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        <div class="slide-counter">
+            <span id="currentSlide">1</span> / <span id="totalSlides">8</span>
+        </div>
+
+        <!-- Slide 1: Title Slide -->
+        <div class="slide active">
+            <div class="slide-header">
+                <h1 class="slide-title">SOC Platform Architecture</h1>
+                <p class="slide-subtitle">Comprehensive Security Operations Center Dashboard</p>
+            </div>
+            
+            <div class="content-grid two-column">
+                <div class="card">
+                    <div class="card-title">
+                        🛡️ Current Implementation
+                    </div>
+                    <div class="card-content">
+                        <ul style="list-style: none; padding: 0;">
+                            <li style="margin-bottom: 0.8rem;">✅ <strong>Authentication System</strong> - Secure login with bcrypt & sessions</li>
+                            <li style="margin-bottom: 0.8rem;">✅ <strong>Real-time Dashboard</strong> - WebSocket-based live updates</li>
+                            <li style="margin-bottom: 0.8rem;">✅ <strong>Alert Management</strong> - Processing and normalization</li>
+                            <li style="margin-bottom: 0.8rem;">✅ <strong>Incident Response</strong> - Workflow management</li>
+                            <li style="margin-bottom: 0.8rem;">✅ <strong>Analytics & Reporting</strong> - Data visualization</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        🚀 Future Integrations
+                    </div>
+                    <div class="card-content">
+                        <ul style="list-style: none; padding: 0;">
+                            <li style="margin-bottom: 0.8rem;">🔄 <strong>Kafka Event Streaming</strong> - High-throughput event processing</li>
+                            <li style="margin-bottom: 0.8rem;">📊 <strong>OCSF Standards</strong> - Open Cybersecurity Schema Framework</li>
+                            <li style="margin-bottom: 0.8rem;">🤖 <strong>ML Integration</strong> - Automated threat detection</li>
+                            <li style="margin-bottom: 0.8rem;">🌐 <strong>Multi-source Ingestion</strong> - SIEM, EDR, Firewall integration</li>
+                            <li style="margin-bottom: 0.8rem;">⚡ <strong>Real-time Correlation</strong> - Advanced threat hunting</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="integration-timeline">
+                <div class="timeline-line"></div>
+                <div class="timeline-point current">V1</div>
+                <div class="timeline-point planned">V2</div>
+                <div class="timeline-point future">V3</div>
+            </div>
+
+            <div class="performance-metrics">
+                <div class="metric">
+                    <div class="metric-value">50+</div>
+                    <div class="metric-label">Demo Alerts</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">6</div>
+                    <div class="metric-label">Security Sources</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">3</div>
+                    <div class="metric-label">User Roles</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">5</div>
+                    <div class="metric-label">Incident Types</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: System Architecture Overview -->
+        <div class="slide">
+            <div class="slide-header">
+                <h1 class="slide-title">System Architecture Overview</h1>
+                <p class="slide-subtitle">Multi-layer architecture with real-time capabilities</p>
+            </div>
+
+            <div class="architecture-diagram">
+                <div class="layer">
+                    <div class="layer-title">Presentation</div>
+                    <div class="component">React Dashboard</div>
+                    <div class="component">Real-time UI</div>
+                    <div class="component">WebSocket Client</div>
+                    <div class="component">Analytics Views</div>
+                </div>
+
+                <div class="layer">
+                    <div class="layer-title">API Layer</div>
+                    <div class="component">Express.js Server</div>
+                    <div class="component">REST API</div>
+                    <div class="component">WebSocket Server</div>
+                    <div class="component">Authentication</div>
+                </div>
+
+                <div class="layer">
+                    <div class="layer-title">Business Logic</div>
+                    <div class="component">Alert Processing</div>
+                    <div class="component">Incident Management</div>
+                    <div class="component">User Management</div>
+                    <div class="component">Analytics Engine</div>
+                </div>
+
+                <div class="layer">
+                    <div class="layer-title">Integration</div>
+                    <div class="component">Kafka Consumer</div>
+                    <div class="component">OCSF Processor</div>
+                    <div class="component">Source Connectors</div>
+                    <div class="component">ML Pipeline</div>
+                </div>
+
+                <div class="layer">
+                    <div class="layer-title">Data Storage</div>
+                    <div class="component">PostgreSQL</div>
+                    <div class="component">Session Store</div>
+                    <div class="component">Alert Archive</div>
+                    <div class="component">Analytics DB</div>
+                </div>
+
+                <div class="layer">
+                    <div class="layer-title">External Sources</div>
+                    <div class="component">SIEM Systems</div>
+                    <div class="component">EDR Solutions</div>
+                    <div class="component">Firewalls</div>
+                    <div class="component">Cloud Security</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Data Flow Architecture -->
+        <div class="slide">
+            <div class="slide-header">
+                <h1 class="slide-title">Data Flow Architecture</h1>
+                <p class="slide-subtitle">How security events flow through the system</p>
+            </div>
+
+            <div class="data-flow-path">
+                <div class="flow-step">
+                    <div class="step-number">1</div>
+                    <div>
+                        <strong>Security Event Generation</strong>
+                        <p style="color: #94a3b8; margin: 0.3rem 0 0 0;">SIEM, EDR, Firewall systems detect security events</p>
+                    </div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="step-number">2</div>
+                    <div>
+                        <strong>Event Ingestion</strong>
+                        <p style="color: #94a3b8; margin: 0.3rem 0 0 0;">Events ingested via REST APIs or Kafka topics</p>
+                    </div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="step-number">3</div>
+                    <div>
+                        <strong>Format Transformation</strong>
+                        <p style="color: #94a3b8; margin: 0.3rem 0 0 0;">Convert to OCSF standard format for unified processing</p>
+                    </div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="step-number">4</div>
+                    <div>
+                        <strong>Event Processing</strong>
+                        <p style="color: #94a3b8; margin: 0.3rem 0 0 0;">Alert normalization, enrichment, and correlation</p>
+                    </div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="step-number">5</div>
+                    <div>
+                        <strong>Storage & Indexing</strong>
+                        <p style="color: #94a3b8; margin: 0.3rem 0 0 0;">Store in PostgreSQL with feature vectors for ML</p>
+                    </div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="step-number">6</div>
+                    <div>
+                        <strong>Real-time Distribution</strong>
+                        <p style="color: #94a3b8; margin: 0.3rem 0 0 0;">Broadcast to connected dashboards via WebSocket</p>
+                    </div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="step-number">7</div>
+                    <div>
+                        <strong>Analyst Response</strong>
+                        <p style="color: #94a3b8; margin: 0.3rem 0 0 0;">SOC analysts review, investigate, and respond to threats</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Technology Stack -->
+        <div class="slide">
+            <div class="slide-header">
+                <h1 class="slide-title">Technology Stack</h1>
+                <p class="slide-subtitle">Modern, scalable technologies powering the SOC platform</p>
+            </div>
+
+            <div class="content-grid two-column">
+                <div>
+                    <h3 style="color: #e91e63; margin-bottom: 1rem;">🎨 Frontend Stack</h3>
+                    <div class="tech-stack">
+                        <div class="tech-item">
+                            <div class="tech-icon">⚛️</div>
+                            <strong>React 18</strong>
+                            <p style="color: #94a3b8; font-size: 0.9rem;">Modern UI library with hooks</p>
+                        </div>
+                        <div class="tech-item">
+                            <div class="tech-icon">📘</div>
+                            <strong>TypeScript</strong>
+                            <p style="color: #94a3b8; font-size: 0.9rem;">Type-safe development</p>
+                        </div>
+                        <div class="tech-item">
+                            <div class="tech-icon">🎨</div>
+                            <strong>Tailwind CSS</strong>
+                            <p style="color: #94a3b8; font-size: 0.9rem;">Utility-first styling</p>
+                        </div>
+                        <div class="tech-item">
+                            <div class="tech-icon">🧩</div>
+                            <strong>Shadcn/UI</strong>
+                            <p style="color: #94a3b8; font-size: 0.9rem;">Accessible components</p>
+                        </div>
+                        <div class="tech-item">
+                            <div class="tech-icon">🔄</div>
+                            <strong>React Query</strong>
+                            <p style="color: #94a3b8; font-size: 0.9rem;">Server state management</p>
+                        </div>
+                        <div class="tech-item">
+                            <div class="tech-icon">⚡</div>
+                            <strong>Vite</strong>
+                            <p style="color: #94a3b8; font-size: 0.9rem;">Fast build tool</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 style="color: #e91e63; margin-bottom: 1rem;">🔧 Backend Stack</h3>
+                    <div class="tech-stack">
+                        <div class="tech-item">
+                            <div class="tech-icon">🟢</div>
+                            <strong>Node.js</strong>
+                            <p style="color: #94a3b8; font-size: 0.9rem;">JavaScript runtime</p>
+                        </div>
+                        <div class="tech-item">
+                            <div class="tech-icon">🚀</div>
+                            <strong>Express.js</strong>
+                            <p style="color: #94a3b8; font-size: 0.9rem;">Web framework</p>
+                        </div>
+                        <div class="tech-item">
+                            <div class="tech-icon">🐘</div>
+                            <strong>PostgreSQL</strong>
+                            <p style="color: #94a3b8; font-size: 0.9rem;">Relational database</p>
+                        </div>
+                        <div class="tech-item">
+                            <div class="tech-icon">🗄️</div>
+                            <strong>Drizzle ORM</strong>
+                            <p style="color: #94a3b8; font-size: 0.9rem;">Type-safe database</p>
+                        </div>
+                        <div class="tech-item">
+                            <div class="tech-icon">🔌</div>
+                            <strong>WebSocket</strong>
+                            <p style="color: #94a3b8; font-size: 0.9rem;">Real-time communication</p>
+                        </div>
+                        <div class="tech-item">
+                            <div class="tech-icon">🔒</div>
+                            <strong>bcrypt</strong>
+                            <p style="color: #94a3b8; font-size: 0.9rem;">Password hashing</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 2rem;">
+                <h3 style="color: #e91e63; margin-bottom: 1rem;">🚀 Integration Technologies</h3>
+                <div class="tech-stack">
+                    <div class="tech-item">
+                        <div class="tech-icon">📊</div>
+                        <strong>Apache Kafka</strong>
+                        <p style="color: #94a3b8; font-size: 0.9rem;">Event streaming platform</p>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-icon">📋</div>
+                        <strong>OCSF Schema</strong>
+                        <p style="color: #94a3b8; font-size: 0.9rem;">Open Cybersecurity Schema</p>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-icon">🤖</div>
+                        <strong>ML Pipeline</strong>
+                        <p style="color: #94a3b8; font-size: 0.9rem;">Threat detection models</p>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-icon">🔗</div>
+                        <strong>REST APIs</strong>
+                        <p style="color: #94a3b8; font-size: 0.9rem;">External integrations</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Current Implementation Status -->
+        <div class="slide">
+            <div class="slide-header">
+                <h1 class="slide-title">Current Implementation Status</h1>
+                <p class="slide-subtitle">What's working today and what's coming next</p>
+            </div>
+
+            <div class="content-grid two-column">
+                <div>
+                    <h3 style="color: #22c55e; margin-bottom: 1rem;">✅ Implemented Features</h3>
+                    <div class="card">
+                        <div class="card-title">
+                            <span class="status-indicator status-active"></span>
+                            Authentication & Authorization
+                        </div>
+                        <div class="card-content">
+                            <p>✅ Session-based authentication with bcrypt</p>
+                            <p>✅ Role-based access control (Analyst/Admin)</p>
+                            <p>✅ Protected API routes</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">
+                            <span class="status-indicator status-active"></span>
+                            Dashboard & UI
+                        </div>
+                        <div class="card-content">
+                            <p>✅ Real-time WebSocket dashboard</p>
+                            <p>✅ SOC-optimized dark theme</p>
+                            <p>✅ Responsive design</p>
+                            <p>✅ Alert management interface</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">
+                            <span class="status-indicator status-active"></span>
+                            Data Management
+                        </div>
+                        <div class="card-content">
+                            <p>✅ PostgreSQL integration (Drizzle ORM)</p>
+                            <p>✅ Demo data with realistic security scenarios</p>
+                            <p>✅ In-memory storage for development</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 style="color: #f59e0b; margin-bottom: 1rem;">🔄 In Progress</h3>
+                    <div class="card">
+                        <div class="card-title">
+                            <span class="status-indicator status-planned"></span>
+                            Kafka Integration
+                        </div>
+                        <div class="card-content">
+                            <p>🔄 Event streaming architecture</p>
+                            <p>🔄 Producer/consumer setup</p>
+                            <p>🔄 Topic management for security events</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">
+                            <span class="status-indicator status-planned"></span>
+                            OCSF Implementation
+                        </div>
+                        <div class="card-content">
+                            <p>🔄 Open Cybersecurity Schema Framework</p>
+                            <p>🔄 Event transformation services</p>
+                            <p>🔄 Standardized security event format</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">
+                            <span class="status-indicator status-future"></span>
+                            ML & Analytics
+                        </div>
+                        <div class="card-content">
+                            <p>🎯 Feature vector processing</p>
+                            <p>🎯 Automated threat detection</p>
+                            <p>🎯 Behavioral analytics</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flow-diagram">
+                <div class="flow-box" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
+                    <strong>Phase 1</strong><br>
+                    Core Platform<br>
+                    <small style="opacity: 0.8;">(Current)</small>
+                </div>
+                <div class="flow-box" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                    <strong>Phase 2</strong><br>
+                    Kafka + OCSF<br>
+                    <small style="opacity: 0.8;">(In Progress)</small>
+                </div>
+                <div class="flow-box" style="background: linear-gradient(135deg, #6366f1, #4f46e5);">
+                    <strong>Phase 3</strong><br>
+                    ML Integration<br>
+                    <small style="opacity: 0.8;">(Planned)</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Kafka & Event Processing -->
+        <div class="slide">
+            <div class="slide-header">
+                <h1 class="slide-title">Kafka Event Processing Architecture</h1>
+                <p class="slide-subtitle">High-throughput security event streaming and processing</p>
+            </div>
+
+            <div class="architecture-diagram">
+                <div class="layer">
+                    <div class="layer-title">Producers</div>
+                    <div class="component">SIEM Events</div>
+                    <div class="component">EDR Alerts</div>
+                    <div class="component">Firewall Logs</div>
+                    <div class="component">Cloud Security</div>
+                </div>
+
+                <div class="layer">
+                    <div class="layer-title">Kafka Topics</div>
+                    <div class="component">security-alerts</div>
+                    <div class="component">ocsf-network-activity</div>
+                    <div class="component">ocsf-system-activity</div>
+                    <div class="component">threat-intelligence</div>
+                </div>
+
+                <div class="layer">
+                    <div class="layer-title">Consumers</div>
+                    <div class="component">SOC Dashboard</div>
+                    <div class="component">ML Pipeline</div>
+                    <div class="component">SIEM Integration</div>
+                    <div class="component">Alert Archive</div>
+                </div>
+            </div>
+
+            <div class="content-grid two-column">
+                <div class="card">
+                    <div class="card-title">📊 Event Topics Structure</div>
+                    <div class="card-content">
+                        <div style="background: #1e293b; padding: 1rem; border-radius: 8px; font-family: monospace; margin: 1rem 0;">
+                            <div style="color: #22c55e;">// Security Alert Topics</div>
+                            <div>security-alerts</div>
+                            <div>incidents</div>
+                            <div>threat-intelligence</div>
+                            <div>system-metrics</div>
+                            <div>audit-logs</div>
+                            <div style="color: #22c55e; margin-top: 0.5rem;">// OCSF Standard Topics</div>
+                            <div>ocsf-network-activity</div>
+                            <div>ocsf-system-activity</div>
+                            <div>ocsf-security-finding</div>
+                            <div>ocsf-authentication</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">⚡ Processing Features</div>
+                    <div class="card-content">
+                        <ul style="list-style: none; padding: 0;">
+                            <li style="margin-bottom: 0.8rem;">🔄 <strong>Real-time Processing</strong> - Sub-second event handling</li>
+                            <li style="margin-bottom: 0.8rem;">📈 <strong>High Throughput</strong> - Thousands of events per second</li>
+                            <li style="margin-bottom: 0.8rem;">🔗 <strong>Event Correlation</strong> - Cross-source threat detection</li>
+                            <li style="margin-bottom: 0.8rem;">🛡️ <strong>Fault Tolerance</strong> - Graceful failure handling</li>
+                            <li style="margin-bottom: 0.8rem;">📊 <strong>Schema Evolution</strong> - OCSF standard compliance</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: OCSF Integration -->
+        <div class="slide">
+            <div class="slide-header">
+                <h1 class="slide-title">OCSF Schema Integration</h1>
+                <p class="slide-subtitle">Open Cybersecurity Schema Framework standardization</p>
+            </div>
+
+            <div class="content-grid two-column">
+                <div class="card">
+                    <div class="card-title">📋 OCSF Benefits</div>
+                    <div class="card-content">
+                        <ul style="list-style: none; padding: 0;">
+                            <li style="margin-bottom: 0.8rem;">🌐 <strong>Standardization</strong> - Unified event format across all sources</li>
+                            <li style="margin-bottom: 0.8rem;">🔄 <strong>Interoperability</strong> - Easy integration with security tools</li>
+                            <li style="margin-bottom: 0.8rem;">📊 <strong>Rich Metadata</strong> - Comprehensive event context</li>
+                            <li style="margin-bottom: 0.8rem;">🔍 <strong>Better Analytics</strong> - Consistent data for ML/AI</li>
+                            <li style="margin-bottom: 0.8rem;">📈 <strong>Scalability</strong> - Schema evolution support</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">🛡️ OCSF Event Classes</div>
+                    <div class="card-content">
+                        <div style="background: #1e293b; padding: 1rem; border-radius: 8px; font-family: monospace; margin: 1rem 0;">
+                            <div style="color: #e91e63;">class_uid: 1001</div>
+                            <div>System Activity Events</div>
+                            <div style="margin-top: 0.5rem; color: #e91e63;">class_uid: 2001</div>
+                            <div>Security Finding Events</div>
+                            <div style="margin-top: 0.5rem; color: #e91e63;">class_uid: 3002</div>
+                            <div>Authentication Events</div>
+                            <div style="margin-top: 0.5rem; color: #e91e63;">class_uid: 4001</div>
+                            <div>Network Activity Events</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="data-flow-path">
+                <div class="flow-step">
+                    <div class="step-number">1</div>
+                    <div>
+                        <strong>Raw Event Ingestion</strong>
+                        <p style="color: #94a3b8; margin: 0.3rem 0 0 0;">Native format from SIEM, EDR, Firewall systems</p>
+                    </div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="step-number">2</div>
+                    <div>
+                        <strong>OCSF Transformation</strong>
+                        <p style="color: #94a3b8; margin: 0.3rem 0 0 0;">Convert to standardized OCSF format with enrichment</p>
+                    </div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="step-number">3</div>
+                    <div>
+                        <strong>Schema Validation</strong>
+                        <p style="color: #94a3b8; margin: 0.3rem 0 0 0;">Validate against OCSF schema for consistency</p>
+                    </div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="step-number">4</div>
+                    <div>
+                        <strong>Event Classification</strong>
+                        <p style="color: #94a3b8; margin: 0.3rem 0 0 0;">Route to appropriate topic based on class_uid</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: Integration Roadmap -->
+        <div class="slide">
+            <div class="slide-header">
+                <h1 class="slide-title">Integration Roadmap</h1>
+                <p class="slide-subtitle">Complete integration timeline and future capabilities</p>
+            </div>
+
+            <div class="content-grid three-column">
+                <div>
+                    <h3 style="color: #22c55e; margin-bottom: 1rem; text-align: center;">Phase 1: Foundation</h3>
+                    <div class="card">
+                        <div class="card-title">
+                            <span class="status-indicator status-active"></span>
+                            Core Platform ✅
+                        </div>
+                        <div class="card-content">
+                            <p>• Authentication system</p>
+                            <p>• Basic dashboard</p>
+                            <p>• WebSocket real-time</p>
+                            <p>• PostgreSQL database</p>
+                            <p>• Demo security data</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 style="color: #f59e0b; margin-bottom: 1rem; text-align: center;">Phase 2: Streaming</h3>
+                    <div class="card">
+                        <div class="card-title">
+                            <span class="status-indicator status-planned"></span>
+                            Event Processing 🔄
+                        </div>
+                        <div class="card-content">
+                            <p>• Kafka integration</p>
+                            <p>• OCSF transformation</p>
+                            <p>• Multi-source ingestion</p>
+                            <p>• Event correlation</p>
+                            <p>• Advanced analytics</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 style="color: #6366f1; margin-bottom: 1rem; text-align: center;">Phase 3: Intelligence</h3>
+                    <div class="card">
+                        <div class="card-title">
+                            <span class="status-indicator status-future"></span>
+                            AI/ML Integration 🎯
+                        </div>
+                        <div class="card-content">
+                            <p>• Machine learning models</p>
+                            <p>• Behavioral analytics</p>
+                            <p>• Automated response</p>
+                            <p>• Threat hunting</p>
+                            <p>• Predictive security</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="integration-timeline" style="margin: 3rem 0;">
+                <div class="timeline-line"></div>
+                <div class="timeline-point current">Q1</div>
+                <div class="timeline-point planned">Q2</div>
+                <div class="timeline-point future">Q3</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">🎯 Final Architecture Vision</div>
+                <div class="card-content">
+                    <p style="font-size: 1.1rem; line-height: 1.8;">
+                        A <span class="highlight">fully integrated SOC platform</span> that ingests security events from multiple sources, 
+                        processes them through <span class="highlight">Kafka streams</span> with <span class="highlight">OCSF standardization</span>, 
+                        applies <span class="highlight">machine learning</span> for threat detection, and provides 
+                        <span class="highlight">real-time dashboards</span> with automated response capabilities for security analysts.
+                    </p>
+                    
+                    <div class="performance-metrics" style="margin-top: 2rem;">
+                        <div class="metric">
+                            <div class="metric-value">10K+</div>
+                            <div class="metric-label">Events/sec</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">&lt;100ms</div>
+                            <div class="metric-label">Processing Time</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">99.9%</div>
+                            <div class="metric-label">Uptime</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">50+</div>
+                            <div class="metric-label">Data Sources</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="navigation">
+            <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ Previous</button>
+            <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">Next ▶</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = document.querySelectorAll('.slide').length;
+        
+        document.getElementById('totalSlides').textContent = totalSlides;
+        
+        function showSlide(n) {
+            const slides = document.querySelectorAll('.slide');
+            
+            if (n > totalSlides) currentSlide = 1;
+            if (n < 1) currentSlide = totalSlides;
+            
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[currentSlide - 1].classList.add('active');
+            
+            document.getElementById('currentSlide').textContent = currentSlide;
+            
+            // Update button states
+            document.getElementById('prevBtn').disabled = currentSlide === 1;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides;
+        }
+        
+        function changeSlide(n) {
+            currentSlide += n;
+            showSlide(currentSlide);
+        }
+        
+        // Initialize
+        showSlide(currentSlide);
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+            if (e.key === 'ArrowRight') changeSlide(1);
+            if (e.key === 'Home') { currentSlide = 1; showSlide(currentSlide); }
+            if (e.key === 'End') { currentSlide = totalSlides; showSlide(currentSlide); }
+        });
+        
+        // Touch/swipe support for mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        document.addEventListener('touchstart', function(e) {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+        
+        document.addEventListener('touchend', function(e) {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+        
+        function handleSwipe() {
+            if (touchEndX < touchStartX - 50) changeSlide(1); // Swipe left - next slide
+            if (touchEndX > touchStartX + 50) changeSlide(-1); // Swipe right - previous slide
+        }
+    </script>
+</body>
+</html>
