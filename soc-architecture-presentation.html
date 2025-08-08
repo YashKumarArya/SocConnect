@@ -27,19 +27,40 @@
 
         .slide {
             display: none;
-            padding: 3rem;
+            padding: 2rem;
             height: 100vh;
             overflow-y: auto;
-            animation: fadeIn 0.5s ease-in-out;
         }
 
         .slide.active {
             display: block;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        /* Removed general fadeIn animation - keeping only control flow animations */
+        
+        /* Control Flow Animations */
+        @keyframes dataFlow {
+            0% { transform: translateX(0); opacity: 0.3; }
+            50% { transform: translateX(50px); opacity: 1; }
+            100% { transform: translateX(100px); opacity: 0.3; }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .data-flow-arrow {
+            animation: dataFlow 2s ease-in-out infinite;
+            color: #e91e63;
+            font-size: 1.5rem;
+        }
+        
+        .active-component {
+            animation: pulse 2s ease-in-out infinite;
+            border-color: #22c55e !important;
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.5);
         }
 
         .slide-header {
@@ -90,7 +111,6 @@
         .card:hover {
             border-color: #e91e63;
             box-shadow: 0 0 20px rgba(233, 30, 99, 0.3);
-            transform: translateY(-5px);
         }
 
         .card-title {
@@ -183,9 +203,15 @@
             transition: all 0.3s ease;
         }
 
-        .component:hover {
-            border-color: #e91e63;
-            box-shadow: 0 0 15px rgba(233, 30, 99, 0.4);
+        .component {
+            background: linear-gradient(135deg, #334155, #475569);
+            border: 1px solid #64748b;
+            border-radius: 8px;
+            padding: 0.8rem;
+            text-align: center;
+            min-width: 120px;
+            transition: all 0.3s ease;
+            cursor: pointer;
         }
 
         .tech-stack {
@@ -230,13 +256,11 @@
 
         .nav-btn:hover {
             background: #ad1457;
-            transform: scale(1.05);
         }
 
         .nav-btn:disabled {
             background: #374151;
             cursor: not-allowed;
-            transform: none;
         }
 
         .slide-counter {
@@ -370,80 +394,347 @@
 <body>
     <div class="presentation-container">
         <div class="slide-counter">
-            <span id="currentSlide">1</span> / <span id="totalSlides">8</span>
+            <span id="currentSlide">1</span> / <span id="totalSlides">15</span>
         </div>
 
-        <!-- Slide 1: Title Slide -->
+        <!-- Slide 1: Introduction for New Interns -->
         <div class="slide active">
             <div class="slide-header">
-                <h1 class="slide-title">SOC Platform Architecture</h1>
-                <p class="slide-subtitle">Comprehensive Security Operations Center Dashboard</p>
+                <h1 class="slide-title">Welcome to SOC Platform</h1>
+                <p class="slide-subtitle">Security Operations Center Dashboard - A Complete Guide for New Team Members</p>
+            </div>
+            
+            <div style="margin-bottom: 2rem;">
+                <div class="card" style="background: rgba(34, 197, 94, 0.1); border-color: #22c55e;">
+                    <div class="card-title" style="color: #22c55e;">
+                        📚 What is a SOC (Security Operations Center)?
+                    </div>
+                    <div class="card-content" style="font-size: 1.1rem; line-height: 1.8;">
+                        <p style="margin-bottom: 1rem;"><strong>Think of a SOC like a 24/7 security guard for computer networks.</strong> Just like how security guards monitor buildings for break-ins, our SOC monitors computer networks for cyber attacks, malware, and suspicious activities.</p>
+                        <p style="margin-bottom: 1rem;">Our SOC platform is like a <strong>mission control center</strong> where security analysts (that's us!) watch for threats, investigate suspicious activities, and respond to security incidents. It's like having super-powered security cameras that can see digital threats instead of physical ones.</p>
+                        <p><strong>Our main job:</strong> Keep the company's digital assets safe from hackers, malware, data theft, and other cyber threats.</p>
+                    </div>
+                </div>
             </div>
             
             <div class="content-grid two-column">
                 <div class="card">
                     <div class="card-title">
-                        🛡️ Current Implementation
+                        ✅ What We've Already Built (Current Features)
                     </div>
                     <div class="card-content">
-                        <ul style="list-style: none; padding: 0;">
-                            <li style="margin-bottom: 0.8rem;">✅ <strong>Authentication System</strong> - Secure login with bcrypt & sessions</li>
-                            <li style="margin-bottom: 0.8rem;">✅ <strong>Real-time Dashboard</strong> - WebSocket-based live updates</li>
-                            <li style="margin-bottom: 0.8rem;">✅ <strong>Alert Management</strong> - Processing and normalization</li>
-                            <li style="margin-bottom: 0.8rem;">✅ <strong>Incident Response</strong> - Workflow management</li>
-                            <li style="margin-bottom: 0.8rem;">✅ <strong>Analytics & Reporting</strong> - Data visualization</li>
-                        </ul>
+                        <div style="margin-bottom: 1rem;"><strong>🔐 User Login System</strong><br><span style="color: #94a3b8; font-size: 0.9rem;">Secure way for analysts to access the dashboard. Uses encrypted passwords (bcrypt) and sessions to keep accounts safe.</span></div>
+                        
+                        <div style="margin-bottom: 1rem;"><strong>📊 Live Dashboard</strong><br><span style="color: #94a3b8; font-size: 0.9rem;">Real-time updates using WebSocket technology - like a live TV feed of security events happening right now.</span></div>
+                        
+                        <div style="margin-bottom: 1rem;"><strong>🚨 Alert Processing</strong><br><span style="color: #94a3b8; font-size: 0.9rem;">Automatically sorts and organizes security warnings from different security tools into a clean, readable format.</span></div>
+                        
+                        <div style="margin-bottom: 1rem;"><strong>🎯 Incident Management</strong><br><span style="color: #94a3b8; font-size: 0.9rem;">Tools to track, investigate, and resolve security incidents from start to finish.</span></div>
+                        
+                        <div style="margin-bottom: 1rem;"><strong>📈 Reports & Analytics</strong><br><span style="color: #94a3b8; font-size: 0.9rem;">Charts and graphs showing security trends, performance metrics, and threat patterns over time.</span></div>
                     </div>
                 </div>
 
                 <div class="card">
                     <div class="card-title">
-                        🚀 Future Integrations
+                        🚀 What We're Building Next (Future Features)
                     </div>
                     <div class="card-content">
-                        <ul style="list-style: none; padding: 0;">
-                            <li style="margin-bottom: 0.8rem;">🔄 <strong>Kafka Event Streaming</strong> - High-throughput event processing</li>
-                            <li style="margin-bottom: 0.8rem;">📊 <strong>OCSF Standards</strong> - Open Cybersecurity Schema Framework</li>
-                            <li style="margin-bottom: 0.8rem;">🤖 <strong>ML Integration</strong> - Automated threat detection</li>
-                            <li style="margin-bottom: 0.8rem;">🌐 <strong>Multi-source Ingestion</strong> - SIEM, EDR, Firewall integration</li>
-                            <li style="margin-bottom: 0.8rem;">⚡ <strong>Real-time Correlation</strong> - Advanced threat hunting</li>
-                        </ul>
+                        <div style="margin-bottom: 1rem;"><strong>🔄 Kafka Event Streaming</strong><br><span style="color: #94a3b8; font-size: 0.9rem;">Like a super-fast highway for security data - can handle millions of security events per second without getting overwhelmed.</span></div>
+                        
+                        <div style="margin-bottom: 1rem;"><strong>📊 OCSF Standard Format</strong><br><span style="color: #94a3b8; font-size: 0.9rem;">A universal language for security events - like having all security tools speak the same language instead of different dialects.</span></div>
+                        
+                        <div style="margin-bottom: 1rem;"><strong>🤖 Machine Learning</strong><br><span style="color: #94a3b8; font-size: 0.9rem;">AI that learns to spot threats automatically - like training a digital detective to recognize suspicious patterns.</span></div>
+                        
+                        <div style="margin-bottom: 1rem;"><strong>🌐 Multiple Security Tools</strong><br><span style="color: #94a3b8; font-size: 0.9rem;">Connect to different security systems (SIEM, EDR, Firewalls) - like having multiple security cameras all feeding into one monitoring room.</span></div>
+                        
+                        <div style="margin-bottom: 1rem;"><strong>⚡ Smart Threat Hunting</strong><br><span style="color: #94a3b8; font-size: 0.9rem;">Automatically connects related security events to find complex attack patterns that humans might miss.</span></div>
                     </div>
                 </div>
             </div>
 
-            <div class="integration-timeline">
-                <div class="timeline-line"></div>
-                <div class="timeline-point current">V1</div>
-                <div class="timeline-point planned">V2</div>
-                <div class="timeline-point future">V3</div>
+            <div style="margin-top: 2rem;">
+                <div class="card" style="background: rgba(156, 39, 176, 0.1); border-color: #9c27b0;">
+                    <div class="card-title" style="color: #9c27b0;">
+                        🎯 Our Development Roadmap (Project Timeline)
+                    </div>
+                    <div class="card-content">
+                        <div class="integration-timeline">
+                            <div class="timeline-line"></div>
+                            <div class="timeline-point current">Phase 1<br><span style="font-size: 0.7rem;">Current</span></div>
+                            <div class="timeline-point planned">Phase 2<br><span style="font-size: 0.7rem;">In Progress</span></div>
+                            <div class="timeline-point future">Phase 3<br><span style="font-size: 0.7rem;">Future</span></div>
+                        </div>
+                        <div style="margin-top: 1.5rem; text-align: center; color: #cbd5e1;">
+                            <strong>Phase 1:</strong> Basic SOC Dashboard with manual processes<br>
+                            <strong>Phase 2:</strong> Add Kafka streaming and OCSF standardization<br>
+                            <strong>Phase 3:</strong> Full automation with AI/ML threat detection
+                        </div>
+                    </div>
+                </div>
             </div>
-
-            <div class="performance-metrics">
+            
+            <div class="performance-metrics" style="margin-top: 2rem;">
                 <div class="metric">
                     <div class="metric-value">50+</div>
-                    <div class="metric-label">Demo Alerts</div>
+                    <div class="metric-label">Sample Security Alerts</div>
                 </div>
                 <div class="metric">
                     <div class="metric-value">6</div>
-                    <div class="metric-label">Security Sources</div>
+                    <div class="metric-label">Security Tool Types</div>
                 </div>
                 <div class="metric">
                     <div class="metric-value">3</div>
-                    <div class="metric-label">User Roles</div>
+                    <div class="metric-label">User Permission Levels</div>
                 </div>
                 <div class="metric">
-                    <div class="metric-value">5</div>
-                    <div class="metric-label">Incident Types</div>
+                    <div class="metric-value">15</div>
+                    <div class="metric-label">Slides in This Guide</div>
                 </div>
             </div>
         </div>
 
-        <!-- Slide 2: System Architecture Overview -->
+        <!-- Slide 2: Complete Project Architecture Deep Dive -->
         <div class="slide">
             <div class="slide-header">
-                <h1 class="slide-title">System Architecture Overview</h1>
-                <p class="slide-subtitle">Multi-layer architecture with real-time capabilities</p>
+                <h1 class="slide-title">Complete SOC Platform Architecture</h1>
+                <p class="slide-subtitle">Full technical architecture with all components, connections, and data flows</p>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <div class="card" style="background: rgba(59, 130, 246, 0.1); border-color: #3b82f6;">
+                    <div class="card-title" style="color: #3b82f6;">
+                        🏗️ Architecture Overview
+                    </div>
+                    <div class="card-content" style="font-size: 1rem; line-height: 1.7;">
+                        <p><strong>Our SOC platform follows a modern microservices architecture</strong> with clear separation of concerns, event-driven communication, and scalable components. The system is designed to handle high-throughput security event processing with real-time response capabilities.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Frontend Architecture -->
+            <div style="margin-bottom: 2rem;">
+                <div class="card" style="background: rgba(16, 185, 129, 0.1); border-color: #10b981;">
+                    <div class="card-title" style="color: #10b981;">🎨 Frontend Architecture (React-based Dashboard)</div>
+                    <div class="card-content">
+                        <div class="content-grid three-column" style="gap: 1rem;">
+                            <div style="background: rgba(15, 23, 42, 0.6); padding: 1rem; border-radius: 6px;">
+                                <strong style="color: #22c55e;">UI Layer</strong>
+                                <ul style="font-size: 0.85rem; color: #cbd5e1; margin-top: 0.5rem; line-height: 1.4;">
+                                    <li>React 18 with TypeScript</li>
+                                    <li>Tailwind CSS + Shadcn/UI</li>
+                                    <li>Wouter for routing</li>
+                                    <li>Framer Motion animations</li>
+                                    <li>Responsive design patterns</li>
+                                </ul>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.6); padding: 1rem; border-radius: 6px;">
+                                <strong style="color: #3b82f6;">State Management</strong>
+                                <ul style="font-size: 0.85rem; color: #cbd5e1; margin-top: 0.5rem; line-height: 1.4;">
+                                    <li>TanStack React Query</li>
+                                    <li>Server state caching</li>
+                                    <li>Optimistic updates</li>
+                                    <li>Background refetching</li>
+                                    <li>Error boundary handling</li>
+                                </ul>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.6); padding: 1rem; border-radius: 6px;">
+                                <strong style="color: #f59e0b;">Real-time Features</strong>
+                                <ul style="font-size: 0.85rem; color: #cbd5e1; margin-top: 0.5rem; line-height: 1.4;">
+                                    <li>WebSocket client</li>
+                                    <li>Live alert notifications</li>
+                                    <li>Real-time dashboards</li>
+                                    <li>Auto-reconnection</li>
+                                    <li>Connection status indicators</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Backend Architecture -->
+            <div style="margin-bottom: 2rem;">
+                <div class="card" style="background: rgba(168, 85, 247, 0.1); border-color: #a855f7;">
+                    <div class="card-title" style="color: #a855f7;">⚙️ Backend Architecture (Node.js/Express)</div>
+                    <div class="card-content">
+                        <div class="content-grid three-column" style="gap: 1rem;">
+                            <div style="background: rgba(15, 23, 42, 0.6); padding: 1rem; border-radius: 6px;">
+                                <strong style="color: #ec4899;">Web Server</strong>
+                                <ul style="font-size: 0.85rem; color: #cbd5e1; margin-top: 0.5rem; line-height: 1.4;">
+                                    <li>Express.js framework</li>
+                                    <li>TypeScript with ES modules</li>
+                                    <li>RESTful API endpoints</li>
+                                    <li>Middleware stack</li>
+                                    <li>Error handling</li>
+                                </ul>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.6); padding: 1rem; border-radius: 6px;">
+                                <strong style="color: #06b6d4;">Authentication</strong>
+                                <ul style="font-size: 0.85rem; color: #cbd5e1; margin-top: 0.5rem; line-height: 1.4;">
+                                    <li>bcrypt password hashing</li>
+                                    <li>Express sessions</li>
+                                    <li>PostgreSQL session store</li>
+                                    <li>Role-based access (RBAC)</li>
+                                    <li>Session timeout handling</li>
+                                </ul>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.6); padding: 1rem; border-radius: 6px;">
+                                <strong style="color: #84cc16;">WebSocket Server</strong>
+                                <ul style="font-size: 0.85rem; color: #cbd5e1; margin-top: 0.5rem; line-height: 1.4;">
+                                    <li>ws library implementation</li>
+                                    <li>Client connection management</li>
+                                    <li>Event broadcasting</li>
+                                    <li>Heartbeat monitoring</li>
+                                    <li>Graceful disconnection</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Architecture -->
+            <div style="margin-bottom: 2rem;">
+                <div class="card" style="background: rgba(239, 68, 68, 0.1); border-color: #ef4444;">
+                    <div class="card-title" style="color: #ef4444;">🗄️ Data Architecture & Storage</div>
+                    <div class="card-content">
+                        <div class="content-grid three-column" style="gap: 1rem;">
+                            <div style="background: rgba(15, 23, 42, 0.6); padding: 1rem; border-radius: 6px;">
+                                <strong style="color: #3b82f6;">Primary Database</strong>
+                                <ul style="font-size: 0.85rem; color: #cbd5e1; margin-top: 0.5rem; line-height: 1.4;">
+                                    <li>PostgreSQL (Neon-backed)</li>
+                                    <li>Drizzle ORM with TypeScript</li>
+                                    <li>Schema migrations</li>
+                                    <li>Connection pooling</li>
+                                    <li>Automatic backups</li>
+                                </ul>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.6); padding: 1rem; border-radius: 6px;">
+                                <strong style="color: #f59e0b;">Storage Layers</strong>
+                                <ul style="font-size: 0.85rem; color: #cbd5e1; margin-top: 0.5rem; line-height: 1.4;">
+                                    <li>Hot storage (active data)</li>
+                                    <li>Warm storage (recent data)</li>
+                                    <li>Cold storage (archived data)</li>
+                                    <li>Feature vectors for ML</li>
+                                    <li>Audit log retention</li>
+                                </ul>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.6); padding: 1rem; border-radius: 6px;">
+                                <strong style="color: #10b981;">Data Models</strong>
+                                <ul style="font-size: 0.85rem; color: #cbd5e1; margin-top: 0.5rem; line-height: 1.4;">
+                                    <li>Users & roles</li>
+                                    <li>Security sources</li>
+                                    <li>Raw & normalized alerts</li>
+                                    <li>Incidents & actions</li>
+                                    <li>OCSF events</li>
+                                    <li>Analytics & metrics</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Integration Architecture -->
+            <div style="margin-bottom: 2rem;">
+                <div class="card" style="background: rgba(245, 158, 11, 0.1); border-color: #f59e0b;">
+                    <div class="card-title" style="color: #f59e0b;">🔗 Integration Architecture</div>
+                    <div class="card-content">
+                        <div class="content-grid three-column" style="gap: 1rem;">
+                            <div style="background: rgba(15, 23, 42, 0.6); padding: 1rem; border-radius: 6px;">
+                                <strong style="color: #8b5cf6;">Event Streaming</strong>
+                                <ul style="font-size: 0.85rem; color: #cbd5e1; margin-top: 0.5rem; line-height: 1.4;">
+                                    <li>Apache Kafka cluster</li>
+                                    <li>Multiple topic partitions</li>
+                                    <li>Producer/Consumer groups</li>
+                                    <li>Message ordering</li>
+                                    <li>Fault tolerance</li>
+                                </ul>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.6); padding: 1rem; border-radius: 6px;">
+                                <strong style="color: #06b6d4;">Data Processing</strong>
+                                <ul style="font-size: 0.85rem; color: #cbd5e1; margin-top: 0.5rem; line-height: 1.4;">
+                                    <li>OCSF transformation</li>
+                                    <li>Event correlation</li>
+                                    <li>Enrichment pipeline</li>
+                                    <li>ML feature extraction</li>
+                                    <li>Alert normalization</li>
+                                </ul>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.6); padding: 1rem; border-radius: 6px;">
+                                <strong style="color: #ef4444;">External Connectors</strong>
+                                <ul style="font-size: 0.85rem; color: #cbd5e1; margin-top: 0.5rem; line-height: 1.4;">
+                                    <li>SIEM integrations</li>
+                                    <li>EDR connections</li>
+                                    <li>Firewall APIs</li>
+                                    <li>Threat intel feeds</li>
+                                    <li>Cloud security platforms</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Development & Deployment -->
+            <div>
+                <div class="card" style="background: rgba(34, 197, 94, 0.1); border-color: #22c55e;">
+                    <div class="card-title" style="color: #22c55e;">🚀 Development & Deployment Architecture</div>
+                    <div class="card-content">
+                        <div class="content-grid three-column" style="gap: 1rem;">
+                            <div style="background: rgba(15, 23, 42, 0.6); padding: 1rem; border-radius: 6px;">
+                                <strong style="color: #f59e0b;">Build System</strong>
+                                <ul style="font-size: 0.85rem; color: #cbd5e1; margin-top: 0.5rem; line-height: 1.4;">
+                                    <li>Vite for frontend builds</li>
+                                    <li>TypeScript compilation</li>
+                                    <li>Hot module replacement</li>
+                                    <li>Code splitting</li>
+                                    <li>Asset optimization</li>
+                                </ul>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.6); padding: 1rem; border-radius: 6px;">
+                                <strong style="color: #8b5cf6;">Environment</strong>
+                                <ul style="font-size: 0.85rem; color: #cbd5e1; margin-top: 0.5rem; line-height: 1.4;">
+                                    <li>NixOS-based runtime</li>
+                                    <li>Replit deployment</li>
+                                    <li>Environment variables</li>
+                                    <li>Secret management</li>
+                                    <li>Auto-scaling</li>
+                                </ul>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.6); padding: 1rem; border-radius: 6px;">
+                                <strong style="color: #06b6d4;">Monitoring</strong>
+                                <ul style="font-size: 0.85rem; color: #cbd5e1; margin-top: 0.5rem; line-height: 1.4;">
+                                    <li>Application metrics</li>
+                                    <li>Performance monitoring</li>
+                                    <li>Error tracking</li>
+                                    <li>Health checks</li>
+                                    <li>Log aggregation</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 3: System Architecture Overview -->
+        <div class="slide">
+            <div class="slide-header">
+                <h1 class="slide-title">How Our SOC Platform is Built</h1>
+                <p class="slide-subtitle">Understanding the system architecture - think of it like building blocks stacked on top of each other</p>
+            </div>
+            
+            <div style="margin-bottom: 2rem;">
+                <div class="card" style="background: rgba(59, 130, 246, 0.1); border-color: #3b82f6;">
+                    <div class="card-title" style="color: #3b82f6;">
+                        🏢 Architecture = Building Blueprint
+                    </div>
+                    <div class="card-content" style="font-size: 1rem; line-height: 1.7;">
+                        <p><strong>Imagine our SOC platform like a 6-story office building.</strong> Each floor has a specific purpose, and they all work together. Data flows from the bottom (external security tools) up to the top (what you see on your screen), and commands flow back down.</p>
+                    </div>
+                </div>
             </div>
 
             <div class="architecture-diagram">
@@ -1446,6 +1737,66 @@
         function handleSwipe() {
             if (touchEndX < touchStartX - 50) changeSlide(1); // Swipe left - next slide
             if (touchEndX > touchStartX + 50) changeSlide(-1); // Swipe right - previous slide
+        }
+        
+        // Control Flow Animation Functions
+        function startControlFlowDemo() {
+            const steps = ['step1', 'step2', 'step3', 'step4', 'step5', 'step6', 'step7'];
+            
+            // Reset all animations
+            steps.forEach(stepId => {
+                const element = document.getElementById(stepId);
+                if (element) element.classList.remove('active-component');
+            });
+            
+            // Animate each step sequentially
+            steps.forEach((stepId, index) => {
+                setTimeout(() => {
+                    const element = document.getElementById(stepId);
+                    if (element) {
+                        element.classList.add('active-component');
+                        
+                        // Remove previous step's animation
+                        if (index > 0) {
+                            const prevElement = document.getElementById(steps[index - 1]);
+                            if (prevElement) prevElement.classList.remove('active-component');
+                        }
+                    }
+                }, index * 2000); // 2 second delay between each step
+            });
+            
+            // Reset after complete cycle
+            setTimeout(() => {
+                steps.forEach(stepId => {
+                    const element = document.getElementById(stepId);
+                    if (element) element.classList.remove('active-component');
+                });
+            }, steps.length * 2000);
+        }
+        
+        // Layer Control Flow Animation
+        function startLayerControlFlow() {
+            const layers = ['layer1', 'layer2', 'layer3', 'layer4', 'layer5', 'layer6'];
+            
+            // Reset all animations
+            layers.forEach(layerId => {
+                const elements = document.querySelectorAll(`#${layerId} .component`);
+                elements.forEach(el => el.classList.remove('active-component'));
+            });
+            
+            // Animate data flowing up through layers
+            layers.forEach((layerId, index) => {
+                setTimeout(() => {
+                    const elements = document.querySelectorAll(`#${layerId} .component`);
+                    elements.forEach(el => {
+                        el.classList.add('active-component');
+                        // Remove animation after 3 seconds
+                        setTimeout(() => {
+                            el.classList.remove('active-component');
+                        }, 3000);
+                    });
+                }, index * 1500); // 1.5 second delay between layers
+            });
         }
     </script>
 </body>
