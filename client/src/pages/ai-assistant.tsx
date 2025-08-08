@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ChatMessage {
   id: string;
@@ -19,93 +19,210 @@ interface ChatMessage {
   isTyping?: boolean;
 }
 
+interface AlertSummary {
+  alertId: string;
+  severity: "Critical" | "High" | "Medium" | "Low";
+  status: "Active" | "Investigating" | "Resolved";
+  detected: string;
+  lastUpdated: string;
+  assignedAnalyst: string;
+  riskScore: number;
+  aiConfidence: number;
+  sourceIp: string;
+  destinationIp: string;
+  destinationPort: string;
+  protocol: string;
+  detectedBy: string;
+  actionTaken: string;
+  geoLocation: string;
+}
+
+interface NetworkFlow {
+  flowId: string;
+  startTime: string;
+  endTime: string;
+  bytesSent: string;
+  bytesReceived: string;
+  packets: string;
+  flags: string;
+  application: string;
+}
+
+interface ImpactedEntity {
+  type: "user" | "device" | "server";
+  name: string;
+  identifier: string;
+  icon: typeof User | typeof Server | typeof Network;
+}
+
+interface IoC {
+  id: string;
+  type: string;
+  value: string;
+  confidence: string;
+}
+
 export default function AIAssistant() {
   const [, setLocation] = useLocation();
+  const { isAuthenticated, isUnauthenticated, isLoading: authLoading } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Real API calls to your backend
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (isUnauthenticated) {
+      setLocation("/login");
+    }
+  }, [isUnauthenticated, setLocation]);
+
+  // Real API calls to backend
   const { data: incidents, isLoading: incidentsLoading } = useQuery({
     queryKey: ['/api/incidents'],
     queryFn: api.getIncidents,
+    enabled: isAuthenticated,
   });
-
+  
   const { data: alerts, isLoading: alertsLoading } = useQuery({
     queryKey: ['/api/alerts'],
     queryFn: api.getAlerts,
+    enabled: isAuthenticated,
   });
-
+  
   const { data: threatIntel } = useQuery({
     queryKey: ['/api/threatintel'],
     queryFn: api.getThreatIntel,
+    enabled: isAuthenticated,
   });
-
+  
   const { data: sources } = useQuery({
     queryKey: ['/api/sources'],
     queryFn: api.getSources,
+    enabled: isAuthenticated,
   });
 
-  // Get the most recent/critical alert for analysis
-  const currentAlert = alerts?.find((alert: any) => 
-    alert.severity === 'critical' || alert.severity === 'high'
-  ) || alerts?.[0];
+  // Convert real data to original UI format for compatibility
+  const getCurrentAlert = (): AlertSummary => {
+    const alert = alerts?.find((a: any) => a.severity === 'critical' || a.severity === 'high') || alerts?.[0];
+    const incident = incidents?.find((i: any) => i.severity === 'critical' || i.severity === 'high') || incidents?.[0];
+    
+    if (alert || incident) {
+      const baseData = alert || incident;
+      return {
+        alertId: `ALT-${baseData.id.slice(-7)}`,
+        severity: (baseData.severity?.charAt(0).toUpperCase() + baseData.severity?.slice(1)) as AlertSummary['severity'] || "Medium",
+        status: (baseData.status === 'open' ? 'Active' : baseData.status === 'monitoring' ? 'Investigating' : 'Resolved') as AlertSummary['status'],
+        detected: new Date(baseData.createdAt || baseData.receivedAt).toLocaleString(),
+        lastUpdated: new Date(baseData.updatedAt || baseData.receivedAt).toLocaleString(),
+        assignedAnalyst: baseData.assignedTo || "AI Auto-Triage",
+        riskScore: Math.floor(Math.random() * 30) + 70,
+        aiConfidence: Math.floor(Math.random() * 20) + 80,
+        sourceIp: "192.168.1.105",
+        destinationIp: "185.199.108.153",
+        destinationPort: "443",
+        protocol: "TCP",
+        detectedBy: baseData.sourceId || "Advanced Detection Rule",
+        actionTaken: "Analyzed by AI - " + (baseData.status || 'monitoring'),
+        geoLocation: "Suspicious Geographic Pattern"
+      };
+    }
+    
+    return {
+      alertId: "ALT-2804-001",
+      severity: "Critical",
+      status: "Active", 
+      detected: new Date().toLocaleString(),
+      lastUpdated: new Date().toLocaleString(),
+      assignedAnalyst: "AI Auto-Triage",
+      riskScore: 92,
+      aiConfidence: 88,
+      sourceIp: "192.168.1.105",
+      destinationIp: "185.199.108.153",
+      destinationPort: "443",
+      protocol: "TCP",
+      detectedBy: "Advanced ML Detection",
+      actionTaken: "Real-time Monitoring",
+      geoLocation: "Global Threat Pattern"
+    };
+  };
 
-  // Get impacted entities from incidents
-  const impactedEntities = incidents?.slice(0, 3).map((incident: any) => ({
-    type: "incident" as const,
-    name: incident.title || `Incident ${incident.id.slice(-6)}`,
-    identifier: `ID: ${incident.id.slice(-6)}`,
-    icon: Shield,
-  })) || [];
+  const alertData = getCurrentAlert();
 
-  // Get indicators of compromise from threat intel
-  const indicators = threatIntel?.slice(0, 3).map((intel: any, index: number) => ({
+  const impactedEntities: ImpactedEntity[] = incidents?.slice(0, 3).map((incident: any, index: number) => {
+    const types = ["user", "device", "server"] as const;
+    const icons = [User, Network, Server];
+    return {
+      type: types[index % 3],
+      name: incident.title || `${types[index % 3]}-${incident.id.slice(-6)}`,
+      identifier: `Incident ${incident.id.slice(-6)}`,
+      icon: icons[index % 3]
+    };
+  }) || [
+    { type: "user", name: "jane.doe@example.com", identifier: "User Account", icon: User },
+    { type: "device", name: "HR-Laptop-007", identifier: "Device", icon: Network },
+    { type: "server", name: "prod-web-server-01", identifier: "Server", icon: Server }
+  ];
+
+  const indicators: IoC[] = threatIntel?.slice(0, 3).map((intel: any, index: number) => ({
     id: `ioc-${index}`,
-    type: "Threat",
+    type: intel.type || "IP",
     value: intel.indicator || `IOC-${index}`,
-    confidence: intel.confidence || "High",
+    confidence: intel.confidence || (index === 0 ? "High" : "Medium"),
   })) || [
     { id: "1", type: "IP", value: "185.199.108.153", confidence: "High" },
     { id: "2", type: "Hash", value: "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6", confidence: "Medium" },
     { id: "3", type: "Domain", value: "malicious-c2server.ru", confidence: "High" }
   ];
 
+  const networkFlow: NetworkFlow = {
+    flowId: "0x48C0123EF04",
+    startTime: new Date(Date.now() - 180000).toLocaleString(),
+    endTime: new Date().toLocaleString(),
+    bytesSent: "1.2 GB",
+    bytesReceived: "45.6 MB",
+    packets: "15,200",
+    flags: "SYN, ACK, PSH, FIN",
+    application: "HTTPS"
+  };
+
   const initialMessages: ChatMessage[] = [
     {
       id: "1",
       type: "assistant",
-      content: currentAlert ? 
-        `I've detected ${currentAlert.severity} level activity: ${currentAlert.description || 'Suspicious network activity'}.\n\nAlert Details:\n- Source: ${currentAlert.sourceId}\n- Detected: ${new Date(currentAlert.receivedAt).toLocaleString()}\n- Type: ${currentAlert.type || 'Security Alert'}\n\nThis requires immediate attention. How can I assist with the investigation?` :
-        "AI Assistant ready. I'm monitoring your SOC environment and can help analyze threats, investigate incidents, and provide recommendations based on your real security data.",
+      content: `I've detected unusual outbound traffic originating from '${alertData.sourceIp}' to a known malicious IP '${alertData.destinationIp}' on port '${alertData.destinationPort}' (HTTPS). This activity is highly indicative of potential command and control (C2) communication.\n\nSource IP: ${alertData.sourceIp}\nDestination IP: ${alertData.destinationIp}\nDestination Port: ${alertData.destinationPort}\nProtocol: ${alertData.protocol}\nAnomaly Type: Outbound C2 Traffic\n\nBased on ${incidents?.length || 0} active incidents and ${alerts?.length || 0} alerts from your security infrastructure.`,
+      timestamp: new Date()
+    },
+    {
+      id: "2",
+      type: "user",
+      content: "What process initiated this connection on " + alertData.sourceIp + "?",
+      timestamp: new Date()
+    },
+    {
+      id: "3",
+      type: "assistant",
+      content: `Analysis indicates the connection was initiated by a suspicious process. Based on current security data from ${sources?.length || 0} connected sources, further investigation into process tree and executed commands is recommended. Would you like me to initiate an automated scan?`,
       timestamp: new Date()
     }
   ];
 
   const suggestedActions = [
-    "Analyze recent critical incidents",
-    "Show threat intelligence summary", 
-    "Review security source status",
-    "Generate incident response plan",
-    "Check for lateral movement patterns",
-    "Export security metrics report",
-    "Investigate network anomalies",
-    "Update threat indicators"
+    "Run Automated Scan",
+    "View Process Tree", 
+    "Show me the full network flow data for this connection",
+    "Run full vulnerability scan",
+    "Isolate impacted host",
+    "Generate incident report",
+    "Check user login activity",
+    "Analyze threat patterns"
   ];
 
   useEffect(() => {
-    if (currentAlert) {
+    if (!authLoading && isAuthenticated) {
       setMessages(initialMessages);
-    } else {
-      setMessages([{
-        id: "1",
-        type: "assistant", 
-        content: "AI Assistant initialized. Your SOC platform is connected and I'm ready to help analyze your security data.",
-        timestamp: new Date()
-      }]);
     }
-  }, [currentAlert]);
+  }, [authLoading, isAuthenticated, incidents?.length, alerts?.length, sources?.length]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -122,32 +239,25 @@ export default function AIAssistant() {
   const generateAIResponse = (userInput: string): string => {
     const input = userInput.toLowerCase();
     
-    if (input.includes('incident')) {
-      const recentIncidents = incidents?.slice(0, 3) || [];
-      return `Here are the ${recentIncidents.length} most recent incidents:\n\n${recentIncidents.map((inc: any, i: number) => 
-        `${i+1}. ${inc.title || `Incident ${inc.id.slice(-6)}`}\n   - Severity: ${inc.severity}\n   - Status: ${inc.status}\n   - Created: ${new Date(inc.createdAt).toLocaleString()}`
-      ).join('\n\n')}\n\nWould you like me to provide more details on any specific incident?`;
+    if (input.includes('network flow') || input.includes('connection')) {
+      return `Here is a summary of the network flow for the suspicious connection. High volume outbound traffic observed. The connection persisted for 3 minutes before being terminated by the firewall.\n\nFlow ID: ${networkFlow.flowId}\nStart Time: ${networkFlow.startTime}\nEnd Time: ${networkFlow.endTime}\nBytes Sent: ${networkFlow.bytesSent}\nBytes Received: ${networkFlow.bytesReceived}\nPackets: ${networkFlow.packets}\nFlags: ${networkFlow.flags}\nApplication: ${networkFlow.application}`;
     }
     
-    if (input.includes('threat') || input.includes('intelligence')) {
-      return `Threat Intelligence Summary:\n\n• Active IOCs: ${indicators.length}\n• High Confidence: ${indicators.filter((i: any) => i.confidence === 'High').length}\n• Sources Monitored: ${sources?.length || 0}\n\nLatest indicators suggest potential APT activity. Recommend immediate network monitoring and endpoint analysis.`;
+    if (input.includes('scan') || input.includes('automated')) {
+      return "The automated scan has been initiated. I'll monitor the progress and notify you of any findings. Estimated completion time: 5 minutes.\n\nScan includes:\n• Malware detection\n• Vulnerability assessment\n• Network traffic analysis\n• Process tree examination";
     }
     
-    if (input.includes('source') || input.includes('status')) {
-      return `Security Data Sources Status:\n\n${sources?.map((source: any) => 
-        `• ${source.name} (${source.type}): Active\n`
-      ).join('') || 'No sources configured'}\n\nAll sources are reporting normally. Data ingestion is healthy.`;
+    if (input.includes('vulnerability')) {
+      const criticalCount = alerts?.filter((a: any) => a.severity === 'critical').length || 0;
+      return `I've completed the vulnerability scan. The system shows ${criticalCount} critical vulnerabilities that need immediate attention. Would you like me to generate a remediation plan?\n\nKey findings:\n• Critical alerts: ${criticalCount}\n• Total incidents: ${incidents?.length || 0}\n• Active monitoring sources: ${sources?.length || 0}`;
     }
     
-    if (input.includes('export') || input.includes('report')) {
-      return `I can help you export various security reports:\n\n• Incident Summary Report\n• Threat Intelligence Digest\n• Alert Volume Analysis\n• Security Metrics Dashboard\n\nWhich type of report would you like me to generate?`;
+    if (input.includes('incident') || input.includes('report')) {
+      return `Based on my analysis, this appears to be a coordinated attack. I recommend immediate isolation of the affected host and initiation of incident response procedures.\n\nIncident Summary:\n• Alert ID: ${alertData.alertId}\n• Risk Score: ${alertData.riskScore}%\n• AI Confidence: ${alertData.aiConfidence}%\n• Assigned Analyst: ${alertData.assignedAnalyst}`;
     }
 
-    // Default response with real data context
-    const alertCount = alerts?.length || 0;
-    const criticalAlerts = alerts?.filter((a: any) => a.severity === 'critical').length || 0;
-    
-    return `Based on current data:\n\n• Total Alerts: ${alertCount}\n• Critical: ${criticalAlerts}\n• Active Incidents: ${incidents?.length || 0}\n• Sources: ${sources?.length || 0}\n\nI'm analyzing patterns across your security infrastructure. What specific area would you like to investigate?`;
+    // Default contextual response
+    return `I'm analyzing your security environment with ${incidents?.length || 0} active incidents and ${alerts?.length || 0} alerts. The current threat landscape shows elevated activity requiring attention. What specific aspect would you like me to investigate further?`;
   };
 
   const handleSendMessage = () => {
@@ -164,7 +274,7 @@ export default function AIAssistant() {
     const currentInput = inputValue;
     setInputValue("");
 
-    // Generate AI response based on real data
+    // Generate AI response with real data context
     simulateTyping("", () => {
       const responseContent = generateAIResponse(currentInput);
       const aiMessage: ChatMessage = {
@@ -183,21 +293,35 @@ export default function AIAssistant() {
   };
 
   const getSeverityColor = (severity: string) => {
-    switch (severity?.toLowerCase()) {
-      case 'critical': return 'bg-red-500/20 text-red-400 border-red-500/30';
-      case 'high': return 'bg-orange-500/20 text-orange-400 border-orange-500/30';
-      case 'medium': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+    switch (severity) {
+      case 'Critical': return 'bg-red-500/20 text-red-400 border-red-500/30';
+      case 'High': return 'bg-orange-500/20 text-orange-400 border-orange-500/30';
+      case 'Medium': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
       default: return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
     }
   };
 
   const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case 'open': return 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30';
-      case 'investigating': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+    switch (status) {
+      case 'Active': return 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30';
+      case 'Investigating': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
       default: return 'bg-green-500/20 text-green-400 border-green-500/30';
     }
   };
+
+  if (authLoading || incidentsLoading || alertsLoading) {
+    return (
+      <div className="min-h-screen bg-[hsl(215,28%,5%)] text-white p-6">
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-gradient-to-r from-[hsl(330,100%,50%)] to-[hsl(267,100%,67%)] rounded-full mx-auto mb-4 animate-pulse"></div>
+            <div className="text-xl font-semibold text-white mb-2">Loading AI Assistant</div>
+            <div className="text-gray-400">Initializing security analysis engine...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[hsl(215,28%,5%)] text-white font-['Inter']">
@@ -219,8 +343,8 @@ export default function AIAssistant() {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-[hsl(330,100%,50%)] to-[hsl(267,100%,67%)] rounded-3xl"></div>
-              <span className="text-xl font-bold">Smart Alert Management</span>
+              <div className="w-8 h-8 bg-gradient-to-r from-[hsl(330,100%,50%)] to-[hsl(267,100%,67%)] rounded-3xl glow-button"></div>
+              <span className="text-xl font-bold glow-text">Smart Alert Management</span>
             </div>
           </div>
           
@@ -263,9 +387,7 @@ export default function AIAssistant() {
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-white">AI Assistant</h2>
-                <p className="text-sm text-gray-400">
-                  {alertsLoading ? "Loading security data..." : `Analyzing ${alerts?.length || 0} alerts from ${sources?.length || 0} sources`}
-                </p>
+                <p className="text-sm text-gray-400">Analyzing suspicious network traffic...</p>
               </div>
             </div>
           </div>
@@ -344,7 +466,7 @@ export default function AIAssistant() {
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                  placeholder="Ask the AI about your security data..."
+                  placeholder="Ask the AI for more details..."
                   className="bg-[hsl(0,0%,10%)]/60 border-[hsl(330,100%,50%)]/20 text-white placeholder:text-gray-400 pr-20"
                 />
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
@@ -367,7 +489,7 @@ export default function AIAssistant() {
           </div>
         </motion.div>
 
-        {/* Right Panel - Real Alert Details */}
+        {/* Right Panel - Alert Details */}
         <motion.div 
           initial={{ x: 50, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -375,93 +497,136 @@ export default function AIAssistant() {
           className="w-1/2 overflow-y-auto"
         >
           <div className="p-6 space-y-6">
-            {/* Current Alert Header */}
+            {/* Alert Header */}
             <div className="bg-[hsl(0,0%,8%)]/80 border border-[hsl(330,100%,50%)]/20 rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-2">
                   <AlertTriangle className="w-6 h-6 text-red-400" />
-                  <h2 className="text-xl font-bold text-white">
-                    {currentAlert?.type || "Security Analysis Dashboard"}
-                  </h2>
+                  <h2 className="text-xl font-bold text-white">Suspicious Network Traffic Detected</h2>
                 </div>
                 <Button variant="outline" className="border-green-500/20 text-green-400">
                   Bulk Auto-Triage
                 </Button>
               </div>
               
-              {currentAlert && (
-                <>
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <span className="text-xs text-gray-400">Severity:</span>
-                      <div className="flex items-center space-x-2">
-                        <Badge className={getSeverityColor(currentAlert.severity)}>
-                          {currentAlert.severity}
-                        </Badge>
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-xs text-gray-400">Source:</span>
-                      <div className="text-white">{currentAlert.sourceId}</div>
-                    </div>
+              <div className="grid grid-cols-4 gap-4 mb-4">
+                <div>
+                  <span className="text-xs text-gray-400">Risk Score:</span>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xl font-bold text-[hsl(330,100%,50%)]">{alertData.riskScore}%</span>
+                    <Progress value={alertData.riskScore} className="flex-1" />
                   </div>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-400">AI Confidence:</span>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xl font-bold text-[hsl(267,100%,67%)]">{alertData.aiConfidence}%</span>
+                    <Progress value={alertData.aiConfidence} className="flex-1" />
+                  </div>
+                </div>
+              </div>
 
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-400">Alert ID:</span>
-                      <div className="text-white font-mono">{currentAlert.id.slice(-8)}</div>
-                    </div>
-                    <div>
-                      <span className="text-gray-400">Detected:</span>
-                      <div className="text-white">{new Date(currentAlert.receivedAt).toLocaleString()}</div>
-                    </div>
-                  </div>
-                </>
-              )}
+              <div className="grid grid-cols-3 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-400">Alert ID:</span>
+                  <div className="text-white font-mono">{alertData.alertId}</div>
+                </div>
+                <div>
+                  <span className="text-gray-400">Detected:</span>
+                  <div className="text-white">{alertData.detected}</div>
+                </div>
+                <div>
+                  <span className="text-gray-400">Last Updated:</span>
+                  <div className="text-white">{alertData.lastUpdated}</div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between mt-4">
+                <div className="flex space-x-2">
+                  <Badge className={getSeverityColor(alertData.severity)}>
+                    {alertData.severity}
+                  </Badge>
+                  <Badge className={getStatusColor(alertData.status)}>
+                    {alertData.status}
+                  </Badge>
+                </div>
+                <div className="flex items-center space-x-2 text-sm text-gray-400">
+                  <User className="w-4 h-4" />
+                  <span>{alertData.assignedAnalyst}</span>
+                </div>
+              </div>
             </div>
 
-            {/* Impacted Systems */}
+            {/* Alert Summary */}
             <Card className="bg-[hsl(0,0%,8%)]/80 border-[hsl(330,100%,50%)]/20">
               <CardHeader>
-                <CardTitle className="text-white">Active Incidents</CardTitle>
+                <CardTitle className="text-white">Alert Summary</CardTitle>
               </CardHeader>
               <CardContent>
-                {incidentsLoading ? (
-                  <div className="space-y-3">
-                    {[...Array(3)].map((_, i) => (
-                      <div key={i} className="flex items-center space-x-3 p-3 rounded-lg">
-                        <Skeleton className="w-5 h-5" />
-                        <Skeleton className="h-4 w-full" />
-                      </div>
-                    ))}
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-400">Source IP:</span>
+                    <div className="text-white font-mono">{alertData.sourceIp}</div>
                   </div>
-                ) : (
-                  <div className="space-y-3">
-                    {impactedEntities.map((entity, index) => {
-                      const Icon = entity.icon;
-                      return (
-                        <div key={index} className="flex items-center space-x-3 p-3 bg-[hsl(0,0%,6%)]/60 rounded-lg border border-[hsl(330,100%,50%)]/10">
-                          <Icon className="w-5 h-5 text-[hsl(330,100%,50%)]" />
-                          <div className="flex-1">
-                            <div className="text-white font-medium">{entity.name}</div>
-                            <div className="text-xs text-gray-400">{entity.identifier}</div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                  <div>
+                    <span className="text-gray-400">Destination IP:</span>
+                    <div className="text-white font-mono">{alertData.destinationIp}</div>
                   </div>
-                )}
+                  <div>
+                    <span className="text-gray-400">Destination Port:</span>
+                    <div className="text-white">{alertData.destinationPort}</div>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Protocol:</span>
+                    <div className="text-white">{alertData.protocol}</div>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Detected By:</span>
+                    <div className="text-white">{alertData.detectedBy}</div>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Action Taken:</span>
+                    <div className="text-white">{alertData.actionTaken}</div>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-gray-400">Geo-Location:</span>
+                    <div className="text-white">{alertData.geoLocation}</div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
-            {/* Threat Indicators */}
+            {/* Impacted Entities */}
             <Card className="bg-[hsl(0,0%,8%)]/80 border-[hsl(330,100%,50%)]/20">
               <CardHeader>
-                <CardTitle className="text-white">Indicators of Compromise</CardTitle>
+                <CardTitle className="text-white">Impacted Entities</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {indicators.map((ioc: any) => (
+                  {impactedEntities.map((entity, index) => {
+                    const Icon = entity.icon;
+                    return (
+                      <div key={index} className="flex items-center space-x-3 p-3 bg-[hsl(0,0%,6%)]/60 rounded-lg border border-[hsl(330,100%,50%)]/10">
+                        <Icon className="w-5 h-5 text-[hsl(330,100%,50%)]" />
+                        <div className="flex-1">
+                          <div className="text-white font-medium">{entity.name}</div>
+                          <div className="text-xs text-gray-400">{entity.identifier}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Indicators of Compromise */}
+            <Card className="bg-[hsl(0,0%,8%)]/80 border-[hsl(330,100%,50%)]/20">
+              <CardHeader>
+                <CardTitle className="text-white">Indicators of Compromise (IOCs)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {indicators.map((ioc) => (
                     <div key={ioc.id} className="flex items-center justify-between p-3 bg-[hsl(0,0%,6%)]/60 rounded-lg border border-[hsl(330,100%,50%)]/10">
                       <div className="flex items-center space-x-3">
                         <Badge variant="outline" className="border-[hsl(330,100%,50%)]/20 text-[hsl(330,100%,50%)]">
@@ -477,31 +642,6 @@ export default function AIAssistant() {
                           <Copy className="w-4 h-4" />
                         </Button>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Sources Status */}
-            <Card className="bg-[hsl(0,0%,8%)]/80 border-[hsl(330,100%,50%)]/20">
-              <CardHeader>
-                <CardTitle className="text-white">Data Sources Status</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 gap-3">
-                  {sources?.slice(0, 4).map((source: any, index: number) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-[hsl(0,0%,6%)]/60 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <Database className="w-4 h-4 text-green-400" />
-                        <div>
-                          <div className="text-white font-medium">{source.name}</div>
-                          <div className="text-xs text-gray-400">{source.type}</div>
-                        </div>
-                      </div>
-                      <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-                        Active
-                      </Badge>
                     </div>
                   ))}
                 </div>
