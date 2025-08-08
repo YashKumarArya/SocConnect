@@ -12,10 +12,9 @@ gsap.registerPlugin(TextPlugin);
 
 interface HeaderProps {
   onRequestDemo: () => void;
-  onLogin?: () => void;
 }
 
-export default function Header({ onRequestDemo, onLogin }: HeaderProps) {
+export default function Header({ onRequestDemo }: HeaderProps) {
   const [, setLocation] = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showDemoRequest, setShowDemoRequest] = useState(false);
@@ -114,7 +113,7 @@ export default function Header({ onRequestDemo, onLogin }: HeaderProps) {
           <Button 
             variant="ghost"
             className="text-[hsl(330,100%,50%)] hover:bg-[hsl(330,100%,50%)]/10 transition-all duration-300"
-            onClick={() => onLogin ? onLogin() : setShowLoginDialog(true)}
+            onClick={() => setShowLoginDialog(true)}
           >
             Login
           </Button>
@@ -182,7 +181,7 @@ export default function Header({ onRequestDemo, onLogin }: HeaderProps) {
                 variant="outline"
                 size="lg" 
                 className="w-full border-[hsl(330,100%,50%)]/30 text-[hsl(330,100%,50%)] hover:bg-[hsl(330,100%,50%)]/10"
-                onClick={() => onLogin ? onLogin() : setShowLoginDialog(true)}
+                onClick={() => setShowLoginDialog(true)}
               >
                 Login
               </Button>

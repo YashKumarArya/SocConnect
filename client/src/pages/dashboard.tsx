@@ -167,11 +167,11 @@ export default function Dashboard() {
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
               <span className="text-sm text-gray-400">Backend Connected</span>
             </div>
-            <Button variant="ghost" size="icon" className="text-gray-300 hover:text-[hsl(330,100%,50%)] transition-colors relative" onClick={() => alert('Notifications: 3 new critical alerts')}>
+            <Button variant="ghost" size="icon" className="text-gray-300 hover:text-[hsl(330,100%,50%)] transition-colors relative">
               <Bell className="w-5 h-5" />
               <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
             </Button>
-            <Button variant="ghost" size="icon" className="text-gray-300 hover:text-[hsl(330,100%,50%)] transition-colors" onClick={() => alert('Settings panel coming soon')}>
+            <Button variant="ghost" size="icon" className="text-gray-300 hover:text-[hsl(330,100%,50%)] transition-colors">
               <Settings className="w-5 h-5" />
             </Button>
             <div className="flex items-center space-x-2">

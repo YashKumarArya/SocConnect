@@ -168,7 +168,7 @@ export default function Investigation() {
           </div>
 
           <div className="flex items-center space-x-4">
-            <Button variant="outline" size="sm" className="border-[hsl(330,100%,50%)]/20 text-[hsl(330,100%,50%)]" onClick={() => alert('Investigation report downloaded')}>
+            <Button variant="outline" size="sm" className="border-[hsl(330,100%,50%)]/20 text-[hsl(330,100%,50%)]">
               <Download className="w-4 h-4 mr-2" />
               Export Report
             </Button>
@@ -213,11 +213,11 @@ export default function Investigation() {
             </div>
             {criticalIncident && (
               <div className="flex space-x-2">
-                <Button variant="outline" className="border-green-500/20 text-green-400 hover:bg-green-500/10" onClick={() => alert('Incident marked as resolved')}>
+                <Button variant="outline" className="border-green-500/20 text-green-400 hover:bg-green-500/10">
                   <CheckCircle className="w-4 h-4 mr-2" />
                   Mark Resolved
                 </Button>
-                <Button variant="outline" className="border-blue-500/20 text-blue-400 hover:bg-blue-500/10" onClick={() => alert('Opening deep forensic analysis')}>
+                <Button variant="outline" className="border-blue-500/20 text-blue-400 hover:bg-blue-500/10">
                   <Eye className="w-4 h-4 mr-2" />
                   Deep Dive
                 </Button>
@@ -313,11 +313,11 @@ export default function Investigation() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 gap-2">
-                  <Button variant="outline" size="sm" className="border-green-500/20 text-green-400 hover:bg-green-500/10" onClick={() => alert('Detailed investigation report generated')}>
+                  <Button variant="outline" size="sm" className="border-green-500/20 text-green-400 hover:bg-green-500/10">
                     <FileText className="w-4 h-4 mr-2" />
                     Generate Report
                   </Button>
-                  <Button variant="outline" size="sm" className="border-blue-500/20 text-blue-400 hover:bg-blue-500/10" onClick={() => alert('All systems operational - no issues detected')}>
+                  <Button variant="outline" size="sm" className="border-blue-500/20 text-blue-400 hover:bg-blue-500/10">
                     <Server className="w-4 h-4 mr-2" />
                     Check Systems
                   </Button>

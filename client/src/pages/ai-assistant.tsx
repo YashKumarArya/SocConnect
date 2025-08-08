@@ -225,7 +225,7 @@ export default function AIAssistant() {
           </div>
           
           <div className="flex items-center space-x-4">
-            <Button variant="outline" size="sm" className="border-[hsl(330,100%,50%)]/20 text-[hsl(330,100%,50%)]" onClick={() => alert('AI analysis report exported successfully')}>
+            <Button variant="outline" size="sm" className="border-[hsl(330,100%,50%)]/20 text-[hsl(330,100%,50%)]">
               <Download className="w-4 h-4 mr-2" />
               Export Report
             </Button>
@@ -384,7 +384,7 @@ export default function AIAssistant() {
                     {currentAlert?.type || "Security Analysis Dashboard"}
                   </h2>
                 </div>
-                <Button variant="outline" className="border-green-500/20 text-green-400" onClick={() => alert(`Auto-triaging ${alerts?.length || 0} alerts using AI...`)}>
+                <Button variant="outline" className="border-green-500/20 text-green-400">
                   Bulk Auto-Triage
                 </Button>
               </div>
@@ -473,7 +473,7 @@ export default function AIAssistant() {
                         <Badge className={ioc.confidence === 'High' ? 'bg-red-500/20 text-red-400' : 'bg-yellow-500/20 text-yellow-400'}>
                           {ioc.confidence}
                         </Badge>
-                        <Button variant="ghost" size="sm" onClick={() => {navigator.clipboard.writeText(ioc.value); alert('IoC copied to clipboard');}}>
+                        <Button variant="ghost" size="sm">
                           <Copy className="w-4 h-4" />
                         </Button>
                       </div>
