@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
 import { apiRequest } from "@/lib/queryClient";
+import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -89,15 +90,29 @@ export default function SignupDialog({ open, onOpenChange }: SignupDialogProps) 
 
   const submitSignup = useMutation({
     mutationFn: async (data: SignupForm) => {
-      const { confirmPassword, ...submitData } = data;
-      return await apiRequest("POST", "/api/signup", submitData);
+      const { confirmPassword, name, ...otherData } = data;
+      
+      // Split name into firstName and lastName
+      const nameParts = name.trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+      
+      const registrationData = {
+        email: otherData.email,
+        password: otherData.password,
+        confirmPassword: otherData.password, // Backend expects this field
+        firstName,
+        lastName
+      };
+      
+      return await api.register(registrationData);
     },
     onSuccess: () => {
       toast({
         title: "Account created successfully!",
-        description: "Welcome to Prophet Security. You can now access your dashboard.",
+        description: "Welcome to SOC Dashboard. You can now access your dashboard.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       form.reset();
       onOpenChange(false);
     },

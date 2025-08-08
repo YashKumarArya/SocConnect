@@ -188,7 +188,7 @@ export const api = {
   login: (credentials: { email: string; password: string }) =>
     apiRequest('POST', '/api/auth/login', credentials).then(res => res.json()),
     
-  register: (userData: { email: string; password: string; firstName?: string; lastName?: string }) =>
+  register: (userData: { email: string; password: string; confirmPassword: string; firstName?: string; lastName?: string }) =>
     apiRequest('POST', '/api/auth/register', userData),
     
   logout: () =>
