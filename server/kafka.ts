@@ -54,16 +54,35 @@ class KafkaService {
   private producer: Producer;
   private consumer: Consumer;
   private clients: Set<WebSocket> = new Set();
+  private batchBuffer: SecurityEvent[] = [];
+  private batchSize: number = 100;
+  private batchTimeout: number = 5000;
+  private processingStats = {
+    eventsPerSecond: 0,
+    totalProcessed: 0,
+    lastProcessedTime: Date.now()
+  };
 
   constructor() {
     this.producer = kafka.producer({
       transactionTimeout: 30000,
+      maxInFlightRequests: 1,
+      idempotent: true,
+      compression: 'gzip',
+      batch: {
+        size: 16384,
+        lingerMs: 10
+      }
     });
     
     this.consumer = kafka.consumer({ 
       groupId: 'soc-dashboard-group',
       sessionTimeout: 30000,
       heartbeatInterval: 3000,
+      maxBytes: 1024 * 1024, // 1MB per fetch
+      maxBytesPerPartition: 256 * 1024, // 256KB per partition
+      fetchMin: 1,
+      fetchMax: 1024 * 1024
     });
   }
 
@@ -84,6 +103,9 @@ class KafkaService {
       // Start consuming events
       this.startEventConsumer();
       
+      // Start batch flush timer for high-volume processing
+      this.startBatchTimer();
+      
     } catch (error) {
       console.error('❌ Failed to initialize Kafka service:', error);
       // Graceful fallback - continue without Kafka for development
@@ -91,36 +113,97 @@ class KafkaService {
     }
   }
 
+  // Timer-based batch flushing for consistent throughput
+  private startBatchTimer() {
+    setInterval(async () => {
+      if (this.batchBuffer.length > 0) {
+        await this.flushBatch();
+      }
+    }, this.batchTimeout);
+  }
+
   // Producer: Ingest security events from various sources
   async publishSecurityEvent(event: SecurityEvent) {
     try {
-      // Publish original event
-      await this.producer.send({
-        topic: KAFKA_TOPICS.SECURITY_ALERTS,
-        messages: [
-          {
-            key: event.id,
-            value: JSON.stringify(event),
-            timestamp: new Date(event.timestamp).getTime().toString(),
-            headers: {
-              source: event.source,
-              severity: event.severity,
-              type: event.type,
-              format: 'custom'
-            }
-          }
-        ]
-      });
+      // For high-volume flows, use batch processing
+      this.batchBuffer.push(event);
+      
+      if (this.batchBuffer.length >= this.batchSize) {
+        await this.flushBatch();
+      }
 
-      // Transform to OCSF and publish to OCSF topic
-      await this.publishOCSFEvent(event);
+      // Update processing stats
+      this.updateProcessingStats();
 
-      console.log(`📨 Published security event: ${event.id} from ${event.source}`);
+      console.log(`📨 Queued security event: ${event.id} from ${event.source} (batch: ${this.batchBuffer.length}/${this.batchSize})`);
     } catch (error) {
-      console.error('❌ Failed to publish security event:', error);
+      console.error('❌ Failed to queue security event:', error);
       // Fallback: store directly in database
       await this.fallbackStoreEvent(event);
     }
+  }
+
+  // Batch processing for high-volume data flows
+  private async flushBatch() {
+    if (this.batchBuffer.length === 0) return;
+
+    const batch = [...this.batchBuffer];
+    this.batchBuffer = [];
+
+    try {
+      // Prepare batch messages
+      const messages = batch.map(event => ({
+        key: event.id,
+        value: JSON.stringify(event),
+        timestamp: new Date(event.timestamp).getTime().toString(),
+        headers: {
+          source: event.source,
+          severity: event.severity,
+          type: event.type,
+          format: 'custom'
+        }
+      }));
+
+      // Send batch to Kafka
+      await this.producer.send({
+        topic: KAFKA_TOPICS.SECURITY_ALERTS,
+        messages
+      });
+
+      // Process OCSF transformations in parallel
+      const ocsfPromises = batch.map(event => this.publishOCSFEvent(event));
+      await Promise.allSettled(ocsfPromises);
+
+      console.log(`🚀 Flushed batch: ${batch.length} events (${this.processingStats.eventsPerSecond.toFixed(1)} events/sec)`);
+    } catch (error) {
+      console.error('❌ Batch processing failed:', error);
+      // Fallback: store events directly
+      for (const event of batch) {
+        await this.fallbackStoreEvent(event);
+      }
+    }
+  }
+
+  // Processing statistics for monitoring
+  private updateProcessingStats() {
+    const now = Date.now();
+    const timeDiff = (now - this.processingStats.lastProcessedTime) / 1000;
+    
+    if (timeDiff >= 1) {
+      this.processingStats.eventsPerSecond = this.processingStats.totalProcessed / timeDiff;
+      this.processingStats.lastProcessedTime = now;
+    }
+    
+    this.processingStats.totalProcessed++;
+  }
+
+  // Get current processing statistics
+  getProcessingStats() {
+    return {
+      ...this.processingStats,
+      batchQueueSize: this.batchBuffer.length,
+      connectedClients: this.clients.size
+    };
   }
 
   // Producer: Publish OCSF-formatted events
@@ -167,14 +250,20 @@ class KafkaService {
     }
   }
 
-  // Consumer: Process events and update dashboard
+  // Consumer: Process events and update dashboard with backpressure handling
   private async startEventConsumer() {
     await this.consumer.run({
+      partitionsConsumedConcurrently: 1, // Process partitions sequentially for backpressure control
       eachMessage: async ({ topic, partition, message, heartbeat }) => {
         try {
           if (!message.value) return;
 
           const format = message.headers?.format?.toString() || 'custom';
+          
+          // Backpressure check: slow down if too many clients or high processing load
+          if (this.clients.size > 50 || this.processingStats.eventsPerSecond > 1000) {
+            await new Promise(resolve => setTimeout(resolve, 10)); // Small delay
+          }
           
           if (format === 'ocsf') {
             // Process OCSF event
@@ -183,7 +272,9 @@ class KafkaService {
             
             // Convert to custom format for WebSocket broadcast
             const customEvent = OCSFTransformationService.transformFromOCSF(ocsfEvent);
-            this.broadcastToClients({
+            
+            // Throttled broadcast for high volume
+            this.throttledBroadcast({
               type: 'security_event',
               data: customEvent,
               ocsf: ocsfEvent
@@ -207,8 +298,8 @@ class KafkaService {
                 console.log(`📥 Received event from topic: ${topic}`);
             }
 
-            // Send to connected WebSocket clients for real-time updates
-            this.broadcastToClients({
+            // Throttled broadcast for high volume
+            this.throttledBroadcast({
               type: 'security_event',
               data: event
             });
@@ -222,6 +313,30 @@ class KafkaService {
         }
       }
     });
+  }
+
+  // Throttled broadcast to prevent WebSocket overload
+  private lastBroadcastTime = 0;
+  private broadcastThrottleMs = 100;
+  private pendingBroadcasts: any[] = [];
+
+  private throttledBroadcast(message: any) {
+    this.pendingBroadcasts.push(message);
+    
+    const now = Date.now();
+    if (now - this.lastBroadcastTime >= this.broadcastThrottleMs) {
+      // Send latest events (max 10 per batch)
+      const eventsToSend = this.pendingBroadcasts.slice(-10);
+      this.pendingBroadcasts = [];
+      
+      this.broadcastToClients({
+        type: 'security_events_batch',
+        data: eventsToSend,
+        count: eventsToSend.length
+      });
+      
+      this.lastBroadcastTime = now;
+    }
   }
 
   // Process OCSF events

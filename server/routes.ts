@@ -818,6 +818,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Processing statistics endpoint for monitoring high-volume flows
+  app.get('/api/kafka/stats', async (req, res) => {
+    try {
+      const stats = kafkaService.getProcessingStats();
+      res.json({
+        processing: stats,
+        recommendations: {
+          status: stats.eventsPerSecond > 500 ? 'high_volume' : 'normal',
+          batchOptimization: stats.batchQueueSize > 50 ? 'enabled' : 'standard',
+          clientLoad: stats.connectedClients > 20 ? 'high' : 'normal'
+        }
+      });
+    } catch (error) {
+      console.error('Stats error:', error);
+      res.status(500).json({ error: 'Failed to get processing stats' });
+    }
+  });
+
   // === OCSF (Open Cybersecurity Schema Framework) Endpoints ===
   
   // Get all OCSF events
