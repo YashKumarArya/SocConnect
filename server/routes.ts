@@ -24,10 +24,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     resave: false,
     saveUninitialized: false,
     name: 'soc.sid', // Custom session name
+    rolling: true, // Reset expiry on activity
     cookie: {
       httpOnly: true,
       secure: false, // Set to true in production with HTTPS
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours (shorter for development)
       sameSite: 'lax' // Allow cross-origin requests
     },
   }));
@@ -86,15 +87,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Store user session
       req.session.userId = user.id;
-      console.log('Setting session userId:', user.id, 'Session ID:', req.sessionID);
+      console.log('🔑 Setting session userId:', user.id, 'Session ID:', req.sessionID);
       
       // Save session explicitly
       req.session.save((err) => {
         if (err) {
-          console.error('Session save error:', err);
+          console.error('❌ Session save error:', err);
           return res.status(500).json({ error: 'Failed to save session' });
         }
-        console.log('Session saved successfully');
+        console.log('✅ Session saved successfully for user:', user.email);
         res.json(user);
       });
     } catch (error) {
@@ -111,14 +112,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error('Session destruction error:', err);
         return res.status(500).json({ error: 'Logout failed' });
       }
-      res.clearCookie('connect.sid'); // Default session cookie name
+      res.clearCookie('soc.sid'); // Custom session cookie name
       res.json({ message: 'Logged out successfully' });
     });
   });
 
   app.get('/api/auth/user', async (req: any, res) => {
     try {
-      console.log('Auth user check - Session ID:', req.sessionID, 'UserId in session:', req.session.userId);
+      console.log('🔍 Auth user check - Session ID:', req.sessionID, 'UserId in session:', req.session.userId, 'Session data:', JSON.stringify(req.session));
       
       if (!req.session.userId) {
         return res.status(401).json({ message: "Unauthorized - No session" });
