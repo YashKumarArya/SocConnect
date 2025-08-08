@@ -126,7 +126,7 @@ export default function Dashboard() {
   
   const { data: alertDatasetStats } = useQuery({
     queryKey: ['/api/alerts/dataset-stats'],
-    queryFn: api.getAlertDatasetStats,
+    queryFn: api.getDatasetStats,
     enabled: isAuthenticated,
   });
   
@@ -246,9 +246,9 @@ export default function Dashboard() {
   ];
 
   const mockAutomationMetrics: AutomationMetrics = {
-    tpHandled: alertDatasetStats?.totalAlerts ? Math.floor(alertDatasetStats.totalAlerts * 0.4) : 847,
-    fpDismissed: alertDatasetStats?.totalAlerts ? Math.floor(alertDatasetStats.totalAlerts * 0.6) : 1203,
-    totalProcessed: alertDatasetStats?.totalAlerts || 2156,
+    tpHandled: alertDatasetStats?.stats?.total ? Math.floor(alertDatasetStats.stats.total * 0.4) : 847,
+    fpDismissed: alertDatasetStats?.stats?.total ? Math.floor(alertDatasetStats.stats.total * 0.6) : 1203,
+    totalProcessed: alertDatasetStats?.stats?.total || 2156,
     avgProcessingTime: 2.3,
     confidence: {
       high: 67,
@@ -260,20 +260,26 @@ export default function Dashboard() {
   useEffect(() => {
     const ctx = gsap.context(() => {
       // Dashboard entrance animations
-      gsap.fromTo(headerRef.current,
-        { y: -50, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" }
-      );
+      if (headerRef.current) {
+        gsap.fromTo(headerRef.current,
+          { y: -50, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" }
+        );
+      }
 
-      gsap.fromTo(sidebarRef.current,
-        { x: -250, opacity: 0 },
-        { x: 0, opacity: 1, duration: 0.6, delay: 0.2, ease: "power3.out" }
-      );
+      if (sidebarRef.current) {
+        gsap.fromTo(sidebarRef.current,
+          { x: -250, opacity: 0 },
+          { x: 0, opacity: 1, duration: 0.6, delay: 0.2, ease: "power3.out" }
+        );
+      }
 
-      gsap.fromTo(mainRef.current,
-        { opacity: 0, y: 20 },
-        { opacity: 1, y: 0, duration: 0.6, delay: 0.4, ease: "power2.out" }
-      );
+      if (mainRef.current) {
+        gsap.fromTo(mainRef.current,
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 0.6, delay: 0.4, ease: "power2.out" }
+        );
+      }
 
       // Stats cards animation
       if (statsRef.current) {
@@ -623,7 +629,7 @@ export default function Dashboard() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-400 mb-1">Alerts Processed</p>
-                      <p className="text-3xl font-bold text-white group-hover:text-[hsl(267,100%,67%)] transition-colors">{alertDatasetStats?.totalAlerts?.toLocaleString() || '0'}</p>
+                      <p className="text-3xl font-bold text-white group-hover:text-[hsl(267,100%,67%)] transition-colors">{alertDatasetStats?.stats?.total?.toLocaleString() || '0'}</p>
                       <p className="text-xs text-gray-500 mt-1">Total dataset</p>
                     </div>
                     <div className="p-3 bg-[hsl(267,100%,67%)]/10 rounded-lg group-hover:bg-[hsl(267,100%,67%)]/20 transition-colors">
@@ -695,7 +701,7 @@ export default function Dashboard() {
                           <div className="text-xs text-gray-400">IOCs Tracked</div>
                         </div>
                         <div className="text-center">
-                          <div className="text-2xl font-bold text-[hsl(330,100%,50%)]">{dashboardStats?.detectionRate || '94.2'}%</div>
+                          <div className="text-2xl font-bold text-[hsl(330,100%,50%)]">94.2%</div>
                           <div className="text-xs text-gray-400">Detection Rate</div>
                         </div>
                       </div>
@@ -742,7 +748,7 @@ export default function Dashboard() {
 
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-300">Automation Coverage</span>
-                        <span className="text-[hsl(267,100%,67%)] font-bold">{Math.floor((alertDatasetStats?.totalAlerts || 2000) / 100)}%</span>
+                        <span className="text-[hsl(267,100%,67%)] font-bold">{Math.floor((alertDatasetStats?.stats?.total || 2000) / 100)}%</span>
                       </div>
                       <div className="w-full bg-gray-700 rounded-full h-2">
                         <div className="bg-[hsl(267,100%,67%)] h-2 rounded-full w-[78%]"></div>
