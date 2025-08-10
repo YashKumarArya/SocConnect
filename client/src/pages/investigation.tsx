@@ -9,7 +9,7 @@ import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
-import InvestigationKnowledgeGraph from "@/components/ui/investigation-knowledge-graph";
+import { InvestigationKnowledgeGraph } from "@/components/ui/investigation-knowledge-graph";
 
 interface TimelineEvent {
   id: string;

@@ -94,32 +94,51 @@ const riskColors = {
   info: '#87CEEB'
 };
 
+import { useQuery } from "@tanstack/react-query";
+
 function InvestigationKnowledgeGraph() {
   const svgRef = useRef<SVGSVGElement>(null);
   const [nodes, setNodes] = useState<InvestigationNode[]>([]);
   const [connections, setConnections] = useState<Connection[]>([]);
   const [selectedNode, setSelectedNode] = useState<InvestigationNode | null>(null);
+
+  // Fetch real attack chain data from Neo4j
+  const { data: attackChains } = useQuery({
+    queryKey: ['/api/graph/attack-chains'],
+    queryFn: () => fetch('/api/graph/attack-chains').then(res => res.json()),
+    refetchInterval: 5000, // Update every 5 seconds
+  });
+
+  // Fetch compromised assets
+  const { data: compromisedAssets } = useQuery({
+    queryKey: ['/api/graph/compromised-assets'],
+    queryFn: () => fetch('/api/graph/compromised-assets').then(res => res.json()),
+    refetchInterval: 5000,
+  });
   const [activeQuestions, setActiveQuestions] = useState<InvestigationQuestion[]>([]);
   const [rotation, setRotation] = useState(0);
   const [isRotating, setIsRotating] = useState(true);
   const centerX = 400;
   const centerY = 300;
 
-  // Create spider web layout
+  // Create spider web layout with real Neo4j data
   useEffect(() => {
-    const centerNode: InvestigationNode = {
-      id: 'alert-001',
-      label: 'Suspicious Network Activity',
-      type: 'alert',
-      riskLevel: 'critical',
-      x: centerX,
-      y: centerY,
-      z: 0,
-      connections: ['user-001', 'asset-001', 'network-001', 'process-001', 'threat-001', 'file-001', 'evidence-001'],
-      questions: [
-        {
-          id: 'q1',
-          text: 'What triggered this alert?',
+    if (attackChains && attackChains.attackChains && attackChains.attackChains.length > 0) {
+      // Use real attack chain data to create nodes
+      const realChain = attackChains.attackChains[0];
+      const centerNode: InvestigationNode = {
+        id: realChain.id || 'alert-001',
+        label: `Attack Chain - ${realChain.steps?.length || 0} steps`,
+        type: 'alert',
+        riskLevel: realChain.confidence > 0.8 ? 'critical' : 'high',
+        x: centerX,
+        y: centerY,
+        z: 0,
+        connections: realChain.steps?.map((_, i) => `step-${i}`) || [],
+        questions: [
+          {
+            id: 'q1',
+            text: 'What triggered this alert?',
           answer: 'Anomalous data exfiltration pattern detected',
           confidence: 94,
           category: 'technical',
@@ -349,7 +368,31 @@ function InvestigationKnowledgeGraph() {
     setNodes(allNodes);
     setConnections(connectionList);
     setActiveQuestions(centerNode.questions);
-  }, []);
+  } else {
+    // Fallback to demo data if no real data available
+    const centerNode: InvestigationNode = {
+      id: 'alert-001',
+      label: 'Suspicious Network Activity',
+      type: 'alert',
+      riskLevel: 'critical',
+      x: centerX,
+      y: centerY,
+      z: 0,
+      connections: ['user-001', 'asset-001', 'network-001'],
+      questions: [],
+      isActive: true,
+      isExpanded: false,
+      depth: 0,
+      pulse: true,
+      metadata: { severity: 'critical', source: 'Demo', timestamp: new Date().toISOString() },
+      angle: 0,
+      radius: 0,
+      layer: 0
+    };
+    setNodes([centerNode]);
+    setConnections([]);
+  }
+  }, [rotation, attackChains, compromisedAssets]);
 
   // Gentle rotation animation
   useEffect(() => {
@@ -725,5 +768,4 @@ function InvestigationKnowledgeGraph() {
   );
 }
 
-export default InvestigationKnowledgeGraph;
 export { InvestigationKnowledgeGraph };

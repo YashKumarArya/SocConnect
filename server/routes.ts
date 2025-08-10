@@ -810,6 +810,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Alert Simulation endpoints
+  app.post("/api/simulation/start", async (req: Request, res: Response) => {
+    try {
+      const { intervalMs = 3000 } = req.body;
+      const alertSimulation = (global as any).alertSimulation;
+      
+      if (!alertSimulation) {
+        return res.status(500).json({ message: "Alert simulation not initialized" });
+      }
+      
+      alertSimulation.startSimulation(intervalMs);
+      res.json({ message: "Alert simulation started", intervalMs });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/simulation/stop", async (req: Request, res: Response) => {
+    try {
+      const alertSimulation = (global as any).alertSimulation;
+      
+      if (!alertSimulation) {
+        return res.status(500).json({ message: "Alert simulation not initialized" });
+      }
+      
+      alertSimulation.stopSimulation();
+      res.json({ message: "Alert simulation stopped" });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/simulation/status", async (req: Request, res: Response) => {
+    try {
+      const alertSimulation = (global as any).alertSimulation;
+      
+      if (!alertSimulation) {
+        return res.status(500).json({ message: "Alert simulation not initialized" });
+      }
+      
+      const status = alertSimulation.getSimulationStatus();
+      res.json(status);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Demo endpoint to simulate live security events
   app.post('/api/kafka/demo/simulate', async (req, res) => {
     try {

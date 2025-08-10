@@ -51,6 +51,11 @@ app.use((req, res, next) => {
     log('⚠️ Neo4j initialization failed, continuing without graph analysis:', error.message);
   });
   
+  // Initialize Alert Simulation
+  const { AlertSimulation } = await import('./alertSimulation');
+  (global as any).alertSimulation = new AlertSimulation();
+  console.log('🎯 Alert simulation initialized');
+
   const server = await registerRoutes(app);
 
   // Error handler middleware
