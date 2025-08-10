@@ -1018,6 +1018,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // === NORMALIZATION DEMO ENDPOINTS ===
+  
+  // Demonstrate full normalization flow
+  app.get('/api/demo/normalization/full-flow/:sourceType?', async (req, res) => {
+    try {
+      const { NormalizationDemo } = await import('./normalizationDemo');
+      const sourceType = req.params.sourceType || 'crowdstrike';
+      const results = await NormalizationDemo.demonstrateFullNormalizationFlow(sourceType);
+      
+      res.json({
+        title: `Complete Normalization Flow Demo - ${sourceType}`,
+        description: "Step-by-step demonstration of raw alert → custom normalization → OCSF transformation",
+        flow_steps: results
+      });
+    } catch (error) {
+      console.error('Normalization demo error:', error);
+      res.status(500).json({ error: 'Failed to run normalization demonstration' });
+    }
+  });
+
+  // Demonstrate multi-source normalization 
+  app.get('/api/demo/normalization/multi-source', async (req, res) => {
+    try {
+      const { NormalizationDemo } = await import('./normalizationDemo');
+      const results = await NormalizationDemo.demonstrateMultiSourceNormalization();
+      
+      res.json({
+        title: "Multi-Source Normalization Demo",
+        description: "Shows how different security tools are unified through custom + OCSF normalization",
+        sources_processed: Object.keys(results).filter(k => k !== 'unified_ocsf').length,
+        unified_results: results
+      });
+    } catch (error) {
+      console.error('Multi-source demo error:', error);
+      res.status(500).json({ error: 'Failed to run multi-source demonstration' });
+    }
+  });
+
+  // Get transformation explanation
+  app.get('/api/demo/normalization/explanation', async (req, res) => {
+    try {
+      const { NormalizationDemo } = await import('./normalizationDemo');
+      const explanation = NormalizationDemo.getTransformationExplanation();
+      
+      res.json({
+        title: "Normalization Systems Explanation",
+        description: "How custom normalization and OCSF normalization work together",
+        ...explanation
+      });
+    } catch (error) {
+      console.error('Explanation demo error:', error);
+      res.status(500).json({ error: 'Failed to get normalization explanation' });
+    }
+  });
+
   // Export endpoints
   app.get('/api/export/incidents', async (req, res) => {
     try {
