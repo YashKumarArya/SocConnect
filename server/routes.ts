@@ -15,6 +15,7 @@ import { registerUserSchema, loginUserSchema } from "@shared/schema";
 import { insertSourceSchema, insertRawAlertSchema, insertIncidentSchema, insertActionSchema, insertFeedbackSchema, insertModelMetricSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { kafkaService, SecurityEventIngestion } from "./kafka";
+import { inputSanitizer, rateLimitMiddleware } from "./inputSanitizer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -33,6 +34,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       sameSite: 'lax' // Allow cross-origin requests
     },
   }));
+
+  // Apply input sanitization and rate limiting to all routes
+  app.use(rateLimitMiddleware);
+  app.use(inputSanitizer);
 
   // WebSocket server for real-time updates
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
