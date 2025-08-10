@@ -22,7 +22,7 @@ export function SimulationControls() {
 
   const { data: status } = useQuery({
     queryKey: ['/api/simulation/status'],
-    refetchInterval: 2000,
+    refetchInterval: 10000, // Reduced from 2s to 10s to prevent rate limiting
   });
 
   const startMutation = useMutation({
