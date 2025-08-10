@@ -102,18 +102,20 @@ function InvestigationKnowledgeGraph() {
   const [connections, setConnections] = useState<Connection[]>([]);
   const [selectedNode, setSelectedNode] = useState<InvestigationNode | null>(null);
 
-  // Fetch real attack chain data from Neo4j
+  // Fetch real attack chain data from Neo4j with reduced frequency
   const { data: attackChains } = useQuery({
     queryKey: ['/api/graph/attack-chains'],
     queryFn: () => fetch('/api/graph/attack-chains').then(res => res.json()),
-    refetchInterval: 5000, // Update every 5 seconds
+    staleTime: 300000, // Cache for 5 minutes
+    refetchInterval: false, // Disable automatic polling to prevent rate limiting
   });
 
-  // Fetch compromised assets
+  // Fetch compromised assets with reduced frequency  
   const { data: compromisedAssets } = useQuery({
     queryKey: ['/api/graph/compromised-assets'],
     queryFn: () => fetch('/api/graph/compromised-assets').then(res => res.json()),
-    refetchInterval: 5000,
+    staleTime: 300000, // Cache for 5 minutes
+    refetchInterval: false, // Disable automatic polling to prevent rate limiting
   });
   const [activeQuestions, setActiveQuestions] = useState<InvestigationQuestion[]>([]);
   const [rotation, setRotation] = useState(0);
@@ -134,7 +136,7 @@ function InvestigationKnowledgeGraph() {
         x: centerX,
         y: centerY,
         z: 0,
-        connections: realChain.steps?.map((_, i) => `step-${i}`) || [],
+        connections: realChain.steps?.map((_: any, i: number) => `step-${i}`) || [],
         questions: [
           {
             id: 'q1',

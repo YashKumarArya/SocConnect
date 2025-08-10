@@ -112,35 +112,45 @@ export default function Dashboard() {
     }
   }, [isUnauthenticated, setLocation]);
 
-  // Real API calls to backend
+  // Real API calls to backend with reduced frequency to prevent rate limiting
   const { data: incidents, isLoading: incidentsLoading } = useQuery({
     queryKey: ['/api/incidents'],
     queryFn: api.getIncidents,
     enabled: isAuthenticated,
+    staleTime: 60000, // Cache for 1 minute
+    refetchInterval: false,
   });
   
   const { data: dashboardStats, isLoading: statsLoading } = useQuery({
     queryKey: ['/api/dashboard/stats'],
     queryFn: api.getDashboardStats,
     enabled: isAuthenticated,
+    staleTime: 45000, // Cache for 45 seconds
+    refetchInterval: false,
   });
   
   const { data: alertDatasetStats } = useQuery({
     queryKey: ['/api/alerts/dataset-stats'],
     queryFn: api.getDatasetStats,
     enabled: isAuthenticated,
+    staleTime: 300000, // Cache for 5 minutes (static data)
+    refetchInterval: false,
   });
   
   const { data: sources } = useQuery({
     queryKey: ['/api/sources'],
     queryFn: api.getSources,
     enabled: isAuthenticated,
+    staleTime: 300000, // Cache for 5 minutes (rarely changes)
+    refetchInterval: false,
   });
   
   const { data: metrics } = useQuery({
     queryKey: ['/api/metrics'],
     queryFn: api.getMetrics,
     enabled: isAuthenticated,
+    staleTime: 120000, // Cache for 2 minutes
+    refetchInterval: false,
   });
 
   // Convert real data to mock format for compatibility with original UI
