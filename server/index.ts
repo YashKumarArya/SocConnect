@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { kafkaService } from "./kafka";
+import { neo4jService } from "./neo4j";
 
 const app = express();
 app.use(express.json());
@@ -42,6 +43,12 @@ app.use((req, res, next) => {
   // Don't await Kafka initialization to prevent blocking app startup
   kafkaService.initialize().catch(error => {
     log('⚠️ Kafka initialization failed, continuing without Kafka:', error.message);
+  });
+  
+  // Initialize Neo4j graph database for relationship analysis (non-blocking)
+  log('🔗 Initializing Neo4j graph database...');
+  neo4jService.connect().catch(error => {
+    log('⚠️ Neo4j initialization failed, continuing without graph analysis:', error.message);
   });
   
   const server = await registerRoutes(app);

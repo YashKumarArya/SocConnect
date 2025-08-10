@@ -2,6 +2,7 @@ import { storage } from "./storage";
 import { AlertNormalizer, type NormalizedAlertData } from "./normalization";
 import { AlertDataLoader } from "./alertDataLoader";
 import { AlertCorrelationEngine } from "./alertCorrelation";
+import { neo4jService } from "./neo4j";
 import { type RawAlert, type InsertRawAlert } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -30,7 +31,12 @@ export class AlertProcessor {
       const rawAlertData = AlertNormalizer.toRawAlert(normalizedData, sourceId);
       const rawAlert = await storage.createRawAlert(rawAlertData);
       
-      // Step 3: Run correlation analysis to determine if incident should be created
+      // Step 3: Store in Neo4j graph database for relationship analysis
+      if (neo4jService.isConnected()) {
+        await neo4jService.storeAlert(rawAlert);
+      }
+      
+      // Step 4: Run correlation analysis to determine if incident should be created
       const correlationResult = await AlertCorrelationEngine.correlateAlert(rawAlert);
       
       let incidentId: string | null = null;
@@ -39,6 +45,15 @@ export class AlertProcessor {
       if (correlationResult.shouldCreateIncident) {
         incidentId = await AlertCorrelationEngine.createIncidentFromCorrelation(correlationResult, rawAlert);
         incidentCreated = incidentId !== null;
+        
+        // Store incident in Neo4j with relationships to alerts
+        if (incidentCreated && incidentId && neo4jService.isConnected()) {
+          const incident = await storage.getIncident(incidentId);
+          if (incident) {
+            const relatedAlertIds = correlationResult.relatedAlerts.map(a => a.id);
+            await neo4jService.storeIncident(incident, relatedAlertIds);
+          }
+        }
         
         if (incidentCreated) {
           console.log(`🚨 Auto-created incident ${incidentId} for ${normalizedData.sourceType} alert`);

@@ -5,6 +5,7 @@ import { storage } from "./storage";
 import { AlertProcessor } from "./alertProcessor";
 import { AlertNormalizer } from "./normalization";
 import { ThreatIntelligenceService } from "./threatIntelligence";
+import { neo4jService } from "./neo4j";
 import { AnalyticsService } from "./analyticsService";
 import { ExportService } from "./exportService";
 import { isAuthenticated } from "./auth";
@@ -1015,6 +1016,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('OCSF validation error:', error);
       res.status(500).json({ error: 'Failed to validate OCSF event' });
+    }
+  });
+
+  // === NEO4J GRAPH DATABASE ENDPOINTS ===
+  
+  // Get Neo4j connection status and graph statistics
+  app.get('/api/graph/status', async (req, res) => {
+    try {
+      const isConnected = neo4jService.isConnected();
+      const stats = await neo4jService.getGraphStats();
+      
+      res.json({
+        connected: isConnected,
+        stats: stats || { alerts: 0, incidents: 0, devices: 0, users: 0, relationships: 0 },
+        message: isConnected ? 'Neo4j connected successfully' : 'Neo4j not connected'
+      });
+    } catch (error) {
+      console.error('Graph status error:', error);
+      res.status(500).json({ error: 'Failed to get graph database status' });
+    }
+  });
+
+  // Find related alerts using graph relationships
+  app.get('/api/graph/alerts/:alertId/related', async (req, res) => {
+    try {
+      const { alertId } = req.params;
+      const maxHops = parseInt(req.query.maxHops as string) || 2;
+      
+      if (!neo4jService.isConnected()) {
+        return res.status(503).json({ error: 'Neo4j graph database not connected' });
+      }
+      
+      const relatedAlerts = await neo4jService.findRelatedAlerts(alertId, maxHops);
+      
+      res.json({
+        alertId,
+        relatedAlerts,
+        count: relatedAlerts.length,
+        maxHops
+      });
+    } catch (error) {
+      console.error('Graph related alerts error:', error);
+      res.status(500).json({ error: 'Failed to find related alerts' });
+    }
+  });
+
+  // Detect attack chains using graph analysis
+  app.get('/api/graph/attack-chains', async (req, res) => {
+    try {
+      const timeWindowHours = parseInt(req.query.timeWindow as string) || 24;
+      
+      if (!neo4jService.isConnected()) {
+        return res.status(503).json({ error: 'Neo4j graph database not connected' });
+      }
+      
+      const attackChains = await neo4jService.detectAttackChains(timeWindowHours);
+      
+      res.json({
+        attackChains,
+        count: attackChains.length,
+        timeWindowHours,
+        analysis: {
+          totalChains: attackChains.length,
+          highConfidenceChains: attackChains.filter(c => c.confidence > 0.7).length,
+          criticalImpactChains: attackChains.filter(c => c.totalImpact > 10).length
+        }
+      });
+    } catch (error) {
+      console.error('Graph attack chains error:', error);
+      res.status(500).json({ error: 'Failed to detect attack chains' });
+    }
+  });
+
+  // Find compromised assets (devices/users with multiple alerts)
+  app.get('/api/graph/compromised-assets', async (req, res) => {
+    try {
+      const timeWindowHours = parseInt(req.query.timeWindow as string) || 24;
+      
+      if (!neo4jService.isConnected()) {
+        return res.status(503).json({ error: 'Neo4j graph database not connected' });
+      }
+      
+      const compromisedAssets = await neo4jService.findCompromisedAssets(timeWindowHours);
+      
+      res.json({
+        ...compromisedAssets,
+        timeWindowHours,
+        summary: {
+          totalDevices: compromisedAssets.devices.length,
+          totalUsers: compromisedAssets.users.length,
+          totalIPs: compromisedAssets.ipAddresses.length,
+          criticalDevices: compromisedAssets.devices.filter(d => d.alertCount >= 5).length,
+          criticalUsers: compromisedAssets.users.filter(u => u.alertCount >= 3).length
+        }
+      });
+    } catch (error) {
+      console.error('Graph compromised assets error:', error);
+      res.status(500).json({ error: 'Failed to find compromised assets' });
+    }
+  });
+
+  // Connect to Neo4j manually (for admin use)
+  app.post('/api/graph/connect', isAuthenticated, async (req, res) => {
+    try {
+      await neo4jService.connect();
+      res.json({ message: 'Neo4j connection initiated', connected: neo4jService.isConnected() });
+    } catch (error) {
+      console.error('Graph connect error:', error);
+      res.status(500).json({ error: 'Failed to connect to Neo4j' });
+    }
+  });
+
+  // Disconnect from Neo4j manually (for admin use)
+  app.post('/api/graph/disconnect', isAuthenticated, async (req, res) => {
+    try {
+      await neo4jService.disconnect();
+      res.json({ message: 'Neo4j disconnected successfully', connected: neo4jService.isConnected() });
+    } catch (error) {
+      console.error('Graph disconnect error:', error);
+      res.status(500).json({ error: 'Failed to disconnect from Neo4j' });
     }
   });
 
