@@ -117,7 +117,7 @@ export default function Dashboard() {
     queryKey: ['/api/incidents'],
     queryFn: api.getIncidents,
     enabled: isAuthenticated,
-    staleTime: 60000, // Cache for 1 minute
+    staleTime: 180000, // Cache for 3 minutes
     refetchInterval: false,
   });
   
@@ -125,7 +125,7 @@ export default function Dashboard() {
     queryKey: ['/api/dashboard/stats'],
     queryFn: api.getDashboardStats,
     enabled: isAuthenticated,
-    staleTime: 45000, // Cache for 45 seconds
+    staleTime: 120000, // Cache for 2 minutes
     refetchInterval: false,
   });
   
