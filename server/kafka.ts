@@ -16,18 +16,25 @@ const kafka = new Kafka({
   }
 });
 
-// Kafka Topics for SOC Operations
+// Sequential Pipeline Topics for SOC Operations
 export const KAFKA_TOPICS = {
-  SECURITY_ALERTS: 'security-alerts',
-  INCIDENTS: 'incidents', 
-  THREAT_INTEL: 'threat-intelligence',
-  SYSTEM_METRICS: 'system-metrics',
-  AUDIT_LOGS: 'audit-logs',
-  // OCSF Topics
-  OCSF_NETWORK_ACTIVITY: 'ocsf-network-activity',
-  OCSF_SYSTEM_ACTIVITY: 'ocsf-system-activity',
-  OCSF_SECURITY_FINDING: 'ocsf-security-finding',
-  OCSF_AUTHENTICATION: 'ocsf-authentication'
+  // Stage 1: Raw incoming alerts
+  RAW_ALERTS: 'security.alerts.raw',
+  
+  // Stage 2: Enhanced alerts (enriched but not OCSF)  
+  ENHANCED_ALERTS: 'security.alerts.enhanced',
+  
+  // Stage 3: Final OCSF-standardized alerts (ready for ML + DB)
+  OCSF_READY: 'security.alerts.ocsf.ready',
+  
+  // Stage 4: ML predictions
+  ML_PREDICTIONS: 'security.ml.predictions',
+  
+  // Real-time notifications
+  NOTIFICATIONS: 'security.notifications',
+  
+  // Error handling
+  ERRORS: 'security.errors.dlq'
 } as const;
 
 // Standardized Security Event Schema

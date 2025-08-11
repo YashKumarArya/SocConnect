@@ -10,8 +10,8 @@ import { registerUserSchema, loginUserSchema } from "@shared/schema";
 import { insertSourceSchema, insertRawAlertSchema, insertIncidentSchema, insertActionSchema, insertFeedbackSchema, insertModelMetricSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { kafkaService } from "./kafka";
+import { kafkaSequentialPipeline } from "./kafka-pipeline";
 import { OCSFNormalizationPipeline } from "./ocsfNormalization";
-import { agenticAI } from "./agenticAI";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -42,13 +42,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   wss.on('connection', (ws) => {
     clients.add(ws);
+    console.log('📡 WebSocket client connected. Total:', clients.size);
     
-    // Register client with Kafka service for real-time event streaming
+    // Register client with both Kafka services for real-time event streaming
     kafkaService.addClient(ws);
+    kafkaSequentialPipeline.addClient(ws);
     
     ws.on('close', () => {
       clients.delete(ws);
       kafkaService.removeClient(ws);
+      kafkaSequentialPipeline.removeClient(ws);
+      console.log('📡 WebSocket client disconnected. Total:', clients.size);
     });
 
     // Send welcome message
@@ -331,57 +335,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/alerts', async (req, res) => {
     try {
       const validatedData = insertRawAlertSchema.parse(req.body);
-      const alert = await storage.createRawAlert(validatedData);
       
-      // Process through new OCSF pipeline if enabled
-      try {
-        const { ocsfEvent, enhancedAlert } = await OCSFNormalizationPipeline.processRawAlert(alert);
-        
-        // Store OCSF event with all ML model attributes
-        const storedOCSFEvent = await storage.createOCSFEvent({
-          classUid: ocsfEvent.class_uid,
-          className: ocsfEvent.class_name,
-          categoryUid: ocsfEvent.category_uid,
-          categoryName: ocsfEvent.category_name,
-          activityId: ocsfEvent.activity_id,
-          activityName: ocsfEvent.activity_name,
-          severityId: ocsfEvent.severity_id,
-          severity: ocsfEvent.severity,
-          time: new Date(ocsfEvent.time),
-          message: ocsfEvent.message,
-          // ML model required attributes
-          srcIp: OCSFNormalizationPipeline.extractSourceIP(ocsfEvent),
-          dstIp: OCSFNormalizationPipeline.extractDestinationIP(ocsfEvent),
-          username: OCSFNormalizationPipeline.extractUsername(ocsfEvent),
-          hostname: OCSFNormalizationPipeline.extractHostname(ocsfEvent),
-          dispositionId: OCSFNormalizationPipeline.extractDispositionId(ocsfEvent),
-          confidenceScore: OCSFNormalizationPipeline.extractConfidenceScore(ocsfEvent),
-          productName: ocsfEvent.metadata.product?.name || null,
-          vendorName: ocsfEvent.metadata.product?.vendor_name || null,
-          rawData: ocsfEvent,
-          observables: ocsfEvent.observables
-        });
-        
-        // Store enhanced alert
-        enhancedAlert.ocsfEventId = storedOCSFEvent.id;
-        await storage.createEnhancedNormalizedAlert(enhancedAlert);
-        
-        // Send enhanced and normalized alert to ML via Kafka (includes all enriched attributes)
-        await kafkaService.publishEnhancedAlertToML(storedOCSFEvent, enhancedAlert);
-        
-        console.log(`✅ Alert ${alert.id} processed through OCSF pipeline`);
-      } catch (ocsfError) {
-        console.warn(`⚠️ OCSF processing failed for alert ${alert.id}:`, ocsfError);
-        // Continue with standard processing
-      }
+      // Store raw alert first (Stage 1)
+      const rawAlert = await storage.createRawAlert(validatedData);
       
-      broadcast({ type: 'alert_created', data: alert });
-      res.status(201).json(alert);
+      // Process through Sequential Kafka Pipeline: 
+      // Alert → Enhancement → OCSF → [ML + Database]
+      await kafkaSequentialPipeline.publishRawAlert(rawAlert);
+      
+      // Immediate response - processing continues asynchronously
+      res.status(202).json({
+        id: rawAlert.id,
+        status: 'accepted',
+        message: 'Alert accepted for sequential pipeline processing',
+        pipeline: {
+          stages: ['Enhancement', 'OCSF Standardization', 'ML + Database Storage'],
+          description: 'Alert will be enriched, standardized, and processed by ML model'
+        }
+      });
+      
     } catch (error) {
+      console.error('Alert ingestion error:', error);
       if (error instanceof ZodError) {
-        return res.status(400).json({ error: 'Invalid alert data', details: error.errors });
+        return res.status(400).json({ 
+          error: 'Validation failed', 
+          details: error.errors 
+        });
       }
-      res.status(500).json({ error: 'Failed to create alert' });
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to ingest alert' });
     }
   });
 

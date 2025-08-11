@@ -4,12 +4,12 @@ Advanced Security Operations Center (SOC) platform with machine learning for aut
 
 ## 🚀 Architecture Overview
 
-**Complete Data Flow Pipeline:**
+**Sequential Kafka Pipeline Flow:**
 ```
-Alert Sources → API Endpoints → Kafka Streaming → Enhancement/Enrichment → OCSF Standardization → Database Storage → ML Model + Neo4j Graph Analysis
+Alert Sources → API → Raw Topic → Enhancement Service → Enhanced Topic → OCSF Service → OCSF Ready Topic → [ML Model + Database Storage]
 ```
 
-The system implements real-time, low-latency processing through Kafka message streaming, allowing for immediate enrichment and standardization of security alerts as they flow through the system.
+The system implements a **Sequential Kafka Pipeline** with stage-by-stage processing. Each stage builds upon the previous one's output, ensuring data consistency and quality. When Kafka is unavailable, the system gracefully falls back to direct processing.
 
 ![SOC Dashboard](https://img.shields.io/badge/Status-Active-brightgreen) ![Version](https://img.shields.io/badge/Version-1.0.0-blue) ![License](https://img.shields.io/badge/License-MIT-green)
 

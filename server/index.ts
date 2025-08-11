@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { kafkaService } from "./kafka";
+import { kafkaSequentialPipeline } from "./kafka-pipeline";
 import { neo4jService } from "./neo4j";
 
 const app = express();
@@ -38,9 +39,10 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Skip Kafka initialization - using WebSocket-only mode
-  log('📡 Continuing without Kafka - using WebSocket only mode');
-  // kafkaService.initialize() - Disabled to prevent connection errors
+  // Skip Kafka initialization for fast startup - using fallback processing
+  log('🚀 Starting with sequential pipeline fallback mode (no Kafka required)');
+  // Note: When Kafka is available, alerts will use the sequential pipeline:
+  // Alert → Enhancement → OCSF → [ML + Database]
   
   // Initialize Neo4j graph database for relationship analysis (non-blocking)
   log('🔗 Initializing Neo4j graph database...');
