@@ -1,40 +1,40 @@
 # Alpha SOC Platform - Agentic AI Security Operations Center
 
-Advanced Security Operations Center (SOC) platform with machine learning for automated threat detection (99.58% accuracy), featuring Neo4j graph database capabilities, OCSF (Open Cybersecurity Schema Framework) normalization pipeline, real-time security event processing, and agentic AI integration.
+Production-ready Security Operations Center (SOC) platform with machine learning for automated threat detection, Neo4j graph database capabilities, OCSF (Open Cybersecurity Schema Framework) normalization pipeline, real-time security event processing, and intelligent agentic AI integration. Fully operational with comprehensive authentication, sequential Kafka pipeline processing, and enterprise-grade architecture.
 
-## 🚀 Architecture Overview
+## 🚀 Production Architecture
 
-**Sequential Kafka Pipeline Flow:**
+**Fully Operational Sequential Pipeline:**
 ```
-Alert Sources → API → Raw Topic → Enhancement Service → Enhanced Topic → OCSF Service → OCSF Ready Topic → [ML Model + Database Storage]
+Alert Sources → API → Enhancement Service → OCSF Normalization → [ML Analysis + Database Storage] → Real-time Updates
 ```
 
-The system implements a **Sequential Kafka Pipeline** with stage-by-stage processing. Each stage builds upon the previous one's output, ensuring data consistency and quality. When Kafka is unavailable, the system gracefully falls back to direct processing.
+The system implements a production-ready sequential processing pipeline with intelligent fallback mechanisms. All components are operational with comprehensive service layer architecture, proper error handling, and enterprise authentication.
 
 ![SOC Dashboard](https://img.shields.io/badge/Status-Active-brightgreen) ![Version](https://img.shields.io/badge/Version-1.0.0-blue) ![License](https://img.shields.io/badge/License-MIT-green)
 
-## 🎯 Key Features
+## 🎯 Operational Features
 
-### AI-Powered Security Operations
-- **Real-time Processing** - Kafka-based streaming architecture for sub-second alert processing
-- **ML-Powered Detection** - 99.58% accuracy with 3-class classification and 3.2M parameter model
-- **OCSF Compliance** - Full Open Cybersecurity Schema Framework implementation
-- **Graph Intelligence** - Neo4j-powered relationship analysis and attack pattern detection
-- **Agentic AI** - Intelligent threat assessment and automated response recommendations
-- **Multi-Source Integration** - Support for CrowdStrike, Email Security, Firewall, SentinelOne
+### Intelligent Security Operations
+- **Production Pipeline** - Sequential processing with comprehensive service layer architecture
+- **ML-Powered Analysis** - Intelligent threat assessment with feature extraction and risk scoring
+- **OCSF Compliance** - Complete Open Cybersecurity Schema Framework implementation
+- **Graph Intelligence** - Neo4j-powered relationship analysis and attack pattern detection  
+- **Agentic AI Services** - Advanced threat assessment with automated response recommendations
+- **Multi-Source Integration** - CrowdStrike, SentinelOne, Email Security, Firewall support
 
-### Enhanced Processing Pipeline
-- **Enhanced Enrichment** - Geo-location, user context, threat intelligence, asset context integration
-- **Real-time Standardization** - OCSF-compliant data transformation at the streaming layer
-- **Low-Latency Processing** - Sub-second alert enrichment and classification
-- **Authentic Data Processing** - Handles 4,000+ real security alerts from multiple sources
+### Production Processing Pipeline
+- **Service Layer Architecture** - AlertProcessorService, MLModelService, AgenticAIService
+- **Enhanced Enrichment** - Geo-location, risk scoring, threat intelligence integration
+- **Real-time Processing** - OCSF-compliant data transformation with intelligent analysis
+- **Comprehensive Authentication** - Session-based auth with role management and security
 
-### Technical Excellence
-- **Real-time Communication** - WebSocket + Kafka integration for live updates
-- **Database Architecture** - PostgreSQL + Neo4j graph database for comprehensive analysis
-- **Type Safety** - End-to-end TypeScript with shared schemas
-- **Modern UI/UX** - Dark-themed interface optimized for SOC environments
-- **Enterprise Authentication** - Role-based access control with session management
+### Enterprise Architecture
+- **Real-time Communication** - WebSocket integration with live alert processing
+- **Dual Database** - PostgreSQL for transactions + Neo4j for graph analysis
+- **Service Layer** - Clean architecture with dedicated service classes for each domain
+- **Type Safety** - End-to-end TypeScript with comprehensive validation
+- **Production Authentication** - Session management with proper security controls
 
 ## 🏗️ System Architecture
 
@@ -87,27 +87,28 @@ The system implements a **Sequential Kafka Pipeline** with stage-by-stage proces
 
 ## 🔐 Authentication System
 
-The application uses **Replit OAuth 2.0/OIDC** for secure authentication:
+The application uses **email/password authentication** with secure session management:
 
 ### Features
-- **Single Sign-On (SSO)** through Replit accounts
-- **Session Management** with PostgreSQL-backed storage
-- **Token Refresh** automatic renewal of expired tokens
+- **Secure Registration** with bcrypt password hashing
+- **Session Management** with secure HTTP-only cookies
+- **Role-based Access** analyst and admin user roles
 - **Protected Routes** middleware-based API protection
-- **Role-based Access** user roles and permissions
+- **Production Security** comprehensive input validation and CSRF protection
 
 ### Authentication Flow
-1. User clicks "Sign In" on landing page
-2. Redirected to Replit OAuth authorization
-3. User authorizes the application
-4. Callback processes tokens and creates session
-5. User redirected to dashboard with authenticated session
+1. User registers with email/password or logs in
+2. Password verified using bcrypt comparison
+3. Secure session created with HTTP-only cookie
+4. Session stored with user information
+5. Protected routes validated via session middleware
 
 ### Protected Endpoints
-- `GET /api/auth/user` - Get current user information
-- `GET /api/incidents` - Incident management (requires authentication)
+- `GET /api/auth/user` - Get current authenticated user
+- `GET /api/dashboard/stats` - Dashboard statistics and metrics
+- `GET /api/incidents` - Incident management and tracking
 - `GET /api/sources` - Security sources configuration
-- `POST /api/alerts` - Alert processing endpoints
+- `POST /api/alerts` - Alert ingestion and processing
 
 ## 🚀 Quick Start
 
@@ -242,7 +243,7 @@ npm run build
 npm run preview
 ```
 
-### Project Structure
+### Refactored Project Structure
 ```
 ├── client/                     # Frontend React application
 │   ├── src/
@@ -268,13 +269,17 @@ npm run preview
 │   │   │   └── websocket.ts   # WebSocket client
 │   │   └── App.tsx            # Main application component
 ├── server/                     # Backend Express application
+│   ├── services/              # Production service layer
+│   │   ├── AlertProcessorService.ts # Alert processing, enrichment, normalization
+│   │   ├── MLModelService.ts        # ML feature extraction and prediction
+│   │   └── AgenticAIService.ts      # Intelligent threat assessment
 │   ├── db.ts                  # Database connection (Drizzle + Neon)
 │   ├── routes.ts              # Main API route definitions
 │   ├── storage.ts             # Data access layer (IStorage interface)
-│   ├── replitAuth.ts          # Replit OAuth configuration
+│   ├── auth.ts                # Email/password authentication system
 │   ├── kafka.ts               # Kafka event streaming service
-│   ├── ocsf.ts                # OCSF schema and transformation
-│   ├── websocket.ts           # WebSocket server implementation
+│   ├── ocsfNormalization.ts   # OCSF schema and transformation
+│   ├── neo4j.ts               # Neo4j graph database integration
 │   ├── vite.ts                # Vite middleware for development
 │   └── index.ts               # Server entry point
 ├── shared/                     # Shared TypeScript definitions
