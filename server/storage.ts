@@ -805,6 +805,11 @@ export class MemStorage implements IStorage {
     return this.enhancedNormalizedAlerts.get(id);
   }
 
+  async getEnhancedNormalizedAlerts(): Promise<EnhancedNormalizedAlert[]> {
+    return Array.from(this.enhancedNormalizedAlerts.values())
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
   async createEnhancedNormalizedAlert(insertAlert: InsertEnhancedNormalizedAlert): Promise<EnhancedNormalizedAlert> {
     const id = randomUUID();
     const alert: EnhancedNormalizedAlert = { 

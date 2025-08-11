@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "gsap": "^3.13.0",
-    "react-globe.gl": "^2.35.0"
-  }
-}

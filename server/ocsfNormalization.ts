@@ -1,6 +1,5 @@
 import { OCSFTransformationService, type OCSFEvent } from './ocsf';
 import { storage } from './storage';
-import { AlertNormalizer } from './normalization';
 import type { RawAlert, InsertOCSFEvent, InsertEnhancedNormalizedAlert } from '@shared/schema';
 
 // OCSF-compliant normalization pipeline for ML model compatibility
@@ -38,27 +37,117 @@ export class OCSFNormalizationPipeline {
     
     switch (rawAlert.sourceId) {
       case 'crowdstrike':
-        return AlertNormalizer.normalizeCrowdStrike(rawData);
+        return this.normalizeCrowdStrike(rawData, rawAlert);
       case 'email':
-        return AlertNormalizer.normalizeEmail(rawData);
+        return this.normalizeEmail(rawData, rawAlert);
       case 'firewall':
-        return AlertNormalizer.normalizeFirewall(rawData);
+        return this.normalizeFirewall(rawData, rawAlert);
       case 'sentinelone':
-        return AlertNormalizer.normalizeSentinelOne(rawData);
+        return this.normalizeSentinelOne(rawData, rawAlert);
       default:
         // Generic normalization for unknown sources
         return {
-          sourceType: rawAlert.sourceId,
-          severity: (rawAlert.severity as any) || 'medium',
-          alertType: rawAlert.type || 'anomaly',
-          title: rawData.title || `Alert from ${rawAlert.sourceId}`,
-          description: rawAlert.description || 'Security alert detected',
+          id: rawAlert.id,
           timestamp: new Date(rawAlert.receivedAt),
+          sourceType: rawAlert.sourceId,
+          severity: rawAlert.severity,
+          alertType: rawAlert.type,
+          title: rawAlert.description || 'Unknown Alert',
+          description: rawAlert.description || 'No description available',
+          sourceIP: rawData.source_ip || rawData.ip_address || rawData.ip || null,
+          destIP: rawData.destination_ip || rawData.dest_ip || null,
+          username: rawData.user_name || rawData.username || rawData.user || null,
+          hostname: rawData.device_name || rawData.hostname || rawData.host || null,
+          fileHash: rawData.file_hash || rawData.hash || null,
           additionalData: rawData
         };
     }
   }
-  
+
+  /**
+   * CrowdStrike normalization logic
+   */
+  private static normalizeCrowdStrike(rawData: any, rawAlert: RawAlert) {
+    return {
+      id: rawAlert.id,
+      timestamp: new Date(rawAlert.receivedAt),
+      sourceType: 'crowdstrike',
+      severity: rawData.severity || rawAlert.severity,
+      alertType: rawData.tactic || rawAlert.type,
+      title: rawData.alert_name || rawData.title || rawAlert.description,
+      description: rawData.description || rawAlert.description,
+      sourceIP: rawData.ip_address || rawData.source_ip,
+      destIP: rawData.destination_ip || rawData.dest_ip,
+      username: rawData.user_name || rawData.username,
+      hostname: rawData.device_name || rawData.hostname,
+      fileHash: rawData.file_hash || rawData.hash,
+      additionalData: rawData
+    };
+  }
+
+  /**
+   * Email normalization logic
+   */
+  private static normalizeEmail(rawData: any, rawAlert: RawAlert) {
+    return {
+      id: rawAlert.id,
+      timestamp: new Date(rawAlert.receivedAt),
+      sourceType: 'email',
+      severity: rawData.severity || rawAlert.severity,
+      alertType: rawData.alert_type || rawAlert.type,
+      title: rawData.subject || rawAlert.description,
+      description: rawData.description || rawAlert.description,
+      sourceIP: rawData.sender_ip || rawData.source_ip,
+      destIP: null,
+      username: rawData.recipient || rawData.username,
+      hostname: rawData.hostname,
+      fileHash: rawData.attachment_hash,
+      additionalData: rawData
+    };
+  }
+
+  /**
+   * Firewall normalization logic
+   */
+  private static normalizeFirewall(rawData: any, rawAlert: RawAlert) {
+    return {
+      id: rawAlert.id,
+      timestamp: new Date(rawAlert.receivedAt),
+      sourceType: 'firewall',
+      severity: rawData.severity || rawAlert.severity,
+      alertType: rawData.action || rawAlert.type,
+      title: rawData.rule_name || rawAlert.description,
+      description: rawData.description || rawAlert.description,
+      sourceIP: rawData.source_ip || rawData.src_ip,
+      destIP: rawData.destination_ip || rawData.dest_ip,
+      username: rawData.username || rawData.user,
+      hostname: rawData.hostname,
+      fileHash: null,
+      additionalData: rawData
+    };
+  }
+
+  /**
+   * SentinelOne normalization logic
+   */
+  private static normalizeSentinelOne(rawData: any, rawAlert: RawAlert) {
+    return {
+      id: rawAlert.id,
+      timestamp: new Date(rawAlert.receivedAt),
+      sourceType: 'sentinelone',
+      severity: rawData.severity || rawAlert.severity,
+      alertType: rawData.threat_type || rawAlert.type,
+      title: rawData.threat_name || rawAlert.description,
+      description: rawData.description || rawAlert.description,
+      sourceIP: rawData.network_quarantine_enabled ? rawData.source_ip : null,
+      destIP: rawData.destination_ip,
+      username: rawData.username || rawData.user,
+      hostname: rawData.endpoint_name || rawData.hostname,
+      fileHash: rawData.file_content_hash || rawData.hash,
+      additionalData: rawData
+    };
+  }
+
   /**
    * Enhanced intelligence and enrichment (before OCSF standardization)
    */

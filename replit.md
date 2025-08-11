@@ -9,6 +9,7 @@ Preferred communication style: Simple, everyday language.
 ## Recent Changes (August 11, 2025)
 - **Pipeline Architecture Update**: Restructured to Enhancement → OCSF Standardization order for better enriched data standardization
 - **Kafka ML Integration**: Enhanced alerts with all enriched attributes now sent to ML model via Kafka for optimal processing
+- **Codebase Cleanup**: Removed unnecessary legacy files including NewFrontend/, alertSimulation.ts, normalization.ts, and various test/cookie files
 - **Database Schema Alignment**: Updated OCSF events and enhanced normalized alerts tables to match exact ML model attributes for 99.58% accuracy  
 - **ML Model Attributes**: Added class_uid, category_uid, activity_id, severity_id, src_ip, dst_ip, username, hostname, disposition_id, confidence_score, product_name, vendor_name
 - **Enhanced Intelligence Layer**: Added comprehensive enrichment with geo-location, user context, threat intel, asset context, risk scoring

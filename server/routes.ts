@@ -1,23 +1,17 @@
-import type { Express, Request, Response } from "express";
+import express, { type Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
-import { AlertProcessor } from "./alertProcessor";
-import { AlertNormalizer } from "./normalization";
-import { ThreatIntelligenceService } from "./threatIntelligence";
 import { neo4jService } from "./neo4j";
-import { AnalyticsService } from "./analyticsService";
-import { ExportService } from "./exportService";
 import { isAuthenticated } from "./auth";
 import session from "express-session";
 import { AuthService } from "./auth";
 import { registerUserSchema, loginUserSchema } from "@shared/schema";
 import { insertSourceSchema, insertRawAlertSchema, insertIncidentSchema, insertActionSchema, insertFeedbackSchema, insertModelMetricSchema } from "@shared/schema";
 import { ZodError } from "zod";
-import { kafkaService, SecurityEventIngestion } from "./kafka";
-import { inputSanitizer, rateLimitMiddleware } from "./inputSanitizer";
-import { OCSFNormalizationPipeline, MLModelIntegration } from "./ocsfNormalization";
-import { AgenticAIService } from "./agenticAI";
+import { kafkaService } from "./kafka";
+import { OCSFNormalizationPipeline } from "./ocsfNormalization";
+import { agenticAI } from "./agenticAI";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -37,9 +31,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   }));
 
-  // Apply input sanitization and rate limiting to all routes
-  app.use(rateLimitMiddleware);
-  app.use(inputSanitizer);
+  // Basic input validation middleware
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
   // WebSocket server for real-time updates
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
