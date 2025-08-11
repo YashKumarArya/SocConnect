@@ -1,0 +1,295 @@
+{
+  "schema_version": "edr_alert+enrichments/1.0",
+  "alert": {
+    "alert_id": "7511ec16-de4f-4c51-8228-8e786e284d8d",
+    "timestamp": "2025-08-10T15:14:45.231963+05:30",
+    "vendor": "Sophos",
+    "product": "Intercept X",
+    "category": "True Positive",
+    "agent_verdict": {
+      "label": "True Positive",
+      "true_positive": true,
+      "false_positive": false,
+      "escalate": false
+    },
+    "event_type": "process_creation",
+    "severity": "Medium",
+    "action": "Kill Process",
+    "rule_name": "Suspicious Command Line",
+    "rule_pack": "Threat Intel Pack 2025.07",
+    "mitre_attack": [
+      "T1112 (Modify Registry)",
+      "T1204 (User Execution)"
+    ],
+    "device": {
+      "hostname": "DESKTOP-9299",
+      "os": "Windows 10 Enterprise 22H2",
+      "os_version": "10.0.19045",
+      "user": "svc_backup@acme-corp.com",
+      "department": "Service",
+      "sensor_version": "3.2.4"
+    },
+    "process": {
+      "parent": {
+        "name": "OUTLOOK.EXE",
+        "path": "/usr/bin/bash",
+        "pid": 4913,
+        "integrity": "Medium",
+        "signer": "Ubuntu"
+      },
+      "child": {
+        "name": "cmd.exe",
+        "path": "C:\\Windows\\System32\\\\cmd.exe",
+        "pid": 14931,
+        "ppid": 4913,
+        "cmdline": "cmd.exe /c whoami && echo %cd% && dir",
+        "integrity": "High",
+        "signer": "Microsoft Windows"
+      },
+      "image_hash": {
+        "md5": "58407806c824d0d2fae367aa86a224ef",
+        "sha1": "4043ba9cda66f8b3f662c3c78da2075c02a770e4",
+        "sha256": "bb219eb8ac13fce0e348dee2a28e1330d006302237d1f06ad15f75d371b3efa0"
+      },
+      "tty": "SSH"
+    },
+    "decoded_payload": null,
+    "key_ops_observed": [
+      "whoami",
+      "pwd/echo %cd%",
+      "ls/dir"
+    ],
+    "network": {
+      "dst_ip": "25.145.89.43",
+      "dst_port": 9001,
+      "protocol": "TCP",
+      "ja3": "3e7d3cce8b9d5d1e4c8aa52e3f1f4c19",
+      "bytes_out": 6665,
+      "bytes_in": 4603,
+      "beacon_interval_s": 90
+    },
+    "amsi_or_script": null,
+    "persistence": false,
+    "lsass_access": false,
+    "ransomware_ioa": false,
+    "quarantine_path": null,
+    "tags": [
+      "beacon",
+      "behavior",
+      "edr",
+      "process_creation"
+    ]
+  },
+  "enrichments": {
+    "generated_at": "2025-08-10T17:44:45.231963+00:00",
+    "iocs": [
+      {
+        "ioc_id": "ip:1",
+        "type": "ip",
+        "value": "25.145.89.43",
+        "context": {
+          "found_in": "network.dst_ip",
+          "alert_id": "7511ec16-de4f-4c51-8228-8e786e284d8d",
+          "device": "DESKTOP-9299"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 0,
+            "total_engines": 70,
+            "formatted": "0 / 70"
+          },
+          "reputation": {
+            "community_score": 3,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "unknown",
+            "confidence_percent": 10,
+            "severity_percent": 15
+          },
+          "vendors": []
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "reference": null,
+          "verdict": "unknown",
+          "risk": 20,
+          "confidence_percent": 10,
+          "categories": null,
+          "malware_family": null,
+          "first_seen": "2025-06-22T09:44:45.231963+00:00",
+          "last_seen": "2025-08-10T09:44:45.231963+00:00",
+          "evidence": null,
+          "geo": {
+            "country": "RU",
+            "asn": "AS50816",
+            "org": "GCP"
+          }
+        }
+      },
+      {
+        "ioc_id": "file_hash:2",
+        "type": "file_hash",
+        "value": "bb219eb8ac13fce0e348dee2a28e1330d006302237d1f06ad15f75d371b3efa0",
+        "context": {
+          "found_in": "process.image_hash.sha256",
+          "alert_id": "7511ec16-de4f-4c51-8228-8e786e284d8d",
+          "device": "DESKTOP-9299"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 0,
+            "total_engines": 70,
+            "formatted": "0 / 70"
+          },
+          "reputation": {
+            "community_score": 5,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "unknown",
+            "confidence_percent": 10,
+            "severity_percent": 15
+          },
+          "vendors": []
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "reference": null,
+          "verdict": "unknown",
+          "risk": 20,
+          "confidence_percent": 10,
+          "categories": null,
+          "malware_family": null,
+          "first_seen": "2025-07-29T09:44:45.231963+00:00",
+          "last_seen": "2025-08-10T09:44:45.231963+00:00",
+          "evidence": null,
+          "geo": null
+        }
+      },
+      {
+        "ioc_id": "file_hash:3",
+        "type": "file_hash",
+        "value": "4043ba9cda66f8b3f662c3c78da2075c02a770e4",
+        "context": {
+          "found_in": "process.image_hash.sha1",
+          "alert_id": "7511ec16-de4f-4c51-8228-8e786e284d8d",
+          "device": "DESKTOP-9299"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 0,
+            "total_engines": 70,
+            "formatted": "0 / 70"
+          },
+          "reputation": {
+            "community_score": -4,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "unknown",
+            "confidence_percent": 10,
+            "severity_percent": 15
+          },
+          "vendors": []
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "reference": null,
+          "verdict": "unknown",
+          "risk": 20,
+          "confidence_percent": 10,
+          "categories": null,
+          "malware_family": null,
+          "first_seen": "2025-08-07T09:44:45.231963+00:00",
+          "last_seen": "2025-08-10T09:44:45.231963+00:00",
+          "evidence": null,
+          "geo": null
+        }
+      },
+      {
+        "ioc_id": "file_hash:4",
+        "type": "file_hash",
+        "value": "58407806c824d0d2fae367aa86a224ef",
+        "context": {
+          "found_in": "process.image_hash.md5",
+          "alert_id": "7511ec16-de4f-4c51-8228-8e786e284d8d",
+          "device": "DESKTOP-9299"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 0,
+            "total_engines": 70,
+            "formatted": "0 / 70"
+          },
+          "reputation": {
+            "community_score": 4,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "unknown",
+            "confidence_percent": 10,
+            "severity_percent": 15
+          },
+          "vendors": []
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "reference": null,
+          "verdict": "unknown",
+          "risk": 20,
+          "confidence_percent": 10,
+          "categories": null,
+          "malware_family": null,
+          "first_seen": "2025-07-28T09:44:45.231963+00:00",
+          "last_seen": "2025-08-10T09:44:45.231963+00:00",
+          "evidence": null,
+          "geo": null
+        }
+      }
+    ],
+    "rollup": {
+      "counts": {
+        "total_iocs": 4,
+        "types": {
+          "url": 0,
+          "domain": 0,
+          "ip": 1,
+          "file_hash": 3
+        }
+      },
+      "virustotal": {
+        "malicious_iocs": 0,
+        "suspicious_iocs": 0,
+        "benign_iocs": 0,
+        "unknown_iocs": 4
+      },
+      "checkpoint": {
+        "malicious_iocs": 0,
+        "suspicious_iocs": 0,
+        "benign_iocs": 0,
+        "unknown_iocs": 4
+      }
+    }
+  }
+}

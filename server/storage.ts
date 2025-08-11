@@ -748,10 +748,6 @@ export class MemStorage implements IStorage {
   }
 
   // OCSF Events methods
-  async getOCSFEvents(): Promise<OCSFEvent[]> {
-    return Array.from(this.ocsfEvents.values())
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }
 
   async getOCSFEvent(id: string): Promise<OCSFEvent | undefined> {
     return this.ocsfEvents.get(id);
@@ -777,10 +773,32 @@ export class MemStorage implements IStorage {
       .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
   }
 
-  // Enhanced Normalized Alerts methods
-  async getEnhancedNormalizedAlerts(): Promise<EnhancedNormalizedAlert[]> {
-    return Array.from(this.enhancedNormalizedAlerts.values())
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  // Enhanced Normalized Alerts methods with OCSF support
+
+  // Get OCSF events with filtering
+  async getOCSFEvents(filters?: {
+    classUid?: number;
+    severityId?: number;
+    limit?: number;
+  }): Promise<OCSFEvent[]> {
+    let events = Array.from(this.ocsfEvents.values());
+    
+    if (filters?.classUid) {
+      events = events.filter(event => event.classUid === filters.classUid);
+    }
+    
+    if (filters?.severityId) {
+      events = events.filter(event => event.severityId === filters.severityId);
+    }
+    
+    // Sort by time descending
+    events.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+    
+    if (filters?.limit) {
+      events = events.slice(0, filters.limit);
+    }
+    
+    return events;
   }
 
   async getEnhancedNormalizedAlert(id: string): Promise<EnhancedNormalizedAlert | undefined> {
@@ -802,7 +820,9 @@ export class MemStorage implements IStorage {
       username: insertAlert.username || null,
       ruleId: insertAlert.ruleId || null,
       rawData: insertAlert.rawData || null,
-      status: (insertAlert.status || 'open') as 'open' | 'investigating' | 'closed' | 'false_positive'
+      status: (insertAlert.status || 'open') as 'open' | 'investigating' | 'closed' | 'false_positive',
+      severity: insertAlert.severity as 'low' | 'medium' | 'high' | 'critical',
+      alertType: insertAlert.alertType as 'malware' | 'intrusion' | 'policy_violation' | 'anomaly' | 'threat_intel'
     };
     this.enhancedNormalizedAlerts.set(id, alert);
     return alert;

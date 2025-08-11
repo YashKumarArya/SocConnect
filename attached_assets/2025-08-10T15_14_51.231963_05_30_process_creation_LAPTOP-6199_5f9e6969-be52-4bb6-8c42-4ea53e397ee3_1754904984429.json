@@ -1,0 +1,296 @@
+{
+  "schema_version": "edr_alert+enrichments/1.0",
+  "alert": {
+    "alert_id": "5f9e6969-be52-4bb6-8c42-4ea53e397ee3",
+    "timestamp": "2025-08-10T15:14:51.231963+05:30",
+    "vendor": "SentinelOne",
+    "product": "Singularity",
+    "category": "Escalate",
+    "agent_verdict": {
+      "label": "Escalate",
+      "true_positive": false,
+      "false_positive": false,
+      "escalate": true
+    },
+    "event_type": "process_creation",
+    "severity": "Medium",
+    "action": "Contain if Reproduced",
+    "rule_name": "Suspicious Command Line (Partial Signal)",
+    "rule_pack": "Threat Intel Pack 2025.07",
+    "mitre_attack": [
+      "T1053 (Scheduled Task/cron)",
+      "T1112 (Modify Registry)",
+      "T1547 (Boot or Logon Autostart)"
+    ],
+    "device": {
+      "hostname": "LAPTOP-6199",
+      "os": "Ubuntu 22.04 LTS",
+      "os_version": "5.15.0-113",
+      "user": "rohit.khan@acme-corp.com",
+      "department": "Finance",
+      "sensor_version": "6.7.2"
+    },
+    "process": {
+      "parent": {
+        "name": "python.exe",
+        "path": "/bin/sh",
+        "pid": 3935,
+        "integrity": "High",
+        "signer": "Apple"
+      },
+      "child": {
+        "name": "powershell.exe",
+        "path": "C:\\Windows\\System32\\\\powershell.exe",
+        "pid": 13498,
+        "ppid": 3935,
+        "cmdline": "powershell.exe -NoProfile -Command \"whoami; Get-Location; Get-ChildItem\"",
+        "integrity": "Medium",
+        "signer": "Signed by Vendor"
+      },
+      "image_hash": {
+        "md5": "b20b9a48642b09ccd8d0bac0ee4836c3",
+        "sha1": "897096e25d076fe445615cc98e8f72d5a2a6e2c7",
+        "sha256": "3ff14f6296449b919aefa6ad17116240a11ca15f62ce14de77bf390d77ff4a86"
+      },
+      "tty": "RDP"
+    },
+    "decoded_payload": null,
+    "key_ops_observed": [
+      "whoami",
+      null,
+      null
+    ],
+    "network": {
+      "dst_ip": "31.189.85.202",
+      "dst_port": 9001,
+      "protocol": "TCP",
+      "ja3": "a0e9f5d64349fb13191bc781f81f42e1",
+      "bytes_out": 7020,
+      "bytes_in": 1274,
+      "beacon_interval_s": 60
+    },
+    "amsi_or_script": null,
+    "persistence": false,
+    "lsass_access": false,
+    "ransomware_ioa": false,
+    "quarantine_path": null,
+    "tags": [
+      "beacon",
+      "behavior",
+      "edr",
+      "process_creation"
+    ]
+  },
+  "enrichments": {
+    "generated_at": "2025-08-10T17:44:45.231963+00:00",
+    "iocs": [
+      {
+        "ioc_id": "ip:1",
+        "type": "ip",
+        "value": "31.189.85.202",
+        "context": {
+          "found_in": "network.dst_ip",
+          "alert_id": "5f9e6969-be52-4bb6-8c42-4ea53e397ee3",
+          "device": "LAPTOP-6199"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 0,
+            "total_engines": 70,
+            "formatted": "0 / 70"
+          },
+          "reputation": {
+            "community_score": 1,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "unknown",
+            "confidence_percent": 10,
+            "severity_percent": 15
+          },
+          "vendors": []
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "reference": null,
+          "verdict": "unknown",
+          "risk": 20,
+          "confidence_percent": 10,
+          "categories": null,
+          "malware_family": null,
+          "first_seen": "2025-06-20T09:44:51.231963+00:00",
+          "last_seen": "2025-08-10T09:44:51.231963+00:00",
+          "evidence": null,
+          "geo": {
+            "country": "IN",
+            "asn": "AS12747",
+            "org": "Akamai"
+          }
+        }
+      },
+      {
+        "ioc_id": "file_hash:2",
+        "type": "file_hash",
+        "value": "3ff14f6296449b919aefa6ad17116240a11ca15f62ce14de77bf390d77ff4a86",
+        "context": {
+          "found_in": "process.image_hash.sha256",
+          "alert_id": "5f9e6969-be52-4bb6-8c42-4ea53e397ee3",
+          "device": "LAPTOP-6199"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 0,
+            "total_engines": 70,
+            "formatted": "0 / 70"
+          },
+          "reputation": {
+            "community_score": 3,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "unknown",
+            "confidence_percent": 10,
+            "severity_percent": 15
+          },
+          "vendors": []
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "reference": null,
+          "verdict": "unknown",
+          "risk": 20,
+          "confidence_percent": 10,
+          "categories": null,
+          "malware_family": null,
+          "first_seen": "2025-08-03T09:44:51.231963+00:00",
+          "last_seen": "2025-08-10T09:44:51.231963+00:00",
+          "evidence": null,
+          "geo": null
+        }
+      },
+      {
+        "ioc_id": "file_hash:3",
+        "type": "file_hash",
+        "value": "897096e25d076fe445615cc98e8f72d5a2a6e2c7",
+        "context": {
+          "found_in": "process.image_hash.sha1",
+          "alert_id": "5f9e6969-be52-4bb6-8c42-4ea53e397ee3",
+          "device": "LAPTOP-6199"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 0,
+            "total_engines": 70,
+            "formatted": "0 / 70"
+          },
+          "reputation": {
+            "community_score": 2,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "unknown",
+            "confidence_percent": 10,
+            "severity_percent": 15
+          },
+          "vendors": []
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "reference": null,
+          "verdict": "unknown",
+          "risk": 20,
+          "confidence_percent": 10,
+          "categories": null,
+          "malware_family": null,
+          "first_seen": "2025-08-09T09:44:51.231963+00:00",
+          "last_seen": "2025-08-10T09:44:51.231963+00:00",
+          "evidence": null,
+          "geo": null
+        }
+      },
+      {
+        "ioc_id": "file_hash:4",
+        "type": "file_hash",
+        "value": "b20b9a48642b09ccd8d0bac0ee4836c3",
+        "context": {
+          "found_in": "process.image_hash.md5",
+          "alert_id": "5f9e6969-be52-4bb6-8c42-4ea53e397ee3",
+          "device": "LAPTOP-6199"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 0,
+            "total_engines": 70,
+            "formatted": "0 / 70"
+          },
+          "reputation": {
+            "community_score": -1,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "unknown",
+            "confidence_percent": 10,
+            "severity_percent": 15
+          },
+          "vendors": []
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "reference": null,
+          "verdict": "unknown",
+          "risk": 20,
+          "confidence_percent": 10,
+          "categories": null,
+          "malware_family": null,
+          "first_seen": "2025-07-26T09:44:51.231963+00:00",
+          "last_seen": "2025-08-10T09:44:51.231963+00:00",
+          "evidence": null,
+          "geo": null
+        }
+      }
+    ],
+    "rollup": {
+      "counts": {
+        "total_iocs": 4,
+        "types": {
+          "url": 0,
+          "domain": 0,
+          "ip": 1,
+          "file_hash": 3
+        }
+      },
+      "virustotal": {
+        "malicious_iocs": 0,
+        "suspicious_iocs": 0,
+        "benign_iocs": 0,
+        "unknown_iocs": 4
+      },
+      "checkpoint": {
+        "malicious_iocs": 0,
+        "suspicious_iocs": 0,
+        "benign_iocs": 0,
+        "unknown_iocs": 4
+      }
+    }
+  }
+}

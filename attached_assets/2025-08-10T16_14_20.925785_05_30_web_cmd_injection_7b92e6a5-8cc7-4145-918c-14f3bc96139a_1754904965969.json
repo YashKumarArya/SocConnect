@@ -1,0 +1,324 @@
+{
+  "schema_version": "firewall_alert+enrichments/1.1",
+  "alert": {
+    "alert_id": "7b92e6a5-8cc7-4145-918c-14f3bc96139a",
+    "timestamp": "2025-08-10T16:14:20.925785+05:30",
+    "vendor": "Fortinet",
+    "product": "FortiGate",
+    "category": "Escalate",
+    "agent_verdict": {
+      "label": "Escalate",
+      "true_positive": false,
+      "false_positive": false,
+      "escalate": true
+    },
+    "severity": "Medium",
+    "action": "Alert Only",
+    "proto": "TCP",
+    "app": "HTTP",
+    "src_ip": "131.119.54.14",
+    "src_port": 37454,
+    "src_geo": "AE",
+    "src_city": "Sydney",
+    "src_asn": {
+      "asn": "AS14061",
+      "name": "DIGITALOCEAN-ASN"
+    },
+    "dst_ip": "173.140.131.183",
+    "dst_port": 80,
+    "dst_host": "portal-proxy.prod.acme-corp.com",
+    "signature_id": "FW-HTTP-CMDINJ-00127",
+    "signature_name": "HTTP Command Injection via cmd parameter",
+    "policy_rule": "Block - Web Attack",
+    "policy": "Default Internet",
+    "detection_context": {
+      "matched_fields": [
+        "ja3"
+      ],
+      "pattern": "Partial indicator; needs analyst triage",
+      "confidence": 0.68,
+      "cves": []
+    },
+    "http": {
+      "method": "GET",
+      "uri": "/cgi-bin/status?cmd=whoami",
+      "user_agent": "Go-http-client/1.1",
+      "status": 301,
+      "host": "portal-proxy.prod.acme-corp.com",
+      "referer": null
+    },
+    "dns": null,
+    "smtp": null,
+    "vpn": null,
+    "iocs": {},
+    "ja3": null,
+    "bytes_out": 147126,
+    "bytes_in": 63716,
+    "packets": 106,
+    "duration_ms": 72830,
+    "src_zone": "internet",
+    "dst_zone": "trust",
+    "ingress_iface": "vlan.200",
+    "egress_iface": "ethernet1/3",
+    "tags": [
+      "bruteforce",
+      "cmdinj",
+      "ja3",
+      "recon",
+      "web"
+    ],
+    "session_id": "a74342ab-73bd-4bb8-990c-fd8ec1e4d5a2"
+  },
+  "enrichments": {
+    "generated_at": "2025-08-10T18:30:09.849292+00:00",
+    "iocs": [
+      {
+        "ioc_id": "url:1",
+        "type": "url",
+        "value": "http://portal-proxy.prod.acme-corp.com/cgi-bin/status?cmd=whoami",
+        "context": {
+          "found_in": "http",
+          "alert_id": "7b92e6a5-8cc7-4145-918c-14f3bc96139a",
+          "session_id": "a74342ab-73bd-4bb8-990c-fd8ec1e4d5a2"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:09.849292+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 0,
+            "total_engines": 70,
+            "formatted": "0 / 70"
+          },
+          "reputation": {
+            "community_score": 5,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "unknown",
+            "confidence_percent": 10,
+            "severity_percent": 15
+          },
+          "vendors": []
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:09.849292+00:00",
+          "reference": null,
+          "verdict": "unknown",
+          "risk": 20,
+          "confidence_percent": 10,
+          "categories": null,
+          "malware_family": null,
+          "first_seen": "2025-08-03T10:44:20.925785+00:00",
+          "last_seen": "2025-08-10T10:44:20.925785+00:00",
+          "evidence": null,
+          "geo": null
+        }
+      },
+      {
+        "ioc_id": "domain:2",
+        "type": "domain",
+        "value": "portal-proxy.prod.acme-corp.com",
+        "context": {
+          "found_in": "http.host",
+          "alert_id": "7b92e6a5-8cc7-4145-918c-14f3bc96139a",
+          "session_id": "a74342ab-73bd-4bb8-990c-fd8ec1e4d5a2"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:09.849292+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 0,
+            "total_engines": 70,
+            "formatted": "0 / 70"
+          },
+          "reputation": {
+            "community_score": 76,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "benign",
+            "confidence_percent": 77,
+            "severity_percent": 4
+          },
+          "vendors": [
+            {
+              "vendor": "Sophos",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "Fortinet",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "TrendMicro",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "CrowdStrike",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "ESET",
+              "category": "undetected",
+              "result": null
+            }
+          ]
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:09.849292+00:00",
+          "reference": null,
+          "verdict": "benign",
+          "risk": 5,
+          "confidence_percent": 69,
+          "categories": null,
+          "malware_family": null,
+          "first_seen": "2025-07-06T10:44:20.925785+00:00",
+          "last_seen": "2025-08-10T10:44:20.925785+00:00",
+          "evidence": [
+            "Allowlisted domain"
+          ],
+          "geo": null
+        }
+      },
+      {
+        "ioc_id": "ip:3",
+        "type": "ip",
+        "value": "131.119.54.14",
+        "context": {
+          "found_in": "src_ip",
+          "alert_id": "7b92e6a5-8cc7-4145-918c-14f3bc96139a",
+          "session_id": "a74342ab-73bd-4bb8-990c-fd8ec1e4d5a2"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:09.849292+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 2,
+            "total_engines": 70,
+            "formatted": "2 / 70"
+          },
+          "reputation": {
+            "community_score": -26,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "suspicious",
+            "confidence_percent": 52,
+            "severity_percent": 64
+          },
+          "vendors": [
+            {
+              "vendor": "CrowdStrike",
+              "category": "suspicious",
+              "result": "Heuristic"
+            }
+          ]
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:09.849292+00:00",
+          "reference": null,
+          "verdict": "suspicious",
+          "risk": 59,
+          "confidence_percent": 49,
+          "categories": null,
+          "malware_family": null,
+          "first_seen": "2025-07-26T10:44:20.925785+00:00",
+          "last_seen": "2025-08-10T10:44:20.925785+00:00",
+          "evidence": null,
+          "geo": {
+            "country": "AE",
+            "city": "Sydney",
+            "asn": "AS14061",
+            "org": "DIGITALOCEAN-ASN"
+          }
+        }
+      },
+      {
+        "ioc_id": "ip:4",
+        "type": "ip",
+        "value": "173.140.131.183",
+        "context": {
+          "found_in": "dst_ip",
+          "alert_id": "7b92e6a5-8cc7-4145-918c-14f3bc96139a",
+          "session_id": "a74342ab-73bd-4bb8-990c-fd8ec1e4d5a2"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:09.849292+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 0,
+            "total_engines": 70,
+            "formatted": "0 / 70"
+          },
+          "reputation": {
+            "community_score": -5,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "unknown",
+            "confidence_percent": 10,
+            "severity_percent": 15
+          },
+          "vendors": []
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:09.849292+00:00",
+          "reference": null,
+          "verdict": "unknown",
+          "risk": 20,
+          "confidence_percent": 10,
+          "categories": null,
+          "malware_family": null,
+          "first_seen": "2025-07-13T10:44:20.925785+00:00",
+          "last_seen": "2025-08-10T10:44:20.925785+00:00",
+          "evidence": null,
+          "geo": {
+            "country": "ZA",
+            "city": "Tokyo",
+            "asn": "AS36692",
+            "org": "Hoster"
+          }
+        }
+      }
+    ],
+    "rollup": {
+      "counts": {
+        "total_iocs": 4,
+        "types": {
+          "url": 1,
+          "domain": 1,
+          "ip": 2,
+          "file_hash": 0
+        }
+      },
+      "virustotal": {
+        "malicious_iocs": 0,
+        "suspicious_iocs": 1,
+        "benign_iocs": 1,
+        "unknown_iocs": 2
+      },
+      "checkpoint": {
+        "malicious_iocs": 0,
+        "suspicious_iocs": 1,
+        "benign_iocs": 1,
+        "unknown_iocs": 2
+      }
+    }
+  }
+}

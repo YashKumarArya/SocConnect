@@ -1,0 +1,522 @@
+{
+  "schema_version": "firewall_alert+enrichments/1.1",
+  "alert": {
+    "alert_id": "ba68fd56-5451-4033-b79e-74450a9637e0",
+    "timestamp": "2025-08-10T16:14:25.925785+05:30",
+    "vendor": "Fortinet",
+    "product": "FortiGate",
+    "category": "False Positive",
+    "agent_verdict": {
+      "label": "False Positive",
+      "true_positive": false,
+      "false_positive": true,
+      "escalate": false
+    },
+    "severity": "Medium",
+    "action": "Allowed",
+    "proto": "TCP",
+    "app": "HTTP",
+    "src_ip": "10.140.27.8",
+    "src_port": 28309,
+    "src_geo": "MX",
+    "src_city": "Warsaw",
+    "src_asn": {
+      "asn": "AS14618",
+      "name": "AMAZON-AES"
+    },
+    "dst_ip": "59.113.193.244",
+    "dst_port": 8080,
+    "dst_host": "edge-portal.sap.acme-corp.com",
+    "signature_id": "FW-HTTP-CMDINJ-00127",
+    "signature_name": "HTTP Command Injection via cmd parameter",
+    "policy_rule": "Block - Web Attack",
+    "policy": "Datacenter East-West",
+    "detection_context": {
+      "matched_fields": [
+        "sni",
+        "user_agent",
+        "flow",
+        "dns.qname"
+      ],
+      "pattern": "Benign lookalike / threshold breach (review tuning)",
+      "confidence": 0.88,
+      "cves": []
+    },
+    "http": {
+      "method": "POST",
+      "uri": "/cgi-bin/status?cmd=whoami",
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15",
+      "status": 301,
+      "host": "edge-portal.sap.acme-corp.com",
+      "referer": "https://edge-cdn.status.cloudflare.com"
+    },
+    "dns": null,
+    "smtp": null,
+    "vpn": null,
+    "iocs": {
+      "url": "http://gate.malnet.example/1a2f5e8b"
+    },
+    "ja3": null,
+    "bytes_out": 10065,
+    "bytes_in": 37112,
+    "packets": 21,
+    "duration_ms": 8317,
+    "src_zone": "guest",
+    "dst_zone": "prod",
+    "ingress_iface": "ethernet1/2",
+    "egress_iface": "GigabitEthernet0/1",
+    "tags": [
+      "cmdinj",
+      "tls",
+      "miner",
+      "recon",
+      "web"
+    ],
+    "session_id": "313cbf6c-5812-42ef-a4ee-3099441cd4a6"
+  },
+  "enrichments": {
+    "generated_at": "2025-08-10T18:30:20.308657+00:00",
+    "iocs": [
+      {
+        "ioc_id": "url:1",
+        "type": "url",
+        "value": "http://edge-portal.sap.acme-corp.com/cgi-bin/status?cmd=whoami",
+        "context": {
+          "found_in": "http",
+          "alert_id": "ba68fd56-5451-4033-b79e-74450a9637e0",
+          "session_id": "313cbf6c-5812-42ef-a4ee-3099441cd4a6"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:20.308657+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 34,
+            "total_engines": 70,
+            "formatted": "34 / 70"
+          },
+          "reputation": {
+            "community_score": -82,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "malicious",
+            "confidence_percent": 95,
+            "severity_percent": 93
+          },
+          "vendors": [
+            {
+              "vendor": "Microsoft",
+              "category": "malicious",
+              "result": "Phishing"
+            },
+            {
+              "vendor": "Sophos",
+              "category": "malicious",
+              "result": "Phishing"
+            },
+            {
+              "vendor": "CrowdStrike",
+              "category": "malicious",
+              "result": "Trojan.Generic"
+            }
+          ]
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:20.308657+00:00",
+          "reference": null,
+          "verdict": "malicious",
+          "risk": 89,
+          "confidence_percent": 72,
+          "categories": [
+            "Crypto Miner"
+          ],
+          "malware_family": null,
+          "first_seen": "2025-08-01T10:44:25.925785+00:00",
+          "last_seen": "2025-08-10T10:44:25.925785+00:00",
+          "evidence": [
+            "Miner pool pattern"
+          ],
+          "geo": null
+        }
+      },
+      {
+        "ioc_id": "domain:2",
+        "type": "domain",
+        "value": "edge-portal.sap.acme-corp.com",
+        "context": {
+          "found_in": "http.host",
+          "alert_id": "ba68fd56-5451-4033-b79e-74450a9637e0",
+          "session_id": "313cbf6c-5812-42ef-a4ee-3099441cd4a6"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:20.308657+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 0,
+            "total_engines": 70,
+            "formatted": "0 / 70"
+          },
+          "reputation": {
+            "community_score": 73,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "benign",
+            "confidence_percent": 81,
+            "severity_percent": 10
+          },
+          "vendors": [
+            {
+              "vendor": "ESET",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "Fortinet",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "Kaspersky",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "Symantec",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "Microsoft",
+              "category": "undetected",
+              "result": null
+            }
+          ]
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:20.308657+00:00",
+          "reference": null,
+          "verdict": "benign",
+          "risk": 2,
+          "confidence_percent": 64,
+          "categories": null,
+          "malware_family": null,
+          "first_seen": "2025-08-01T10:44:25.925785+00:00",
+          "last_seen": "2025-08-10T10:44:25.925785+00:00",
+          "evidence": [
+            "Allowlisted domain"
+          ],
+          "geo": null
+        }
+      },
+      {
+        "ioc_id": "url:3",
+        "type": "url",
+        "value": "http://gate.malnet.example/1a2f5e8b",
+        "context": {
+          "found_in": "iocs.url",
+          "alert_id": "ba68fd56-5451-4033-b79e-74450a9637e0",
+          "session_id": "313cbf6c-5812-42ef-a4ee-3099441cd4a6"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:20.308657+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 32,
+            "total_engines": 70,
+            "formatted": "32 / 70"
+          },
+          "reputation": {
+            "community_score": -93,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "malicious",
+            "confidence_percent": 92,
+            "severity_percent": 86
+          },
+          "vendors": [
+            {
+              "vendor": "ESET",
+              "category": "malicious",
+              "result": "Phishing"
+            },
+            {
+              "vendor": "Microsoft",
+              "category": "malicious",
+              "result": "Phishing"
+            },
+            {
+              "vendor": "Symantec",
+              "category": "malicious",
+              "result": "Trojan.Generic"
+            }
+          ]
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:20.308657+00:00",
+          "reference": null,
+          "verdict": "malicious",
+          "risk": 85,
+          "confidence_percent": 74,
+          "categories": [
+            "Crypto Miner"
+          ],
+          "malware_family": null,
+          "first_seen": "2025-07-29T10:44:25.925785+00:00",
+          "last_seen": "2025-08-10T10:44:25.925785+00:00",
+          "evidence": [
+            "Miner pool pattern",
+            "Non-allowlisted domain"
+          ],
+          "geo": null
+        }
+      },
+      {
+        "ioc_id": "domain:4",
+        "type": "domain",
+        "value": "gate.malnet.example",
+        "context": {
+          "found_in": "derived(domain_from:iocs.url)",
+          "alert_id": "ba68fd56-5451-4033-b79e-74450a9637e0",
+          "session_id": "313cbf6c-5812-42ef-a4ee-3099441cd4a6"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:20.308657+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 6,
+            "total_engines": 70,
+            "formatted": "6 / 70"
+          },
+          "reputation": {
+            "community_score": -33,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "suspicious",
+            "confidence_percent": 50,
+            "severity_percent": 47
+          },
+          "vendors": [
+            {
+              "vendor": "Sophos",
+              "category": "suspicious",
+              "result": "Heuristic"
+            },
+            {
+              "vendor": "BitDefender",
+              "category": "suspicious",
+              "result": "Heuristic"
+            },
+            {
+              "vendor": "Symantec",
+              "category": "suspicious",
+              "result": "Heuristic"
+            }
+          ]
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:20.308657+00:00",
+          "reference": null,
+          "verdict": "suspicious",
+          "risk": 63,
+          "confidence_percent": 55,
+          "categories": null,
+          "malware_family": null,
+          "first_seen": "2025-07-13T10:44:25.925785+00:00",
+          "last_seen": "2025-08-10T10:44:25.925785+00:00",
+          "evidence": null,
+          "geo": null
+        }
+      },
+      {
+        "ioc_id": "ip:5",
+        "type": "ip",
+        "value": "10.140.27.8",
+        "context": {
+          "found_in": "src_ip",
+          "alert_id": "ba68fd56-5451-4033-b79e-74450a9637e0",
+          "session_id": "313cbf6c-5812-42ef-a4ee-3099441cd4a6"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:20.308657+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 0,
+            "total_engines": 70,
+            "formatted": "0 / 70"
+          },
+          "reputation": {
+            "community_score": 95,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "benign",
+            "confidence_percent": 73,
+            "severity_percent": 6
+          },
+          "vendors": [
+            {
+              "vendor": "Sophos",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "ESET",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "TrendMicro",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "Symantec",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "BitDefender",
+              "category": "undetected",
+              "result": null
+            }
+          ]
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:20.308657+00:00",
+          "reference": null,
+          "verdict": "benign",
+          "risk": 9,
+          "confidence_percent": 68,
+          "categories": null,
+          "malware_family": null,
+          "first_seen": "2025-07-28T10:44:25.925785+00:00",
+          "last_seen": "2025-08-10T10:44:25.925785+00:00",
+          "evidence": null,
+          "geo": {
+            "country": "MX",
+            "city": "Warsaw",
+            "asn": "AS14618",
+            "org": "AMAZON-AES"
+          }
+        }
+      },
+      {
+        "ioc_id": "ip:6",
+        "type": "ip",
+        "value": "59.113.193.244",
+        "context": {
+          "found_in": "dst_ip",
+          "alert_id": "ba68fd56-5451-4033-b79e-74450a9637e0",
+          "session_id": "313cbf6c-5812-42ef-a4ee-3099441cd4a6"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:20.308657+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 0,
+            "total_engines": 70,
+            "formatted": "0 / 70"
+          },
+          "reputation": {
+            "community_score": 63,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "benign",
+            "confidence_percent": 88,
+            "severity_percent": 1
+          },
+          "vendors": [
+            {
+              "vendor": "Kaspersky",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "BitDefender",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "TrendMicro",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "Symantec",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "Sophos",
+              "category": "undetected",
+              "result": null
+            }
+          ]
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:20.308657+00:00",
+          "reference": null,
+          "verdict": "benign",
+          "risk": 12,
+          "confidence_percent": 73,
+          "categories": null,
+          "malware_family": null,
+          "first_seen": "2025-07-11T10:44:25.925785+00:00",
+          "last_seen": "2025-08-10T10:44:25.925785+00:00",
+          "evidence": null,
+          "geo": {
+            "country": "BR",
+            "city": "Paris",
+            "asn": "AS14061",
+            "org": "Hoster"
+          }
+        }
+      }
+    ],
+    "rollup": {
+      "counts": {
+        "total_iocs": 6,
+        "types": {
+          "url": 2,
+          "domain": 2,
+          "ip": 2,
+          "file_hash": 0
+        }
+      },
+      "virustotal": {
+        "malicious_iocs": 2,
+        "suspicious_iocs": 1,
+        "benign_iocs": 3,
+        "unknown_iocs": 0
+      },
+      "checkpoint": {
+        "malicious_iocs": 2,
+        "suspicious_iocs": 1,
+        "benign_iocs": 3,
+        "unknown_iocs": 0
+      }
+    }
+  }
+}

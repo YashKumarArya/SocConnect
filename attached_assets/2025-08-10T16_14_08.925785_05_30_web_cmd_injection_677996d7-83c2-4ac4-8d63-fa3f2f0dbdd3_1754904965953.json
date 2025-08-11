@@ -1,0 +1,524 @@
+{
+  "schema_version": "firewall_alert+enrichments/1.1",
+  "alert": {
+    "alert_id": "677996d7-83c2-4ac4-8d63-fa3f2f0dbdd3",
+    "timestamp": "2025-08-10T16:14:08.925785+05:30",
+    "vendor": "Cisco",
+    "product": "ASA/FTD",
+    "category": "True Positive",
+    "agent_verdict": {
+      "label": "True Positive",
+      "true_positive": true,
+      "false_positive": false,
+      "escalate": false
+    },
+    "severity": "Critical",
+    "action": "Terminated",
+    "proto": "TCP",
+    "app": "HTTP",
+    "src_ip": "10.55.217.15",
+    "src_port": 2531,
+    "src_geo": "IT",
+    "src_city": "Sydney",
+    "src_asn": {
+      "asn": "AS15169",
+      "name": "GOOGLE"
+    },
+    "dst_ip": "212.184.184.153",
+    "dst_port": 8080,
+    "dst_host": "node-app.jira.acme-corp.com",
+    "signature_id": "FW-HTTP-CMDINJ-00127",
+    "signature_name": "HTTP Command Injection via cmd parameter",
+    "policy_rule": "Block - Web Attack",
+    "policy": "Zero Trust",
+    "detection_context": {
+      "matched_fields": [
+        "user_agent",
+        "x-forwarded-for"
+      ],
+      "pattern": "(;|&&|\\|\\|)\\s*(whoami|pwd|ls|id)\\b",
+      "confidence": 0.76,
+      "cves": []
+    },
+    "http": {
+      "method": "DELETE",
+      "uri": "/cgi-bin/status?cmd=whoami",
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15",
+      "status": 404,
+      "host": "node-app.jira.acme-corp.com",
+      "referer": "https://portal-edge.zoom.us"
+    },
+    "dns": null,
+    "smtp": null,
+    "vpn": null,
+    "iocs": {
+      "url": "http://cdn-drop.malnet.example/2f052090"
+    },
+    "ja3": null,
+    "bytes_out": 68470,
+    "bytes_in": 83747,
+    "packets": 45,
+    "duration_ms": 110021,
+    "src_zone": "dmz",
+    "dst_zone": "corp",
+    "ingress_iface": "GigabitEthernet0/0",
+    "egress_iface": "vlan.10",
+    "tags": [
+      "cmdinj",
+      "beacon",
+      "recon",
+      "web"
+    ],
+    "session_id": "21440e62-a67b-4b1e-b7c5-6c7f118dbf81"
+  },
+  "enrichments": {
+    "generated_at": "2025-08-10T18:30:09.766101+00:00",
+    "iocs": [
+      {
+        "ioc_id": "url:1",
+        "type": "url",
+        "value": "http://node-app.jira.acme-corp.com/cgi-bin/status?cmd=whoami",
+        "context": {
+          "found_in": "http",
+          "alert_id": "677996d7-83c2-4ac4-8d63-fa3f2f0dbdd3",
+          "session_id": "21440e62-a67b-4b1e-b7c5-6c7f118dbf81"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:09.766101+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 35,
+            "total_engines": 70,
+            "formatted": "35 / 70"
+          },
+          "reputation": {
+            "community_score": -66,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "malicious",
+            "confidence_percent": 88,
+            "severity_percent": 98
+          },
+          "vendors": [
+            {
+              "vendor": "ESET",
+              "category": "malicious",
+              "result": "Agent"
+            },
+            {
+              "vendor": "CrowdStrike",
+              "category": "malicious",
+              "result": "C2"
+            },
+            {
+              "vendor": "Sophos",
+              "category": "malicious",
+              "result": "Trojan.Generic"
+            },
+            {
+              "vendor": "Fortinet",
+              "category": "malicious",
+              "result": "Agent"
+            },
+            {
+              "vendor": "Symantec",
+              "category": "malicious",
+              "result": "C2"
+            }
+          ]
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:09.766101+00:00",
+          "reference": null,
+          "verdict": "malicious",
+          "risk": 85,
+          "confidence_percent": 79,
+          "categories": [
+            "C2"
+          ],
+          "malware_family": null,
+          "first_seen": "2025-08-06T10:44:08.925785+00:00",
+          "last_seen": "2025-08-10T10:44:08.925785+00:00",
+          "evidence": [
+            "C2/beacon tags"
+          ],
+          "geo": null
+        }
+      },
+      {
+        "ioc_id": "domain:2",
+        "type": "domain",
+        "value": "node-app.jira.acme-corp.com",
+        "context": {
+          "found_in": "http.host",
+          "alert_id": "677996d7-83c2-4ac4-8d63-fa3f2f0dbdd3",
+          "session_id": "21440e62-a67b-4b1e-b7c5-6c7f118dbf81"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:09.766101+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 26,
+            "total_engines": 70,
+            "formatted": "26 / 70"
+          },
+          "reputation": {
+            "community_score": -73,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "malicious",
+            "confidence_percent": 78,
+            "severity_percent": 86
+          },
+          "vendors": [
+            {
+              "vendor": "Sophos",
+              "category": "malicious",
+              "result": "Agent"
+            },
+            {
+              "vendor": "BitDefender",
+              "category": "malicious",
+              "result": "Trojan.Generic"
+            },
+            {
+              "vendor": "CrowdStrike",
+              "category": "malicious",
+              "result": "Agent"
+            },
+            {
+              "vendor": "Fortinet",
+              "category": "malicious",
+              "result": "Agent"
+            },
+            {
+              "vendor": "ESET",
+              "category": "malicious",
+              "result": "Agent"
+            },
+            {
+              "vendor": "Kaspersky",
+              "category": "malicious",
+              "result": "C2"
+            }
+          ]
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:09.766101+00:00",
+          "reference": null,
+          "verdict": "malicious",
+          "risk": 88,
+          "confidence_percent": 70,
+          "categories": [
+            "C2"
+          ],
+          "malware_family": null,
+          "first_seen": "2025-07-02T10:44:08.925785+00:00",
+          "last_seen": "2025-08-10T10:44:08.925785+00:00",
+          "evidence": [
+            "Allowlisted domain"
+          ],
+          "geo": null
+        }
+      },
+      {
+        "ioc_id": "url:3",
+        "type": "url",
+        "value": "http://cdn-drop.malnet.example/2f052090",
+        "context": {
+          "found_in": "iocs.url",
+          "alert_id": "677996d7-83c2-4ac4-8d63-fa3f2f0dbdd3",
+          "session_id": "21440e62-a67b-4b1e-b7c5-6c7f118dbf81"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:09.766101+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 21,
+            "total_engines": 70,
+            "formatted": "21 / 70"
+          },
+          "reputation": {
+            "community_score": -67,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "malicious",
+            "confidence_percent": 80,
+            "severity_percent": 89
+          },
+          "vendors": [
+            {
+              "vendor": "BitDefender",
+              "category": "malicious",
+              "result": "Downloader"
+            },
+            {
+              "vendor": "ESET",
+              "category": "malicious",
+              "result": "C2"
+            },
+            {
+              "vendor": "Sophos",
+              "category": "malicious",
+              "result": "Agent"
+            },
+            {
+              "vendor": "Fortinet",
+              "category": "malicious",
+              "result": "Agent"
+            },
+            {
+              "vendor": "Kaspersky",
+              "category": "malicious",
+              "result": "Downloader"
+            },
+            {
+              "vendor": "TrendMicro",
+              "category": "malicious",
+              "result": "Trojan.Generic"
+            }
+          ]
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:09.766101+00:00",
+          "reference": null,
+          "verdict": "malicious",
+          "risk": 98,
+          "confidence_percent": 86,
+          "categories": [
+            "C2"
+          ],
+          "malware_family": null,
+          "first_seen": "2025-07-28T10:44:08.925785+00:00",
+          "last_seen": "2025-08-10T10:44:08.925785+00:00",
+          "evidence": [
+            "C2/beacon tags",
+            "Non-allowlisted domain"
+          ],
+          "geo": null
+        }
+      },
+      {
+        "ioc_id": "domain:4",
+        "type": "domain",
+        "value": "cdn-drop.malnet.example",
+        "context": {
+          "found_in": "derived(domain_from:iocs.url)",
+          "alert_id": "677996d7-83c2-4ac4-8d63-fa3f2f0dbdd3",
+          "session_id": "21440e62-a67b-4b1e-b7c5-6c7f118dbf81"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:09.766101+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 24,
+            "total_engines": 70,
+            "formatted": "24 / 70"
+          },
+          "reputation": {
+            "community_score": -53,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "malicious",
+            "confidence_percent": 79,
+            "severity_percent": 90
+          },
+          "vendors": [
+            {
+              "vendor": "Sophos",
+              "category": "malicious",
+              "result": "C2"
+            },
+            {
+              "vendor": "TrendMicro",
+              "category": "malicious",
+              "result": "Agent"
+            },
+            {
+              "vendor": "BitDefender",
+              "category": "malicious",
+              "result": "Agent"
+            }
+          ]
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:09.766101+00:00",
+          "reference": null,
+          "verdict": "malicious",
+          "risk": 99,
+          "confidence_percent": 79,
+          "categories": [
+            "C2"
+          ],
+          "malware_family": null,
+          "first_seen": "2025-07-31T10:44:08.925785+00:00",
+          "last_seen": "2025-08-10T10:44:08.925785+00:00",
+          "evidence": null,
+          "geo": null
+        }
+      },
+      {
+        "ioc_id": "ip:5",
+        "type": "ip",
+        "value": "10.55.217.15",
+        "context": {
+          "found_in": "src_ip",
+          "alert_id": "677996d7-83c2-4ac4-8d63-fa3f2f0dbdd3",
+          "session_id": "21440e62-a67b-4b1e-b7c5-6c7f118dbf81"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:09.766101+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 0,
+            "total_engines": 70,
+            "formatted": "0 / 70"
+          },
+          "reputation": {
+            "community_score": -3,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "unknown",
+            "confidence_percent": 10,
+            "severity_percent": 15
+          },
+          "vendors": []
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:09.766101+00:00",
+          "reference": null,
+          "verdict": "unknown",
+          "risk": 20,
+          "confidence_percent": 10,
+          "categories": null,
+          "malware_family": null,
+          "first_seen": "2025-06-18T10:44:08.925785+00:00",
+          "last_seen": "2025-08-10T10:44:08.925785+00:00",
+          "evidence": null,
+          "geo": {
+            "country": "IT",
+            "city": "Sydney",
+            "asn": "AS15169",
+            "org": "GOOGLE"
+          }
+        }
+      },
+      {
+        "ioc_id": "ip:6",
+        "type": "ip",
+        "value": "212.184.184.153",
+        "context": {
+          "found_in": "dst_ip",
+          "alert_id": "677996d7-83c2-4ac4-8d63-fa3f2f0dbdd3",
+          "session_id": "21440e62-a67b-4b1e-b7c5-6c7f118dbf81"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:09.766101+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 16,
+            "total_engines": 70,
+            "formatted": "16 / 70"
+          },
+          "reputation": {
+            "community_score": -62,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "malicious",
+            "confidence_percent": 79,
+            "severity_percent": 85
+          },
+          "vendors": [
+            {
+              "vendor": "ESET",
+              "category": "malicious",
+              "result": "Agent"
+            },
+            {
+              "vendor": "Kaspersky",
+              "category": "malicious",
+              "result": "Agent"
+            },
+            {
+              "vendor": "Sophos",
+              "category": "malicious",
+              "result": "Phishing"
+            },
+            {
+              "vendor": "Symantec",
+              "category": "malicious",
+              "result": "C2"
+            }
+          ]
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:09.766101+00:00",
+          "reference": null,
+          "verdict": "malicious",
+          "risk": 91,
+          "confidence_percent": 79,
+          "categories": [
+            "C2"
+          ],
+          "malware_family": null,
+          "first_seen": "2025-06-30T10:44:08.925785+00:00",
+          "last_seen": "2025-08-10T10:44:08.925785+00:00",
+          "evidence": null,
+          "geo": {
+            "country": "CA",
+            "city": "Johannesburg",
+            "asn": "AS15169",
+            "org": "ISP"
+          }
+        }
+      }
+    ],
+    "rollup": {
+      "counts": {
+        "total_iocs": 6,
+        "types": {
+          "url": 2,
+          "domain": 2,
+          "ip": 2,
+          "file_hash": 0
+        }
+      },
+      "virustotal": {
+        "malicious_iocs": 5,
+        "suspicious_iocs": 0,
+        "benign_iocs": 0,
+        "unknown_iocs": 1
+      },
+      "checkpoint": {
+        "malicious_iocs": 5,
+        "suspicious_iocs": 0,
+        "benign_iocs": 0,
+        "unknown_iocs": 1
+      }
+    }
+  }
+}

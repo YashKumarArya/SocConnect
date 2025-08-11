@@ -1,0 +1,296 @@
+{
+  "schema_version": "edr_alert+enrichments/1.0",
+  "alert": {
+    "alert_id": "f34bfcde-4d69-4843-9028-38d9acb61ba3",
+    "timestamp": "2025-08-10T15:14:58.231963+05:30",
+    "vendor": "Microsoft",
+    "product": "Defender for Endpoint",
+    "category": "True Positive",
+    "agent_verdict": {
+      "label": "True Positive",
+      "true_positive": true,
+      "false_positive": false,
+      "escalate": false
+    },
+    "event_type": "process_creation",
+    "severity": "Medium",
+    "action": "Kill Process",
+    "rule_name": "Suspicious Command Line",
+    "rule_pack": "Behavioral ML v1.9",
+    "mitre_attack": [
+      "T1003 (OS Credential Dumping)",
+      "T1112 (Modify Registry)",
+      "T1204 (User Execution)"
+    ],
+    "device": {
+      "hostname": "SRV-3062",
+      "os": "macOS 13.6 Ventura",
+      "os_version": "22G630",
+      "user": "svc_git@acme-corp.com",
+      "department": "Service",
+      "sensor_version": "6.8.1"
+    },
+    "process": {
+      "parent": {
+        "name": "WINWORD.EXE",
+        "path": "/bin/sh",
+        "pid": 3637,
+        "integrity": "Medium",
+        "signer": "Microsoft Windows"
+      },
+      "child": {
+        "name": "powershell.exe",
+        "path": "C:\\Windows\\System32\\\\powershell.exe",
+        "pid": 14359,
+        "ppid": 3637,
+        "cmdline": "powershell.exe -NoProfile -Command \"whoami; Get-Location; Get-ChildItem\"",
+        "integrity": "High",
+        "signer": "Signed by Vendor"
+      },
+      "image_hash": {
+        "md5": "b20b9a48642b09ccd8d0bac0ee4836c3",
+        "sha1": "897096e25d076fe445615cc98e8f72d5a2a6e2c7",
+        "sha256": "3ff14f6296449b919aefa6ad17116240a11ca15f62ce14de77bf390d77ff4a86"
+      },
+      "tty": "RDP"
+    },
+    "decoded_payload": null,
+    "key_ops_observed": [
+      "whoami",
+      null,
+      null
+    ],
+    "network": {
+      "dst_ip": "201.68.43.85",
+      "dst_port": 443,
+      "protocol": "TCP",
+      "ja3": "72a589da586844d7f0818ce684948eea",
+      "bytes_out": 7622,
+      "bytes_in": 8090,
+      "beacon_interval_s": 60
+    },
+    "amsi_or_script": null,
+    "persistence": false,
+    "lsass_access": false,
+    "ransomware_ioa": false,
+    "quarantine_path": null,
+    "tags": [
+      "beacon",
+      "behavior",
+      "edr",
+      "process_creation"
+    ]
+  },
+  "enrichments": {
+    "generated_at": "2025-08-10T17:44:45.231963+00:00",
+    "iocs": [
+      {
+        "ioc_id": "ip:1",
+        "type": "ip",
+        "value": "201.68.43.85",
+        "context": {
+          "found_in": "network.dst_ip",
+          "alert_id": "f34bfcde-4d69-4843-9028-38d9acb61ba3",
+          "device": "SRV-3062"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 0,
+            "total_engines": 70,
+            "formatted": "0 / 70"
+          },
+          "reputation": {
+            "community_score": 4,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "unknown",
+            "confidence_percent": 10,
+            "severity_percent": 15
+          },
+          "vendors": []
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "reference": null,
+          "verdict": "unknown",
+          "risk": 20,
+          "confidence_percent": 10,
+          "categories": null,
+          "malware_family": null,
+          "first_seen": "2025-07-22T09:44:58.231963+00:00",
+          "last_seen": "2025-08-10T09:44:58.231963+00:00",
+          "evidence": null,
+          "geo": {
+            "country": "RU",
+            "asn": "AS20391",
+            "org": "Fastly"
+          }
+        }
+      },
+      {
+        "ioc_id": "file_hash:2",
+        "type": "file_hash",
+        "value": "3ff14f6296449b919aefa6ad17116240a11ca15f62ce14de77bf390d77ff4a86",
+        "context": {
+          "found_in": "process.image_hash.sha256",
+          "alert_id": "f34bfcde-4d69-4843-9028-38d9acb61ba3",
+          "device": "SRV-3062"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 0,
+            "total_engines": 70,
+            "formatted": "0 / 70"
+          },
+          "reputation": {
+            "community_score": -2,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "unknown",
+            "confidence_percent": 10,
+            "severity_percent": 15
+          },
+          "vendors": []
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "reference": null,
+          "verdict": "unknown",
+          "risk": 20,
+          "confidence_percent": 10,
+          "categories": null,
+          "malware_family": null,
+          "first_seen": "2025-08-06T09:44:58.231963+00:00",
+          "last_seen": "2025-08-10T09:44:58.231963+00:00",
+          "evidence": null,
+          "geo": null
+        }
+      },
+      {
+        "ioc_id": "file_hash:3",
+        "type": "file_hash",
+        "value": "897096e25d076fe445615cc98e8f72d5a2a6e2c7",
+        "context": {
+          "found_in": "process.image_hash.sha1",
+          "alert_id": "f34bfcde-4d69-4843-9028-38d9acb61ba3",
+          "device": "SRV-3062"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 0,
+            "total_engines": 70,
+            "formatted": "0 / 70"
+          },
+          "reputation": {
+            "community_score": -2,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "unknown",
+            "confidence_percent": 10,
+            "severity_percent": 15
+          },
+          "vendors": []
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "reference": null,
+          "verdict": "unknown",
+          "risk": 20,
+          "confidence_percent": 10,
+          "categories": null,
+          "malware_family": null,
+          "first_seen": "2025-08-08T09:44:58.231963+00:00",
+          "last_seen": "2025-08-10T09:44:58.231963+00:00",
+          "evidence": null,
+          "geo": null
+        }
+      },
+      {
+        "ioc_id": "file_hash:4",
+        "type": "file_hash",
+        "value": "b20b9a48642b09ccd8d0bac0ee4836c3",
+        "context": {
+          "found_in": "process.image_hash.md5",
+          "alert_id": "f34bfcde-4d69-4843-9028-38d9acb61ba3",
+          "device": "SRV-3062"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 0,
+            "total_engines": 70,
+            "formatted": "0 / 70"
+          },
+          "reputation": {
+            "community_score": -2,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "unknown",
+            "confidence_percent": 10,
+            "severity_percent": 15
+          },
+          "vendors": []
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T17:44:45.231963+00:00",
+          "reference": null,
+          "verdict": "unknown",
+          "risk": 20,
+          "confidence_percent": 10,
+          "categories": null,
+          "malware_family": null,
+          "first_seen": "2025-08-07T09:44:58.231963+00:00",
+          "last_seen": "2025-08-10T09:44:58.231963+00:00",
+          "evidence": null,
+          "geo": null
+        }
+      }
+    ],
+    "rollup": {
+      "counts": {
+        "total_iocs": 4,
+        "types": {
+          "url": 0,
+          "domain": 0,
+          "ip": 1,
+          "file_hash": 3
+        }
+      },
+      "virustotal": {
+        "malicious_iocs": 0,
+        "suspicious_iocs": 0,
+        "benign_iocs": 0,
+        "unknown_iocs": 4
+      },
+      "checkpoint": {
+        "malicious_iocs": 0,
+        "suspicious_iocs": 0,
+        "benign_iocs": 0,
+        "unknown_iocs": 4
+      }
+    }
+  }
+}

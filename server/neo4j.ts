@@ -81,6 +81,14 @@ export class Neo4jService {
     return this.connected;
   }
 
+  // Execute a query with parameters
+  async executeQuery(query: string, parameters: Record<string, any> = {}) {
+    if (!this.connected || !this.session) {
+      throw new Error('Neo4j not connected');
+    }
+    return await this.session.run(query, parameters);
+  }
+
   // Setup graph schema with constraints and indexes
   private async setupGraphSchema() {
     if (!this.session) return;

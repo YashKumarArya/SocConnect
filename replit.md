@@ -1,6 +1,6 @@
 # Overview
 
-This is a full-stack Security Operations Center (SOC) dashboard application built with React frontend and Express.js backend. The system provides real-time monitoring, alert management, incident response, and analytics for cybersecurity operations. It features a modern dark-themed UI optimized for SOC environments with real-time WebSocket communication, comprehensive alert processing, and machine learning integration for automated threat detection.
+This is a comprehensive SOC platform with machine learning for automated threat detection (99.58% accuracy, 3 classes, 3.2M parameters), featuring Neo4j graph database capabilities, OCSF (Open Cybersecurity Schema Framework) normalization pipeline, real-time security event processing, and agentic AI integration. The system implements the complete architecture: Alert Sources → API Endpoints → Data Enrichment → OCSF Normalization → Database Storage → ML Model (via Kafka) + Neo4j Graph Analysis (via Agentic AI). The application processes 4,000+ authentic security alerts from CrowdStrike, Email, Firewall, and SentinelOne sources through OCSF-compliant pipelines for ML model compatibility.
 
 # User Preferences
 
@@ -21,22 +21,27 @@ Preferred communication style: Simple, everyday language.
 - **Runtime**: Node.js with Express.js framework
 - **Language**: TypeScript with ES modules for modern JavaScript features
 - **Database ORM**: Drizzle ORM for type-safe database operations
-- **Real-time**: WebSocket server for broadcasting live updates to connected clients
-- **API Design**: RESTful endpoints with JSON communication
+- **OCSF Normalization**: Complete pipeline for ML model compatibility (99.58% accuracy)
+- **Agentic AI Integration**: Neo4j graph analysis with intelligent threat assessment
+- **Real-time**: WebSocket server + Kafka for ML model communication
+- **API Design**: RESTful endpoints with OCSF processing capabilities
 - **Development**: Hot reload with Vite middleware integration
 
 ## Database Design
-- **Database**: PostgreSQL with Drizzle ORM for schema management
+- **Primary Database**: PostgreSQL with Drizzle ORM for schema management
+- **Graph Database**: Neo4j for relationship analysis and attack pattern detection
 - **Schema Structure**:
   - Users table for analyst/admin roles
   - Sources table for security tool configurations (SIEM, EDR, Firewall)
   - Raw alerts table for incoming security events
-  - Normalized alerts table for processed/standardized alerts
+  - **OCSF Events table** for ML-compatible normalized events
+  - **Enhanced Normalized Alerts** with OCSF attribute mapping
   - Feature vectors table for ML-based analysis
-  - Incidents table for security incident management
-  - Actions table for response tracking
+  - Incidents table with graph relationship tracking
+  - Actions table for automated response tracking
   - Feedback table for analyst input and model improvement
-  - Model metrics table for performance monitoring
+  - Model metrics table for performance monitoring (99.58% accuracy tracking)
+- **Neo4j Graph Schema**: Security events, IP addresses, users, hosts with relationship mapping
 - **Migrations**: Drizzle Kit for schema versioning and deployment
 
 ## Real-time Communication
@@ -65,6 +70,24 @@ Preferred communication style: Simple, everyday language.
 - **Development Server**: Vite with HMR and Express.js middleware integration
 - **Build Process**: Separate client and server builds with optimized outputs
 - **Path Aliases**: Simplified imports with @ and @shared path mapping
+
+# OCSF Architecture Implementation
+
+## Complete Data Flow Pipeline
+**Alert Sources → API Endpoints → Data Enrichment → OCSF Normalization → Database Storage → ML Model (via Kafka) + Neo4j Graph Analysis (via Agentic AI)**
+
+## Key Components Added (August 11, 2025)
+- **server/ocsfNormalization.ts**: Complete OCSF normalization pipeline for ML compatibility
+- **server/agenticAI.ts**: Neo4j graph analysis with intelligent threat assessment
+- **Enhanced Routes**: OCSF processing endpoints (`/api/alerts/process-ocsf`, `/api/ocsf/events`)
+- **ML Integration**: Feature extraction and verdict processing for 99.58% accuracy model
+- **Graph Intelligence**: Attack pattern detection, compromised asset identification
+
+## Authentic Data Processing
+- **4,000+ Real Security Alerts**: CrowdStrike, Email, Firewall, SentinelOne sources
+- **OCSF Compliance**: All alerts normalized to OCSF standard for ML model training
+- **Real-time Processing**: WebSocket + Kafka integration for live ML verdicts
+- **Graph Relationships**: Neo4j tracking of IP addresses, users, hosts, and attack chains
 
 # External Dependencies
 

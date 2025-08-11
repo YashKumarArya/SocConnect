@@ -1,0 +1,401 @@
+{
+  "schema_version": "firewall_alert+enrichments/1.1",
+  "alert": {
+    "alert_id": "5b77aebe-eba2-4e0b-b3c8-af4fc444835d",
+    "timestamp": "2025-08-10T16:14:14.925785+05:30",
+    "vendor": "Fortinet",
+    "product": "FortiGate",
+    "category": "False Positive",
+    "agent_verdict": {
+      "label": "False Positive",
+      "true_positive": false,
+      "false_positive": true,
+      "escalate": false
+    },
+    "severity": "Low",
+    "action": "Allowed",
+    "proto": "TCP",
+    "app": "HTTPS",
+    "src_ip": "192.168.218.43",
+    "src_port": 15959,
+    "src_geo": "JP",
+    "src_city": "Amsterdam",
+    "src_asn": {
+      "asn": "AS36692",
+      "name": "OPENDNS"
+    },
+    "dst_ip": "71.55.206.25",
+    "dst_port": 8443,
+    "dst_host": "cdn-app.dev.acme-corp.com",
+    "signature_id": "FW-HTTP-CMDINJ-00127",
+    "signature_name": "HTTP Command Injection via cmd parameter",
+    "policy_rule": "Block - Web Attack",
+    "policy": "Global Protect",
+    "detection_context": {
+      "matched_fields": [
+        "ja3",
+        "sni",
+        "flow"
+      ],
+      "pattern": "Benign lookalike / threshold breach (review tuning)",
+      "confidence": 0.66,
+      "cves": [
+        "CVE-2021-44228"
+      ]
+    },
+    "http": {
+      "method": "PUT",
+      "uri": "/cgi-bin/status?cmd=whoami",
+      "user_agent": "Mozilla/5.0 (X11; Linux x86_64; rv:122.0) Gecko/20100101 Firefox/122.0",
+      "status": 403,
+      "host": "cdn-app.dev.acme-corp.com",
+      "referer": "https://node-api.gitlab.com"
+    },
+    "dns": null,
+    "smtp": null,
+    "vpn": null,
+    "iocs": {},
+    "ja3": null,
+    "bytes_out": 73756,
+    "bytes_in": 72150,
+    "packets": 14,
+    "duration_ms": 46425,
+    "src_zone": "dmz",
+    "dst_zone": "dmz",
+    "ingress_iface": "ethernet1/1",
+    "egress_iface": "vlan.10",
+    "tags": [
+      "dns",
+      "vpn",
+      "cmdinj",
+      "tls",
+      "recon",
+      "web"
+    ],
+    "session_id": "1d0d2770-7cff-4904-9ef9-ee849f6b62e5"
+  },
+  "enrichments": {
+    "generated_at": "2025-08-10T18:30:09.849292+00:00",
+    "iocs": [
+      {
+        "ioc_id": "url:1",
+        "type": "url",
+        "value": "https://cdn-app.dev.acme-corp.com/cgi-bin/status?cmd=whoami",
+        "context": {
+          "found_in": "http",
+          "alert_id": "5b77aebe-eba2-4e0b-b3c8-af4fc444835d",
+          "session_id": "1d0d2770-7cff-4904-9ef9-ee849f6b62e5"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:09.849292+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 0,
+            "total_engines": 70,
+            "formatted": "0 / 70"
+          },
+          "reputation": {
+            "community_score": 66,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "benign",
+            "confidence_percent": 73,
+            "severity_percent": 4
+          },
+          "vendors": [
+            {
+              "vendor": "BitDefender",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "CrowdStrike",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "TrendMicro",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "Microsoft",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "Symantec",
+              "category": "undetected",
+              "result": null
+            }
+          ]
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:09.849292+00:00",
+          "reference": null,
+          "verdict": "benign",
+          "risk": 0,
+          "confidence_percent": 60,
+          "categories": null,
+          "malware_family": null,
+          "first_seen": "2025-07-24T10:44:14.925785+00:00",
+          "last_seen": "2025-08-10T10:44:14.925785+00:00",
+          "evidence": null,
+          "geo": null
+        }
+      },
+      {
+        "ioc_id": "domain:2",
+        "type": "domain",
+        "value": "cdn-app.dev.acme-corp.com",
+        "context": {
+          "found_in": "http.host",
+          "alert_id": "5b77aebe-eba2-4e0b-b3c8-af4fc444835d",
+          "session_id": "1d0d2770-7cff-4904-9ef9-ee849f6b62e5"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:09.849292+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 0,
+            "total_engines": 70,
+            "formatted": "0 / 70"
+          },
+          "reputation": {
+            "community_score": 74,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "benign",
+            "confidence_percent": 85,
+            "severity_percent": 4
+          },
+          "vendors": [
+            {
+              "vendor": "Microsoft",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "BitDefender",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "TrendMicro",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "Symantec",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "Sophos",
+              "category": "undetected",
+              "result": null
+            }
+          ]
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:09.849292+00:00",
+          "reference": null,
+          "verdict": "benign",
+          "risk": 13,
+          "confidence_percent": 67,
+          "categories": null,
+          "malware_family": null,
+          "first_seen": "2025-07-12T10:44:14.925785+00:00",
+          "last_seen": "2025-08-10T10:44:14.925785+00:00",
+          "evidence": [
+            "Allowlisted domain"
+          ],
+          "geo": null
+        }
+      },
+      {
+        "ioc_id": "ip:3",
+        "type": "ip",
+        "value": "192.168.218.43",
+        "context": {
+          "found_in": "src_ip",
+          "alert_id": "5b77aebe-eba2-4e0b-b3c8-af4fc444835d",
+          "session_id": "1d0d2770-7cff-4904-9ef9-ee849f6b62e5"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:09.849292+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 0,
+            "total_engines": 70,
+            "formatted": "0 / 70"
+          },
+          "reputation": {
+            "community_score": 78,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "benign",
+            "confidence_percent": 72,
+            "severity_percent": 10
+          },
+          "vendors": [
+            {
+              "vendor": "BitDefender",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "ESET",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "Sophos",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "Symantec",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "TrendMicro",
+              "category": "undetected",
+              "result": null
+            }
+          ]
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:09.849292+00:00",
+          "reference": null,
+          "verdict": "benign",
+          "risk": 0,
+          "confidence_percent": 86,
+          "categories": null,
+          "malware_family": null,
+          "first_seen": "2025-06-27T10:44:14.925785+00:00",
+          "last_seen": "2025-08-10T10:44:14.925785+00:00",
+          "evidence": null,
+          "geo": {
+            "country": "JP",
+            "city": "Amsterdam",
+            "asn": "AS36692",
+            "org": "OPENDNS"
+          }
+        }
+      },
+      {
+        "ioc_id": "ip:4",
+        "type": "ip",
+        "value": "71.55.206.25",
+        "context": {
+          "found_in": "dst_ip",
+          "alert_id": "5b77aebe-eba2-4e0b-b3c8-af4fc444835d",
+          "session_id": "1d0d2770-7cff-4904-9ef9-ee849f6b62e5"
+        },
+        "virustotal": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:09.849292+00:00",
+          "permalink": null,
+          "detection_statistics": {
+            "malicious": 0,
+            "total_engines": 70,
+            "formatted": "0 / 70"
+          },
+          "reputation": {
+            "community_score": 89,
+            "votes_malicious": 0,
+            "votes_harmless": 0
+          },
+          "classification": {
+            "verdict": "benign",
+            "confidence_percent": 71,
+            "severity_percent": 3
+          },
+          "vendors": [
+            {
+              "vendor": "CrowdStrike",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "ESET",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "Sophos",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "BitDefender",
+              "category": "undetected",
+              "result": null
+            },
+            {
+              "vendor": "Fortinet",
+              "category": "undetected",
+              "result": null
+            }
+          ]
+        },
+        "checkpoint": {
+          "status": "complete",
+          "last_checked": "2025-08-10T18:30:09.849292+00:00",
+          "reference": null,
+          "verdict": "benign",
+          "risk": 11,
+          "confidence_percent": 64,
+          "categories": null,
+          "malware_family": null,
+          "first_seen": "2025-07-03T10:44:14.925785+00:00",
+          "last_seen": "2025-08-10T10:44:14.925785+00:00",
+          "evidence": null,
+          "geo": {
+            "country": "ES",
+            "city": "Amsterdam",
+            "asn": "AS8075",
+            "org": "CloudCo"
+          }
+        }
+      }
+    ],
+    "rollup": {
+      "counts": {
+        "total_iocs": 4,
+        "types": {
+          "url": 1,
+          "domain": 1,
+          "ip": 2,
+          "file_hash": 0
+        }
+      },
+      "virustotal": {
+        "malicious_iocs": 0,
+        "suspicious_iocs": 0,
+        "benign_iocs": 4,
+        "unknown_iocs": 0
+      },
+      "checkpoint": {
+        "malicious_iocs": 0,
+        "suspicious_iocs": 0,
+        "benign_iocs": 4,
+        "unknown_iocs": 0
+      }
+    }
+  }
+}

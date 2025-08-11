@@ -161,10 +161,12 @@ class KafkaService {
       }));
 
       // Send batch to Kafka
-      await this.producer.send({
-        topic: KAFKA_TOPICS.SECURITY_ALERTS,
-        messages
-      });
+      if (this.producer) {
+        await this.producer.send({
+          topic: KAFKA_TOPICS.SECURITY_ALERTS,
+          messages
+        });
+      }
 
       // Process OCSF transformations in parallel
       const ocsfPromises = batch.map(event => this.publishOCSFEvent(event));
@@ -212,9 +214,10 @@ class KafkaService {
 
       const topic = this.getOCSFTopic(ocsfEvent.class_uid);
 
-      await this.producer.send({
-        topic,
-        messages: [
+      if (this.producer) {
+        await this.producer.send({
+          topic,
+          messages: [
           {
             key: ocsfEvent.unmapped?.original_id || `ocsf_${Date.now()}`,
             value: JSON.stringify(ocsfEvent),
@@ -227,7 +230,8 @@ class KafkaService {
             }
           }
         ]
-      });
+        });
+      }
 
       console.log(`📨 Published OCSF event: ${ocsfEvent.class_name} (${ocsfEvent.class_uid})`);
     } catch (error) {
@@ -248,6 +252,8 @@ class KafkaService {
 
   // Consumer: Process events and update dashboard with backpressure handling
   private async startEventConsumer() {
+    if (!this.consumer) return;
+    
     await this.consumer.run({
       partitionsConsumedConcurrently: 1, // Process partitions sequentially for backpressure control
       eachMessage: async ({ topic, partition, message, heartbeat }) => {
@@ -510,8 +516,8 @@ class KafkaService {
 
   async shutdown() {
     try {
-      await this.producer.disconnect();
-      await this.consumer.disconnect();
+      if (this.producer) await this.producer.disconnect();
+      if (this.consumer) await this.consumer.disconnect();
       console.log('🔌 Kafka service disconnected');
     } catch (error) {
       console.error('❌ Error shutting down Kafka service:', error);

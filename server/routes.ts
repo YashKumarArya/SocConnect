@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
@@ -16,6 +16,8 @@ import { insertSourceSchema, insertRawAlertSchema, insertIncidentSchema, insertA
 import { ZodError } from "zod";
 import { kafkaService, SecurityEventIngestion } from "./kafka";
 import { inputSanitizer, rateLimitMiddleware } from "./inputSanitizer";
+import { OCSFNormalizationPipeline, MLModelIntegration } from "./ocsfNormalization";
+import { AgenticAIService } from "./agenticAI";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -219,6 +221,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // OCSF Processing Endpoints - New Architecture: Alert Sources → API → Enrichment → OCSF Normalization → Database → ML via Kafka
+  app.post('/api/alerts/process-ocsf', isAuthenticated, async (req, res) => {
+    try {
+      const rawAlert = req.body;
+      
+      // Process through OCSF normalization pipeline
+      const { ocsfEvent, enhancedAlert } = await OCSFNormalizationPipeline.processRawAlert(rawAlert);
+      
+      // Store OCSF event in database
+      const storedOCSFEvent = await storage.createOCSFEvent({
+        classUid: ocsfEvent.class_uid,
+        className: ocsfEvent.class_name,
+        categoryUid: ocsfEvent.category_uid,
+        categoryName: ocsfEvent.category_name,
+        activityId: ocsfEvent.activity_id,
+        activityName: ocsfEvent.activity_name,
+        severityId: ocsfEvent.severity_id,
+        severity: ocsfEvent.severity,
+        time: new Date(ocsfEvent.time),
+        message: ocsfEvent.message,
+        rawData: ocsfEvent,
+        observables: ocsfEvent.observables
+      });
+      
+      // Link enhanced alert to OCSF event
+      enhancedAlert.ocsfEventId = storedOCSFEvent.id;
+      const storedEnhancedAlert = await storage.createEnhancedNormalizedAlert(enhancedAlert);
+      
+      // Send to ML model via Kafka for verdict
+      const mlFeatures = MLModelIntegration.prepareOCSFForML(ocsfEvent);
+      await kafkaService.publishOCSFEvent(ocsfEvent);
+      
+      // Perform agentic AI analysis
+      const aiAnalysis = await AgenticAIService.analyzeEvent(ocsfEvent);
+      
+      // Broadcast real-time update
+      broadcast({
+        type: 'ocsf_event_processed',
+        data: {
+          ocsfEvent: storedOCSFEvent,
+          enhancedAlert: storedEnhancedAlert,
+          aiAnalysis,
+          mlFeatures
+        }
+      });
+      
+      res.status(201).json({
+        success: true,
+        ocsfEvent: storedOCSFEvent,
+        enhancedAlert: storedEnhancedAlert,
+        aiAnalysis,
+        message: 'Alert processed through OCSF pipeline successfully'
+      });
+      
+    } catch (error) {
+      console.error('OCSF processing error:', error);
+      res.status(500).json({ error: 'Failed to process alert through OCSF pipeline' });
+    }
+  });
+
+  // Get OCSF events with enhanced analysis
+  app.get('/api/ocsf/events', isAuthenticated, async (req, res) => {
+    try {
+      const { classUid, severityId, limit = 50 } = req.query;
+      const ocsfEvents = await storage.getOCSFEvents({
+        classUid: classUid ? parseInt(classUid as string) : undefined,
+        severityId: severityId ? parseInt(severityId as string) : undefined,
+        limit: Math.min(parseInt(limit as string), 1000)
+      });
+      
+      res.json(ocsfEvents);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch OCSF events' });
+    }
+  });
+
+  // Get enhanced normalized alerts with OCSF compliance
+  app.get('/api/alerts/enhanced', isAuthenticated, async (req, res) => {
+    try {
+      const enhancedAlerts = await storage.getEnhancedNormalizedAlerts();
+      res.json(enhancedAlerts);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch enhanced alerts' });
+    }
+  });
+
+  // ML Model verdict processing endpoint
+  app.post('/api/ml/verdict', async (req, res) => {
+    try {
+      const { ocsfEventId, verdict } = req.body;
+      await MLModelIntegration.processMLVerdict(ocsfEventId, verdict);
+      
+      broadcast({
+        type: 'ml_verdict_received',
+        data: { ocsfEventId, verdict }
+      });
+      
+      res.json({ success: true, message: 'ML verdict processed successfully' });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to process ML verdict' });
+    }
+  });
+
   // Raw alerts endpoints
   app.get('/api/alerts', async (req, res) => {
     try {
@@ -233,6 +338,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertRawAlertSchema.parse(req.body);
       const alert = await storage.createRawAlert(validatedData);
+      
+      // Process through new OCSF pipeline if enabled
+      try {
+        const { ocsfEvent, enhancedAlert } = await OCSFNormalizationPipeline.processRawAlert(alert);
+        
+        // Store OCSF event
+        const storedOCSFEvent = await storage.createOCSFEvent({
+          classUid: ocsfEvent.class_uid,
+          className: ocsfEvent.class_name,
+          categoryUid: ocsfEvent.category_uid,
+          categoryName: ocsfEvent.category_name,
+          activityId: ocsfEvent.activity_id,
+          activityName: ocsfEvent.activity_name,
+          severityId: ocsfEvent.severity_id,
+          severity: ocsfEvent.severity,
+          time: new Date(ocsfEvent.time),
+          message: ocsfEvent.message,
+          rawData: ocsfEvent,
+          observables: ocsfEvent.observables
+        });
+        
+        // Store enhanced alert
+        enhancedAlert.ocsfEventId = storedOCSFEvent.id;
+        await storage.createEnhancedNormalizedAlert(enhancedAlert);
+        
+        // Send to ML via Kafka
+        await kafkaService.publishOCSFEvent(ocsfEvent);
+        
+        console.log(`✅ Alert ${alert.id} processed through OCSF pipeline`);
+      } catch (ocsfError) {
+        console.warn(`⚠️ OCSF processing failed for alert ${alert.id}:`, ocsfError);
+        // Continue with standard processing
+      }
       
       broadcast({ type: 'alert_created', data: alert });
       res.status(201).json(alert);
