@@ -14,6 +14,8 @@ Preferred communication style: Simple, everyday language.
 - **ML Model Attributes**: Added class_uid, category_uid, activity_id, severity_id, src_ip, dst_ip, username, hostname, disposition_id, confidence_score, product_name, vendor_name
 - **Enhanced Intelligence Layer**: Added comprehensive enrichment with geo-location, user context, threat intel, asset context, risk scoring
 - **OCSF Standardization**: All enriched attributes now follow OCSF standards for ML model compatibility
+- **Real-time Processing Focus**: Documentation updated to emphasize Kafka-based streaming architecture for sub-second latency
+- **Kafka Architecture Design**: Created comprehensive streaming architecture plan for low-latency enrichment and standardization
 
 # System Architecture
 
