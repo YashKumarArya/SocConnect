@@ -51,8 +51,8 @@ export interface SecurityEvent {
 }
 
 class KafkaService {
-  private producer: Producer;
-  private consumer: Consumer;
+  private producer: Producer | null = null;
+  private consumer: Consumer | null = null;
   private clients: Set<WebSocket> = new Set();
   private batchBuffer: SecurityEvent[] = [];
   private batchSize: number = 100;
@@ -64,30 +64,26 @@ class KafkaService {
   };
 
   constructor() {
-    this.producer = kafka.producer({
-      transactionTimeout: 30000,
-      maxInFlightRequests: 1,
-      idempotent: true,
-      compression: 'gzip',
-      batch: {
-        size: 16384,
-        lingerMs: 10
-      }
-    });
-    
-    this.consumer = kafka.consumer({ 
-      groupId: 'soc-dashboard-group',
-      sessionTimeout: 30000,
-      heartbeatInterval: 3000,
-      maxBytes: 1024 * 1024, // 1MB per fetch
-      maxBytesPerPartition: 256 * 1024, // 256KB per partition
-      fetchMin: 1,
-      fetchMax: 1024 * 1024
-    });
+    // Initialize as null - will be created when initialize() is called
+    this.producer = null;
+    this.consumer = null;
   }
 
   async initialize() {
     try {
+      // Create producer and consumer
+      this.producer = kafka.producer({
+        transactionTimeout: 30000,
+        maxInFlightRequests: 1,
+        idempotent: true
+      });
+      
+      this.consumer = kafka.consumer({ 
+        groupId: 'soc-dashboard-group',
+        sessionTimeout: 30000,
+        heartbeatInterval: 3000
+      });
+
       // Connect producer and consumer
       await this.producer.connect();
       await this.consumer.connect();

@@ -38,12 +38,9 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Initialize Kafka service for enterprise security event streaming (non-blocking)
-  log('🎯 Initializing Kafka service for SOC operations...');
-  // Don't await Kafka initialization to prevent blocking app startup
-  kafkaService.initialize().catch(error => {
-    log('⚠️ Kafka initialization failed, continuing without Kafka:', error.message);
-  });
+  // Skip Kafka initialization - using WebSocket-only mode
+  log('📡 Continuing without Kafka - using WebSocket only mode');
+  // kafkaService.initialize() - Disabled to prevent connection errors
   
   // Initialize Neo4j graph database for relationship analysis (non-blocking)
   log('🔗 Initializing Neo4j graph database...');
