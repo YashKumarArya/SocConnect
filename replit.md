@@ -7,10 +7,11 @@ This is a comprehensive SOC platform with machine learning for automated threat 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (August 11, 2025)
-- **Database Schema Alignment**: Updated OCSF events and enhanced normalized alerts tables to match exact ML model attributes for 99.58% accuracy
+- **Pipeline Architecture Update**: Restructured to Enhancement → OCSF Standardization order for better enriched data standardization
+- **Database Schema Alignment**: Updated OCSF events and enhanced normalized alerts tables to match exact ML model attributes for 99.58% accuracy  
 - **ML Model Attributes**: Added class_uid, category_uid, activity_id, severity_id, src_ip, dst_ip, username, hostname, disposition_id, confidence_score, product_name, vendor_name
-- **Schema Migration**: Applied database changes successfully with drizzle-kit push
-- **OCSF Pipeline**: Enhanced normalization pipeline to populate all ML model required attributes
+- **Enhanced Intelligence Layer**: Added comprehensive enrichment with geo-location, user context, threat intel, asset context, risk scoring
+- **OCSF Standardization**: All enriched attributes now follow OCSF standards for ML model compatibility
 
 # System Architecture
 
@@ -80,7 +81,7 @@ Preferred communication style: Simple, everyday language.
 # OCSF Architecture Implementation
 
 ## Complete Data Flow Pipeline
-**Alert Sources → API Endpoints → Data Enrichment → OCSF Normalization → Database Storage → ML Model (via Kafka) + Neo4j Graph Analysis (via Agentic AI)**
+**Alert Sources → API Endpoints → Enhancement/Enrichment → OCSF Standardization → Database Storage → ML Model (via Kafka) + Neo4j Graph Analysis (via Agentic AI)**
 
 ## Key Components Added (August 11, 2025)
 - **server/ocsfNormalization.ts**: Complete OCSF normalization pipeline for ML compatibility

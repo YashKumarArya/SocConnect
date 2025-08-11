@@ -7,8 +7,8 @@ import type { RawAlert, InsertOCSFEvent, InsertEnhancedNormalizedAlert } from '@
 export class OCSFNormalizationPipeline {
   
   /**
-   * Main normalization entry point - converts raw alerts to OCSF format
-   * Architecture: Alert Sources → API → Enrichment → OCSF Normalization → Database → ML via Kafka
+   * Main processing entry point - enhanced then OCSF standardization
+   * Architecture: Alert Sources → API → Enhancement/Enrichment → OCSF Standardization → Database → ML via Kafka
    */
   static async processRawAlert(rawAlert: RawAlert): Promise<{
     ocsfEvent: OCSFEvent;
@@ -18,14 +18,14 @@ export class OCSFNormalizationPipeline {
     // Step 1: Normalize based on source type using existing normalizers
     const normalizedData = this.normalizeBySource(rawAlert);
     
-    // Step 2: Enrich with threat intelligence and context
-    const enrichedData = await this.enrichWithThreatIntel(normalizedData);
+    // Step 2: Enhance with threat intelligence, context, and additional enrichment
+    const enhancedData = await this.enhanceWithIntelligence(normalizedData, rawAlert);
     
-    // Step 3: Transform to OCSF format for ML model compatibility
-    const ocsfEvent = this.transformToOCSF(enrichedData, rawAlert);
+    // Step 3: Apply OCSF standardization to enriched data for ML model compatibility
+    const ocsfEvent = this.standardizeToOCSF(enhancedData, rawAlert);
     
-    // Step 4: Create enhanced normalized alert with OCSF attributes
-    const enhancedAlert = this.createEnhancedAlert(ocsfEvent, rawAlert);
+    // Step 4: Create final enhanced alert with standardized OCSF attributes
+    const enhancedAlert = this.createEnhancedAlert(ocsfEvent, rawAlert, enhancedData);
     
     return { ocsfEvent, enhancedAlert };
   }
@@ -60,34 +60,155 @@ export class OCSFNormalizationPipeline {
   }
   
   /**
-   * Threat intelligence enrichment
+   * Enhanced intelligence and enrichment (before OCSF standardization)
    */
-  private static async enrichWithThreatIntel(normalizedData: any) {
-    // TODO: Integrate with ThreatIntelligenceService for IOC enrichment
-    // For now, return the normalized data as-is
-    return normalizedData;
+  private static async enhanceWithIntelligence(normalizedData: any, rawAlert: RawAlert) {
+    // Comprehensive enrichment with threat intelligence, geolocation, user context, etc.
+    const enhancedData = {
+      ...normalizedData,
+      // Add enrichment data
+      geoLocation: await this.enrichGeoLocation(normalizedData.sourceIP),
+      userContext: await this.enrichUserContext(normalizedData.username),
+      threatIntel: await this.enrichThreatIntelligence(normalizedData),
+      assetContext: await this.enrichAssetContext(normalizedData.hostname),
+      networkContext: await this.enrichNetworkContext(normalizedData.sourceIP, normalizedData.destIP),
+      // Add risk scoring and correlation
+      riskScore: this.calculateRiskScore(normalizedData),
+      correlationId: this.generateCorrelationId(normalizedData),
+      // Add timestamps for enrichment tracking
+      enrichedAt: new Date().toISOString(),
+      originalSourceId: rawAlert.sourceId
+    };
+    
+    return enhancedData;
   }
   
   /**
-   * Transform normalized data to OCSF format using existing transformation service
+   * Geo-location enrichment for IP addresses
    */
-  private static transformToOCSF(normalizedData: any, rawAlert: RawAlert): OCSFEvent {
-    // Convert normalized data to SecurityEvent format for transformation
+  private static async enrichGeoLocation(ip: string): Promise<any> {
+    if (!ip) return null;
+    // TODO: Integrate with geo-location service
+    return {
+      country: 'Unknown',
+      city: 'Unknown',
+      coordinates: null
+    };
+  }
+  
+  /**
+   * User context enrichment
+   */
+  private static async enrichUserContext(username: string): Promise<any> {
+    if (!username) return null;
+    // TODO: Integrate with user directory/LDAP
+    return {
+      department: 'Unknown',
+      riskLevel: 'medium',
+      lastLogin: null
+    };
+  }
+  
+  /**
+   * Threat intelligence enrichment
+   */
+  private static async enrichThreatIntelligence(data: any): Promise<any> {
+    // TODO: Integrate with ThreatIntelligenceService for IOC enrichment
+    return {
+      iocMatches: [],
+      threatActors: [],
+      campaigns: []
+    };
+  }
+  
+  /**
+   * Asset context enrichment
+   */
+  private static async enrichAssetContext(hostname: string): Promise<any> {
+    if (!hostname) return null;
+    // TODO: Integrate with asset management system
+    return {
+      assetType: 'workstation',
+      criticality: 'medium',
+      owner: 'Unknown'
+    };
+  }
+  
+  /**
+   * Network context enrichment
+   */
+  private static async enrichNetworkContext(srcIp: string, destIp: string): Promise<any> {
+    return {
+      isInternal: this.isInternalIP(srcIp),
+      networkSegment: 'Unknown',
+      communicationPattern: 'Unknown'
+    };
+  }
+  
+  /**
+   * Calculate risk score based on enriched data
+   */
+  private static calculateRiskScore(data: any): number {
+    let score = 50; // Base score
+    
+    // Adjust based on severity
+    switch (data.severity) {
+      case 'critical': score += 40; break;
+      case 'high': score += 25; break;
+      case 'medium': score += 10; break;
+      case 'low': score += 0; break;
+    }
+    
+    return Math.min(100, score);
+  }
+  
+  /**
+   * Generate correlation ID for related events
+   */
+  private static generateCorrelationId(data: any): string {
+    // Generate based on key attributes
+    const key = `${data.sourceIP || ''}_${data.username || ''}_${data.alertType || ''}`;
+    return `corr_${Buffer.from(key).toString('base64').substring(0, 8)}`;
+  }
+  
+  /**
+   * Check if IP is internal
+   */
+  private static isInternalIP(ip: string): boolean {
+    if (!ip) return false;
+    return ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('172.');
+  }
+  
+  /**
+   * Standardize enriched data to OCSF format for ML model compatibility
+   */
+  private static standardizeToOCSF(enhancedData: any, rawAlert: RawAlert): OCSFEvent {
+    // Convert enhanced data to SecurityEvent format for OCSF standardization
     const securityEvent = {
       id: rawAlert.id,
-      timestamp: normalizedData.timestamp.toISOString(),
-      source: normalizedData.sourceType,
-      severity: normalizedData.severity,
-      type: this.mapAlertTypeToSecurityEventType(normalizedData.alertType),
-      title: normalizedData.title,
-      description: normalizedData.description,
+      timestamp: enhancedData.timestamp.toISOString(),
+      source: enhancedData.sourceType,
+      severity: enhancedData.severity,
+      type: this.mapAlertTypeToSecurityEventType(enhancedData.alertType),
+      title: enhancedData.title,
+      description: enhancedData.description,
       metadata: {
-        source_ip: normalizedData.sourceIP,
-        destination_ip: normalizedData.destIP,
-        user: normalizedData.username,
-        file_hash: normalizedData.fileHash,
-        hostname: normalizedData.hostname,
-        ...normalizedData.additionalData
+        // Core attributes
+        source_ip: enhancedData.sourceIP,
+        destination_ip: enhancedData.destIP,
+        user: enhancedData.username,
+        file_hash: enhancedData.fileHash,
+        hostname: enhancedData.hostname,
+        // Enriched attributes (now standardized via OCSF)
+        geo_location: enhancedData.geoLocation,
+        user_context: enhancedData.userContext,
+        threat_intel: enhancedData.threatIntel,
+        asset_context: enhancedData.assetContext,
+        network_context: enhancedData.networkContext,
+        risk_score: enhancedData.riskScore,
+        correlation_id: enhancedData.correlationId,
+        enriched_at: enhancedData.enrichedAt,
+        ...enhancedData.additionalData
       },
       raw_data: rawAlert.rawData
     };
@@ -98,7 +219,7 @@ export class OCSFNormalizationPipeline {
   /**
    * Create enhanced normalized alert with ML model-compatible OCSF attributes
    */
-  private static createEnhancedAlert(ocsfEvent: OCSFEvent, rawAlert: RawAlert): InsertEnhancedNormalizedAlert {
+  private static createEnhancedAlert(ocsfEvent: OCSFEvent, rawAlert: RawAlert, enhancedData?: any): InsertEnhancedNormalizedAlert {
     return {
       sourceId: rawAlert.sourceId,
       originalId: rawAlert.id,
@@ -135,8 +256,11 @@ export class OCSFNormalizationPipeline {
       destinationIp: this.extractDestinationIP(ocsfEvent),
       ruleId: this.extractRuleId(ocsfEvent),
       
-      // Storage
-      rawData: ocsfEvent,
+      // Storage - include both OCSF and enriched data
+      rawData: {
+        ...ocsfEvent,
+        enrichedData: enhancedData || {}
+      },
       ocsfEventId: null, // Will be set after OCSF event is stored
       status: 'open'
     };

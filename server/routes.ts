@@ -300,7 +300,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get enhanced normalized alerts with OCSF compliance
   app.get('/api/alerts/enhanced', isAuthenticated, async (req, res) => {
     try {
-      const enhancedAlerts = await storage.getEnhancedNormalizedAlerts();
+      const enhancedAlerts = await storage.getEnhancedNormalizedAlert();
       res.json(enhancedAlerts);
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch enhanced alerts' });
