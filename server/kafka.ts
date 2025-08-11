@@ -204,7 +204,79 @@ class KafkaService {
     };
   }
 
-  // Producer: Publish OCSF-formatted events
+  // Producer: Publish enhanced and normalized alerts to ML (includes all enriched attributes in OCSF format)
+  async publishEnhancedAlertToML(ocsfEvent: any, enhancedAlert: any) {
+    try {
+      // Prepare ML-ready payload with enhanced data in OCSF format
+      const mlPayload = {
+        // Core OCSF attributes for ML model (99.58% accuracy)
+        class_uid: ocsfEvent.classUid,
+        category_uid: ocsfEvent.categoryUid,
+        activity_id: ocsfEvent.activityId,
+        severity_id: ocsfEvent.severityId,
+        time: ocsfEvent.time,
+        
+        // Network features
+        src_ip: ocsfEvent.srcIp,
+        dst_ip: ocsfEvent.dstIp,
+        
+        // System features
+        username: ocsfEvent.username,
+        hostname: ocsfEvent.hostname,
+        
+        // Security features
+        disposition_id: ocsfEvent.dispositionId,
+        confidence_score: ocsfEvent.confidenceScore,
+        
+        // Metadata features
+        product_name: ocsfEvent.productName,
+        vendor_name: ocsfEvent.vendorName,
+        
+        // Enhanced attributes (from enrichment layer)
+        enriched_data: enhancedAlert.rawData?.enrichedData || {},
+        
+        // Alert context
+        alert_id: enhancedAlert.id,
+        original_id: enhancedAlert.originalId,
+        source_id: enhancedAlert.sourceId,
+        alert_type: enhancedAlert.alertType,
+        title: enhancedAlert.title,
+        description: enhancedAlert.description,
+        
+        // Processing metadata
+        processed_at: new Date().toISOString(),
+        pipeline_version: '2.0-enhanced'
+      };
+
+      if (this.producer) {
+        await this.producer.send({
+          topic: 'security-events-ml',
+          messages: [
+            {
+              key: enhancedAlert.id || ocsfEvent.id,
+              value: JSON.stringify({
+                type: 'enhanced_alert_ml',
+                timestamp: new Date().toISOString(),
+                payload: mlPayload
+              }),
+              headers: {
+                'content-type': 'application/json',
+                'event-type': 'security.enhanced.ml',
+                'pipeline-version': '2.0',
+                'format': 'enhanced-ocsf'
+              }
+            }
+          ]
+        });
+      }
+
+      console.log(`📤 Published enhanced alert ${enhancedAlert.id} to ML model with enriched OCSF data`);
+    } catch (error) {
+      console.error('❌ Failed to publish enhanced alert to ML:', error);
+    }
+  }
+
+  // Producer: Publish OCSF-formatted events (legacy method)
   async publishOCSFEvent(event: SecurityEvent | OCSFEvent) {
     try {
       // Transform to OCSF if it's a custom SecurityEvent

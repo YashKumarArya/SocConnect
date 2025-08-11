@@ -300,7 +300,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get enhanced normalized alerts with OCSF compliance
   app.get('/api/alerts/enhanced', isAuthenticated, async (req, res) => {
     try {
-      const enhancedAlerts = await storage.getEnhancedNormalizedAlert();
+      const enhancedAlerts = await storage.getEnhancedNormalizedAlerts();
       res.json(enhancedAlerts);
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch enhanced alerts' });
@@ -372,8 +372,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         enhancedAlert.ocsfEventId = storedOCSFEvent.id;
         await storage.createEnhancedNormalizedAlert(enhancedAlert);
         
-        // Send to ML via Kafka
-        await kafkaService.publishOCSFEvent(ocsfEvent);
+        // Send enhanced and normalized alert to ML via Kafka (includes all enriched attributes)
+        await kafkaService.publishEnhancedAlertToML(storedOCSFEvent, enhancedAlert);
         
         console.log(`✅ Alert ${alert.id} processed through OCSF pipeline`);
       } catch (ocsfError) {
