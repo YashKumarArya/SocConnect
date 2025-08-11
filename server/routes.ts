@@ -343,7 +343,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const { ocsfEvent, enhancedAlert } = await OCSFNormalizationPipeline.processRawAlert(alert);
         
-        // Store OCSF event
+        // Store OCSF event with all ML model attributes
         const storedOCSFEvent = await storage.createOCSFEvent({
           classUid: ocsfEvent.class_uid,
           className: ocsfEvent.class_name,
@@ -355,6 +355,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           severity: ocsfEvent.severity,
           time: new Date(ocsfEvent.time),
           message: ocsfEvent.message,
+          // ML model required attributes
+          srcIp: OCSFNormalizationPipeline.extractSourceIP(ocsfEvent),
+          dstIp: OCSFNormalizationPipeline.extractDestinationIP(ocsfEvent),
+          username: OCSFNormalizationPipeline.extractUsername(ocsfEvent),
+          hostname: OCSFNormalizationPipeline.extractHostname(ocsfEvent),
+          dispositionId: OCSFNormalizationPipeline.extractDispositionId(ocsfEvent),
+          confidenceScore: OCSFNormalizationPipeline.extractConfidenceScore(ocsfEvent),
+          productName: ocsfEvent.metadata.product?.name || null,
+          vendorName: ocsfEvent.metadata.product?.vendor_name || null,
           rawData: ocsfEvent,
           observables: ocsfEvent.observables
         });

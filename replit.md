@@ -6,6 +6,12 @@ This is a comprehensive SOC platform with machine learning for automated threat 
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (August 11, 2025)
+- **Database Schema Alignment**: Updated OCSF events and enhanced normalized alerts tables to match exact ML model attributes for 99.58% accuracy
+- **ML Model Attributes**: Added class_uid, category_uid, activity_id, severity_id, src_ip, dst_ip, username, hostname, disposition_id, confidence_score, product_name, vendor_name
+- **Schema Migration**: Applied database changes successfully with drizzle-kit push
+- **OCSF Pipeline**: Enhanced normalization pipeline to populate all ML model required attributes
+
 # System Architecture
 
 ## Frontend Architecture

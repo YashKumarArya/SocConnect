@@ -96,7 +96,7 @@ export class OCSFNormalizationPipeline {
   }
   
   /**
-   * Create enhanced normalized alert with OCSF-compliant attributes
+   * Create enhanced normalized alert with ML model-compatible OCSF attributes
    */
   private static createEnhancedAlert(ocsfEvent: OCSFEvent, rawAlert: RawAlert): InsertEnhancedNormalizedAlert {
     return {
@@ -107,13 +107,35 @@ export class OCSFNormalizationPipeline {
       alertType: this.mapOCSFClassToAlertType(ocsfEvent.class_uid),
       title: ocsfEvent.message || `${ocsfEvent.class_name}: ${ocsfEvent.activity_name}`,
       description: ocsfEvent.message,
-      // Extract OCSF network attributes
-      sourceIp: this.extractSourceIP(ocsfEvent),
-      destinationIp: this.extractDestinationIP(ocsfEvent), 
-      // Extract OCSF system attributes
+      
+      // ML Model Required OCSF Attributes
+      classUid: ocsfEvent.class_uid,
+      categoryUid: ocsfEvent.category_uid,
+      activityId: ocsfEvent.activity_id,
+      severityId: ocsfEvent.severity_id,
+      
+      // Network features (ML model attributes)
+      srcIp: this.extractSourceIP(ocsfEvent),
+      dstIp: this.extractDestinationIP(ocsfEvent),
+      
+      // System features (ML model attributes)
       username: this.extractUsername(ocsfEvent),
+      hostname: this.extractHostname(ocsfEvent),
+      
+      // Security features (ML model attributes)
+      dispositionId: this.extractDispositionId(ocsfEvent),
+      confidenceScore: this.extractConfidenceScore(ocsfEvent),
+      
+      // Metadata features (ML model attributes)
+      productName: ocsfEvent.metadata.product?.name || null,
+      vendorName: ocsfEvent.metadata.product?.vendor_name || null,
+      
+      // Legacy fields for compatibility
+      sourceIp: this.extractSourceIP(ocsfEvent),
+      destinationIp: this.extractDestinationIP(ocsfEvent),
       ruleId: this.extractRuleId(ocsfEvent),
-      // Store complete OCSF event data
+      
+      // Storage
       rawData: ocsfEvent,
       ocsfEventId: null, // Will be set after OCSF event is stored
       status: 'open'
@@ -123,7 +145,7 @@ export class OCSFNormalizationPipeline {
   /**
    * Extract source IP from OCSF event
    */
-  private static extractSourceIP(ocsfEvent: OCSFEvent): string | null {
+  static extractSourceIP(ocsfEvent: OCSFEvent): string | null {
     if ('src_endpoint' in ocsfEvent && ocsfEvent.src_endpoint?.ip) {
       return ocsfEvent.src_endpoint.ip;
     }
@@ -133,7 +155,7 @@ export class OCSFNormalizationPipeline {
   /**
    * Extract destination IP from OCSF event
    */
-  private static extractDestinationIP(ocsfEvent: OCSFEvent): string | null {
+  static extractDestinationIP(ocsfEvent: OCSFEvent): string | null {
     if ('dst_endpoint' in ocsfEvent && ocsfEvent.dst_endpoint?.ip) {
       return ocsfEvent.dst_endpoint.ip;
     }
@@ -143,12 +165,45 @@ export class OCSFNormalizationPipeline {
   /**
    * Extract username from OCSF event
    */
-  private static extractUsername(ocsfEvent: OCSFEvent): string | null {
+  static extractUsername(ocsfEvent: OCSFEvent): string | null {
     if ('actor' in ocsfEvent && ocsfEvent.actor?.user?.name) {
       return ocsfEvent.actor.user.name;
     }
     if ('user' in ocsfEvent && ocsfEvent.user?.name) {
       return ocsfEvent.user.name;
+    }
+    return null;
+  }
+  
+  /**
+   * Extract hostname from OCSF event
+   */
+  static extractHostname(ocsfEvent: OCSFEvent): string | null {
+    if ('device' in ocsfEvent && ocsfEvent.device?.hostname) {
+      return ocsfEvent.device.hostname;
+    }
+    if ('src_endpoint' in ocsfEvent && ocsfEvent.src_endpoint?.hostname) {
+      return ocsfEvent.src_endpoint.hostname;
+    }
+    return null;
+  }
+  
+  /**
+   * Extract disposition ID from OCSF event
+   */
+  static extractDispositionId(ocsfEvent: OCSFEvent): number | null {
+    if ('disposition_id' in ocsfEvent) {
+      return ocsfEvent.disposition_id || null;
+    }
+    return null;
+  }
+  
+  /**
+   * Extract confidence score from OCSF event
+   */
+  static extractConfidenceScore(ocsfEvent: OCSFEvent): number | null {
+    if ('confidence_score' in ocsfEvent) {
+      return ocsfEvent.confidence_score || null;
     }
     return null;
   }
