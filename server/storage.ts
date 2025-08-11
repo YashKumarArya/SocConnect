@@ -761,7 +761,11 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
       message: insertEvent.message || null,
       severity: insertEvent.severity || null,
-      observables: insertEvent.observables || null
+      observables: insertEvent.observables || null,
+      srcIp: insertEvent.srcIp || null,
+      dstIp: insertEvent.dstIp || null,
+      hostname: insertEvent.hostname || null,
+      username: insertEvent.username || null
     };
     this.ocsfEvents.set(id, event);
     return event;
@@ -825,6 +829,7 @@ export class MemStorage implements IStorage {
       username: insertAlert.username || null,
       ruleId: insertAlert.ruleId || null,
       rawData: insertAlert.rawData || null,
+      classUid: insertAlert.classUid || null,
       status: (insertAlert.status || 'open') as 'open' | 'investigating' | 'closed' | 'false_positive',
       severity: insertAlert.severity as 'low' | 'medium' | 'high' | 'critical',
       alertType: insertAlert.alertType as 'malware' | 'intrusion' | 'policy_violation' | 'anomaly' | 'threat_intel'
