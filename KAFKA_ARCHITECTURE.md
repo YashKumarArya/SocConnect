@@ -13,39 +13,40 @@ This document explains how to implement Apache Kafka (or similar streaming platf
 Alert Sources → API → Enhancement → OCSF → Database → WebSocket
 ```
 
-**Proposed (Kafka Streaming):**
+**Proposed (Kafka Sequential Streaming):**
 ```
-Alert Sources → API → Kafka → [Stream Processors] → Database → WebSocket + ML Model
-                         ↓
-              [Enhancement Service] → [OCSF Service] → [ML Pipeline]
+Alert Sources → API → Kafka Raw Topic → Enhancement Service → Enhanced Topic 
+                                              ↓
+                                        OCSF Service → OCSF Topic
+                                              ↓
+                                    [ML Pipeline + Database Storage]
+                                              ↓
+                                        WebSocket Broadcast
 ```
 
 ## Kafka Implementation Strategy
 
-### 1. Topic Design
+### 1. Sequential Topic Design
 
 ```javascript
-// Topic structure for different processing stages
+// Sequential processing pipeline
 const KAFKA_TOPICS = {
-  // Raw incoming alerts from various sources
+  // Stage 1: Raw incoming alerts
   RAW_ALERTS: 'security.alerts.raw',
   
-  // Enhanced alerts with enrichment data
+  // Stage 2: Enhanced alerts (enriched but not OCSF)  
   ENHANCED_ALERTS: 'security.alerts.enhanced',
   
-  // OCSF-standardized alerts
-  OCSF_ALERTS: 'security.alerts.ocsf',
+  // Stage 3: Final OCSF-standardized alerts (ready for ML + DB)
+  OCSF_READY: 'security.alerts.ocsf.ready',
   
-  // ML model predictions
+  // Stage 4: ML predictions from OCSF data
   ML_PREDICTIONS: 'security.ml.predictions',
   
-  // Neo4j graph insights
-  GRAPH_INSIGHTS: 'security.graph.insights',
-  
-  // Real-time notifications
+  // Stage 5: Real-time notifications
   NOTIFICATIONS: 'security.notifications',
   
-  // Error handling and DLQ
+  // Error handling
   ERRORS: 'security.errors.dlq'
 };
 ```
@@ -179,22 +180,23 @@ export class OCSFProcessor {
       eachMessage: async ({ message }) => {
         const enhancedAlert = JSON.parse(message.value.toString());
         
-        // Fast OCSF transformation
+        // Fast OCSF transformation with all enriched data
         const ocsfEvent = this.transformToOCSF(enhancedAlert);
         
         // Validate OCSF compliance
         const isValid = await this.validateOCSF(ocsfEvent);
         
         if (isValid) {
-          // Publish to OCSF topic for ML model
+          // Publish to OCSF_READY topic for both ML and Database
           await this.producer.send({
-            topic: KAFKA_TOPICS.OCSF_ALERTS,
+            topic: KAFKA_TOPICS.OCSF_READY,
             messages: [{
               key: message.key,
               value: JSON.stringify(ocsfEvent),
               headers: {
                 ...message.headers,
-                'processing-stage': 'ocsf',
+                'processing-stage': 'ocsf-ready',
+                'ready-for': 'ml-and-database',
                 'ocsf-version': '1.1.0',
                 'class-uid': ocsfEvent.class_uid.toString()
               }
@@ -226,46 +228,76 @@ export class OCSFProcessor {
 }
 ```
 
-### 4. ML Pipeline Integration
+### 4. ML Pipeline and Database Service
 
 ```javascript
-// services/ml-pipeline.ts
-export class MLPipeline {
-  async processOCSFAlerts(): Promise<void> {
-    await this.consumer.subscribe({ topic: KAFKA_TOPICS.OCSF_ALERTS });
+// services/ml-and-database-processor.ts
+export class MLAndDatabaseProcessor {
+  async processOCSFReadyAlerts(): Promise<void> {
+    await this.consumer.subscribe({ topic: KAFKA_TOPICS.OCSF_READY });
     
     await this.consumer.run({
       eachMessage: async ({ message }) => {
         const ocsfEvent = JSON.parse(message.value.toString());
         
-        // Extract features for ML model (99.58% accuracy)
-        const features = this.extractMLFeatures(ocsfEvent);
+        // Parallel processing: ML prediction AND database storage
+        const [mlResult] = await Promise.all([
+          this.processWithMLModel(ocsfEvent),
+          this.storeInDatabase(ocsfEvent)
+        ]);
         
-        // Send to ML model (external service/API)
-        const prediction = await this.callMLModel(features);
-        
-        const mlResult = {
-          alertId: ocsfEvent.id,
-          prediction: prediction.class,
-          confidence: prediction.confidence,
-          features: features,
-          modelVersion: '3.2M-params-v1.0',
-          processedAt: new Date().toISOString()
-        };
-
-        // Publish ML results
-        await this.producer.send({
-          topic: KAFKA_TOPICS.ML_PREDICTIONS,
-          messages: [{
-            key: message.key,
-            value: JSON.stringify(mlResult),
-            headers: {
-              'prediction-class': prediction.class,
-              'confidence-score': prediction.confidence.toString()
-            }
-          }]
+        // Broadcast to WebSocket for real-time UI
+        this.broadcastToWebSocket({
+          type: 'alert-processed',
+          ocsfEvent,
+          mlPrediction: mlResult,
+          timestamp: new Date().toISOString()
         });
       }
+    });
+  }
+
+  private async processWithMLModel(ocsfEvent: any) {
+    // Extract features for ML model (99.58% accuracy)
+    const features = this.extractMLFeatures(ocsfEvent);
+    
+    // Send to ML model
+    const prediction = await this.callMLModel(features);
+    
+    const mlResult = {
+      alertId: ocsfEvent.id,
+      prediction: prediction.class,
+      confidence: prediction.confidence,
+      features: features,
+      modelVersion: '3.2M-params-v1.0',
+      processedAt: new Date().toISOString()
+    };
+
+    // Store ML result in database
+    await this.storePrediction(mlResult);
+    
+    return mlResult;
+  }
+
+  private async storeInDatabase(ocsfEvent: any) {
+    // Store OCSF event in database
+    await db.insert(ocsfEvents).values({
+      id: ocsfEvent.id,
+      class_uid: ocsfEvent.class_uid,
+      category_uid: ocsfEvent.category_uid,
+      activity_id: ocsfEvent.activity_id,
+      severity_id: ocsfEvent.severity_id,
+      time: new Date(ocsfEvent.time),
+      message: ocsfEvent.message,
+      raw_data: ocsfEvent,
+      src_ip: ocsfEvent.src_ip,
+      dst_ip: ocsfEvent.dst_ip,
+      username: ocsfEvent.username,
+      hostname: ocsfEvent.hostname,
+      disposition_id: ocsfEvent.disposition_id,
+      confidence_score: ocsfEvent.confidence_score,
+      product_name: ocsfEvent.product_name,
+      vendor_name: ocsfEvent.vendor_name
     });
   }
 
@@ -288,43 +320,31 @@ export class MLPipeline {
 }
 ```
 
-### 5. Database Persistence Service
+## Sequential Processing Flow
 
-```javascript
-// services/database-processor.ts
-export class DatabaseProcessor {
-  async processAllStreams(): Promise<void> {
-    // Subscribe to multiple topics
-    const topics = [
-      KAFKA_TOPICS.ENHANCED_ALERTS,
-      KAFKA_TOPICS.OCSF_ALERTS,
-      KAFKA_TOPICS.ML_PREDICTIONS
-    ];
-    
-    await this.consumer.subscribe({ topics });
-    
-    await this.consumer.run({
-      eachMessage: async ({ topic, message }) => {
-        const data = JSON.parse(message.value.toString());
-        
-        switch (topic) {
-          case KAFKA_TOPICS.ENHANCED_ALERTS:
-            await this.storeEnhancedAlert(data);
-            break;
-          case KAFKA_TOPICS.OCSF_ALERTS:
-            await this.storeOCSFEvent(data);
-            break;
-          case KAFKA_TOPICS.ML_PREDICTIONS:
-            await this.storePrediction(data);
-            break;
-        }
-        
-        // Broadcast via WebSocket for real-time UI updates
-        this.websocketBroadcast(topic, data);
-      }
-    });
-  }
-}
+```
+Stage 1: Alert Ingestion
+Raw Alert → API → Kafka (security.alerts.raw)
+
+Stage 2: Enhancement 
+Raw Topic → Enhancement Service → Enhanced Topic (security.alerts.enhanced)
+• Geo-location enrichment
+• Threat intelligence lookup  
+• User context enrichment
+• Asset context enrichment
+
+Stage 3: OCSF Standardization
+Enhanced Topic → OCSF Service → OCSF Ready Topic (security.alerts.ocsf.ready)
+• Transform enriched data to OCSF format
+• Validate OCSF compliance
+• Add ML-compatible attributes
+
+Stage 4: ML Processing + Database Storage (Parallel)
+OCSF Ready Topic → ML + Database Service
+• Extract features for 99.58% accuracy ML model
+• Store OCSF event in database (ocsf_events table)
+• Store ML prediction in database (predictions table)
+• Broadcast real-time updates via WebSocket
 ```
 
 ## Performance Optimizations

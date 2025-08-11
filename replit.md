@@ -7,15 +7,13 @@ This is a comprehensive SOC platform with machine learning for automated threat 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (August 11, 2025)
-- **Pipeline Architecture Update**: Restructured to Enhancement → OCSF Standardization order for better enriched data standardization
-- **Kafka ML Integration**: Enhanced alerts with all enriched attributes now sent to ML model via Kafka for optimal processing
-- **Codebase Cleanup**: Removed unnecessary legacy files including NewFrontend/, alertSimulation.ts, normalization.ts, and various test/cookie files
-- **Database Schema Alignment**: Updated OCSF events and enhanced normalized alerts tables to match exact ML model attributes for 99.58% accuracy  
-- **ML Model Attributes**: Added class_uid, category_uid, activity_id, severity_id, src_ip, dst_ip, username, hostname, disposition_id, confidence_score, product_name, vendor_name
-- **Enhanced Intelligence Layer**: Added comprehensive enrichment with geo-location, user context, threat intel, asset context, risk scoring
-- **OCSF Standardization**: All enriched attributes now follow OCSF standards for ML model compatibility
-- **Real-time Processing Focus**: Documentation updated to emphasize Kafka-based streaming architecture for sub-second latency
-- **Kafka Architecture Design**: Created comprehensive streaming architecture plan for low-latency enrichment and standardization
+- **Sequential Kafka Pipeline**: Updated architecture to Alert → Enhancement → OCSF → [ML + Database] for optimal processing
+- **Kafka Architecture Finalized**: Sequential processing ensures enriched data flows through OCSF standardization before ML/DB
+- **Database Storage Confirmed**: Both enhanced enrichment data and OCSF-standardized data stored in database
+- **ML Model Integration**: OCSF-ready topic feeds both ML model (99.58% accuracy) and database storage simultaneously
+- **Complete Data Flow**: Alert → API → Raw Topic → Enhancement → Enhanced Topic → OCSF → OCSF Ready Topic → [ML + Database]
+- **Documentation Updates**: README.md, SOC_Platform_Documentation.html, and KAFKA_ARCHITECTURE.md updated with sequential pipeline
+- **Real-time Processing**: Sub-second latency maintained through optimized Kafka sequential processing stages
 
 # System Architecture
 
