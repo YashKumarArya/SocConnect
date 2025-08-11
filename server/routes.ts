@@ -479,7 +479,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get dataset statistics
   app.get('/api/alerts/dataset-stats', async (req, res) => {
     try {
-      const stats = await AlertProcessor.getDatasetStats();
+      const stats = await storage.getDatasetStats();
       res.json({
         message: 'Alert dataset statistics',
         stats,
