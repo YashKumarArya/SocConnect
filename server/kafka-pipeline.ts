@@ -70,7 +70,7 @@ export class KafkaSequentialPipeline {
         }),
         headers: {
           'source-type': rawAlert.sourceId,
-          'severity': rawAlert.severity,
+          'severity': rawAlert.severity || 'medium',
           'correlation-id': `corr_${rawAlert.id}`,
           'stage': 'raw'
         }
@@ -348,7 +348,6 @@ export class KafkaSequentialPipeline {
         sourceIp: enhancedAlert.rawData?.source_ip,
         hostname: enhancedAlert.rawData?.hostname,
         username: enhancedAlert.rawData?.username,
-        geoLocation: JSON.stringify(enhancedAlert.enrichment?.geoLocation),
         threatIntelData: JSON.stringify(enhancedAlert.enrichment?.threatIntel),
         userContext: JSON.stringify(enhancedAlert.enrichment?.userContext),
         assetContext: JSON.stringify(enhancedAlert.enrichment?.assetContext),
@@ -362,17 +361,98 @@ export class KafkaSequentialPipeline {
   }
 
   private async transformToOCSF(enhancedAlert: any): Promise<any> {
-    // Use existing OCSF transformation service
-    const ocsfPipeline = new OCSFNormalizationPipeline();
-    
-    return ocsfPipeline.transformEnhancedAlert({
-      ...enhancedAlert,
-      sourceId: enhancedAlert.sourceId,
-      alertType: enhancedAlert.type,
+    // Transform enhanced alert to OCSF 1.1.0 format
+    const ocsfEvent = {
+      // Core OCSF attributes  
+      class_uid: 2001, // Security Finding
+      class_name: "Security Finding",
+      category_uid: 2,
+      category_name: "Findings", 
+      activity_id: 1,
+      activity_name: "Create",
+      severity_id: this.mapSeverityToOCSF(enhancedAlert.severity),
       severity: enhancedAlert.severity,
-      rawData: enhancedAlert.rawData || {},
-      enrichedData: enhancedAlert.enrichment || {}
-    });
+      time: new Date().toISOString(),
+      message: enhancedAlert.description || 'Security event detected',
+      
+      // Network observables
+      src_ip: enhancedAlert.rawData?.source_ip,
+      dst_ip: enhancedAlert.rawData?.destination_ip,
+      
+      // System observables
+      username: enhancedAlert.rawData?.username || enhancedAlert.rawData?.user,
+      hostname: enhancedAlert.rawData?.hostname || enhancedAlert.rawData?.endpoint,
+      
+      // Security attributes
+      disposition_id: 1, // Unknown
+      confidence_score: enhancedAlert.enrichment?.riskScore || 50,
+      
+      // Product metadata
+      metadata: {
+        product: {
+          name: this.mapSourceToProduct(enhancedAlert.sourceId),
+          vendor_name: "Security Platform",
+          version: "1.0"
+        },
+        version: "1.1.0"
+      },
+      
+      // Observables for threat hunting
+      observables: this.extractObservables(enhancedAlert),
+      
+      // Original data
+      raw_data: enhancedAlert
+    };
+    
+    return ocsfEvent;
+  }
+
+  private mapSeverityToOCSF(severity: string): number {
+    const severityMap: Record<string, number> = {
+      'low': 2,
+      'medium': 3,
+      'high': 4,
+      'critical': 5
+    };
+    return severityMap[severity?.toLowerCase()] || 1;
+  }
+
+  private mapSourceToProduct(sourceId: string): string {
+    if (sourceId?.includes('crowdstrike')) return 'CrowdStrike Falcon';
+    if (sourceId?.includes('sentinelone')) return 'SentinelOne';
+    if (sourceId?.includes('firewall')) return 'Network Firewall';
+    if (sourceId?.includes('email')) return 'Email Security';
+    return 'Security Platform';
+  }
+
+  private extractObservables(enhancedAlert: any): any[] {
+    const observables = [];
+    
+    if (enhancedAlert.rawData?.source_ip) {
+      observables.push({
+        name: 'src_ip',
+        type: 'IP Address',
+        value: enhancedAlert.rawData.source_ip
+      });
+    }
+    
+    if (enhancedAlert.rawData?.hash) {
+      observables.push({
+        name: 'file_hash',
+        type: 'File Hash',
+        value: enhancedAlert.rawData.hash
+      });
+    }
+    
+    if (enhancedAlert.rawData?.username) {
+      observables.push({
+        name: 'username',
+        type: 'User Name',
+        value: enhancedAlert.rawData.username
+      });
+    }
+    
+    return observables;
   }
 
   private validateOCSF(ocsfEvent: any): boolean {
@@ -530,7 +610,7 @@ export class KafkaSequentialPipeline {
         await this.producer.disconnect();
       }
       
-      for (const consumer of this.consumers.values()) {
+      for (const consumer of Array.from(this.consumers.values())) {
         await consumer.disconnect();
       }
       
