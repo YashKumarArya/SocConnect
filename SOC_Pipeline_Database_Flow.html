@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOC Pipeline Database Flow - Data Processing & Storage</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 0.5in;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.4;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            background: white;
+            font-size: 11pt;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+        
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 24pt;
+        }
+        
+        .section {
+            margin: 15px 0;
+            page-break-inside: avoid;
+        }
+        
+        .pipeline-step {
+            background: #f8f9fa;
+            border-left: 5px solid #667eea;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            page-break-inside: avoid;
+        }
+        
+        .step-number {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 25px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .data-flow {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 8px 0;
+            border-left: 3px solid #2196f3;
+        }
+        
+        .database-operation {
+            background: #f3e5f5;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 8px 0;
+            border-left: 3px solid #9c27b0;
+        }
+        
+        .code-block {
+            background: #263238;
+            color: #b0bec5;
+            padding: 12px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 9pt;
+            overflow-x: auto;
+            margin: 8px 0;
+        }
+        
+        .table-schema {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 9pt;
+        }
+        
+        .table-schema th,
+        .table-schema td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            text-align: left;
+        }
+        
+        .table-schema th {
+            background: #f2f2f2;
+            font-weight: bold;
+        }
+        
+        .flow-diagram {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: #fafafa;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            page-break-inside: avoid;
+        }
+        
+        .arrow {
+            font-size: 18pt;
+            color: #667eea;
+            margin: 0 10px;
+        }
+        
+        .data-sample {
+            background: #fff3e0;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 8pt;
+            border-left: 3px solid #ff9800;
+            margin: 5px 0;
+        }
+        
+        .highlight-box {
+            background: #e8f5e8;
+            border: 2px solid #4caf50;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 10px 0;
+            page-break-inside: avoid;
+        }
+        
+        .warning-box {
+            background: #fff8e1;
+            border: 2px solid #ff9800;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        
+        h1, h2, h3 {
+            color: #2c3e50;
+            page-break-after: avoid;
+        }
+        
+        h2 {
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 5px;
+            margin-top: 25px;
+        }
+        
+        .page-break {
+            page-break-before: always;
+        }
+        
+        .no-break {
+            page-break-inside: avoid;
+        }
+        
+        @media print {
+            body { 
+                background: white; 
+                font-size: 10pt;
+            }
+            .header { 
+                background: #667eea !important; 
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛡️ SOC Pipeline Database Flow</h1>
+        <p><strong>Data Processing & Storage Documentation</strong></p>
+        <p>Alert → API → Raw Topic → Enhancement → Enhanced Topic → OCSF → OCSF Ready → [ML + Database]</p>
+        <p><strong>Generated:</strong> August 11, 2025 | <strong>Version:</strong> 1.0</p>
+    </div>
+
+    <div class="section">
+        <h2>📋 Executive Summary</h2>
+        <p>This document provides a comprehensive overview of data flow and database operations in the Alpha SOC Platform's Kafka-based processing pipeline. It details what data is processed, transformed, and stored at each stage of the sequential pipeline.</p>
+        
+        <div class="highlight-box">
+            <strong>Key Points:</strong>
+            <ul>
+                <li><strong>Sequential Processing:</strong> Each stage builds upon the previous stage's data</li>
+                <li><strong>Database Storage:</strong> Raw, enhanced, and OCSF data are all preserved</li>
+                <li><strong>ML Integration:</strong> Final OCSF data feeds both ML model (99.58% accuracy) and database</li>
+                <li><strong>Real-time:</strong> Sub-second processing with immediate database updates</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🗄️ Database Schema Overview</h2>
+        <p>The pipeline uses four main database tables to store different stages of alert processing:</p>
+        
+        <table class="table-schema">
+            <thead>
+                <tr>
+                    <th>Table</th>
+                    <th>Purpose</th>
+                    <th>Updated At Stage</th>
+                    <th>Key Fields</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>raw_alerts</strong></td>
+                    <td>Original unprocessed alerts</td>
+                    <td>Stage 1 (API Ingestion)</td>
+                    <td>id, sourceId, severity, rawData, receivedAt</td>
+                </tr>
+                <tr>
+                    <td><strong>enhanced_normalized_alerts</strong></td>
+                    <td>Enriched alerts with context</td>
+                    <td>Stage 3 (Enhancement)</td>
+                    <td>geoLocation, threatIntel, userContext, riskScore</td>
+                </tr>
+                <tr>
+                    <td><strong>ocsf_events</strong></td>
+                    <td>OCSF-standardized events</td>
+                    <td>Stage 6 (Final Storage)</td>
+                    <td>class_uid, severity_id, src_ip, dst_ip, ML-compatible fields</td>
+                </tr>
+                <tr>
+                    <td><strong>ml_predictions</strong></td>
+                    <td>ML model classifications</td>
+                    <td>Stage 6 (ML Processing)</td>
+                    <td>prediction, confidence, features, modelVersion</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="page-break"></div>
+
+    <div class="section">
+        <h2>🔄 Complete Pipeline Flow</h2>
+        
+        <div class="flow-diagram">
+            <strong>Raw Alert</strong> <span class="arrow">→</span> 
+            <strong>API</strong> <span class="arrow">→</span> 
+            <strong>Raw Topic</strong> <span class="arrow">→</span> 
+            <strong>Enhancement</strong> <span class="arrow">→</span> 
+            <strong>Enhanced Topic</strong> <span class="arrow">→</span> 
+            <strong>OCSF Service</strong> <span class="arrow">→</span> 
+            <strong>OCSF Ready</strong> <span class="arrow">→</span> 
+            <strong>[ML + Database]</strong>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>📊 Step-by-Step Data Processing & Database Operations</h2>
+
+        <!-- Stage 1 -->
+        <div class="pipeline-step">
+            <h3><span class="step-number">1</span>Alert Ingestion → API</h3>
+            
+            <div class="data-flow">
+                <strong>📥 Input Data:</strong> Raw security alert from source (CrowdStrike, SentinelOne, etc.)
+            </div>
+            
+            <div class="data-sample">
+POST /api/alerts
+{
+  "id": "alert_001",
+  "sourceId": "crowdstrike", 
+  "severity": "critical",
+  "type": "malware",
+  "description": "Trojan detected",
+  "rawData": {
+    "endpoint_name": "WORKSTATION-01",
+    "threat_name": "Trojan.Win32.Malware",
+    "source_ip": "192.168.1.100"
+  }
+}
+            </div>
+            
+            <div class="database-operation">
+                <strong>💾 Database Operation: INSERT into raw_alerts</strong>
+                <div class="code-block">
+INSERT INTO raw_alerts (
+    id, sourceId, severity, type, description, 
+    rawData, receivedAt, createdAt
+) VALUES (
+    'alert_001', 'crowdstrike', 'critical', 'malware',
+    'Trojan detected', '{"endpoint_name": "WORKSTATION-01"...}',
+    '2025-08-11T10:00:00Z', NOW()
+);
+                </div>
+            </div>
+            
+            <div class="highlight-box">
+                <strong>📊 Data Added:</strong>
+                <ul>
+                    <li>Complete raw alert data preserved</li>
+                    <li>Timestamp for audit trail</li>
+                    <li>Source identification for processing rules</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Stage 2 -->
+        <div class="pipeline-step">
+            <h3><span class="step-number">2</span>API → Kafka Raw Topic</h3>
+            
+            <div class="data-flow">
+                <strong>📤 Kafka Operation:</strong> Publish to security.alerts.raw topic
+            </div>
+            
+            <div class="code-block">
+// Kafka message structure
+{
+  "key": "alert_001",
+  "value": {
+    "id": "alert_001",
+    "sourceId": "crowdstrike",
+    "severity": "critical",
+    "rawData": {...},
+    "kafkaMetadata": {
+      "publishedAt": "2025-08-11T10:00:01Z",
+      "partition": 0,
+      "offset": 12345
+    }
+  },
+  "headers": {
+    "source-type": "crowdstrike",
+    "severity": "critical",
+    "correlation-id": "corr_001"
+  }
+}
+            </div>
+            
+            <div class="warning-box">
+                <strong>⚠️ No Database Update:</strong> Data only published to Kafka for processing
+            </div>
+        </div>
+
+        <!-- Stage 3 -->
+        <div class="pipeline-step no-break">
+            <h3><span class="step-number">3</span>Enhancement Service Processing</h3>
+            
+            <div class="data-flow">
+                <strong>🔍 Processing:</strong> Parallel enrichment from multiple sources
+            </div>
+            
+            <div class="code-block">
+// Enhancement processing
+const enrichmentData = await Promise.all([
+    enrichGeoLocation(alert.rawData.source_ip),     // IP → Location
+    enrichThreatIntel(alert),                       // Threat → Intel
+    enrichUserContext(alert.rawData.username),      // User → Directory  
+    enrichAssetContext(alert.rawData.hostname)      // Asset → Inventory
+]);
+
+const enhancedAlert = {
+    ...originalAlert,
+    enrichment: {
+        geoLocation: { country: "US", city: "San Francisco", asn: "AS15169" },
+        threatIntel: { reputation: "malicious", category: "trojan" },
+        userContext: { department: "IT", riskLevel: "medium" },
+        assetContext: { criticality: "high", os: "Windows 10" },
+        riskScore: 85
+    }
+};
+            </div>
+            
+            <div class="database-operation">
+                <strong>💾 Database Operation: INSERT into enhanced_normalized_alerts</strong>
+                <div class="code-block">
+INSERT INTO enhanced_normalized_alerts (
+    id, source_id, alert_type, severity, description,
+    src_ip, hostname, username, geo_location, 
+    threat_intel_data, user_context, asset_context,
+    risk_score, enhanced_at, created_at
+) VALUES (
+    'alert_001', 'crowdstrike', 'malware', 'critical',
+    'Trojan detected', '192.168.1.100', 'WORKSTATION-01', 
+    'john.doe', '{"country":"US","city":"San Francisco"}',
+    '{"reputation":"malicious"}', '{"department":"IT"}',
+    '{"criticality":"high"}', 85, NOW(), NOW()
+);
+                </div>
+            </div>
+            
+            <div class="highlight-box">
+                <strong>📊 Enhanced Data Added:</strong>
+                <ul>
+                    <li><strong>Geo-location:</strong> IP address → Country, City, ASN, Coordinates</li>
+                    <li><strong>Threat Intelligence:</strong> IOC reputation, category, confidence</li>
+                    <li><strong>User Context:</strong> Department, role, risk level, manager</li>
+                    <li><strong>Asset Context:</strong> Criticality, OS, patch level, owner</li>
+                    <li><strong>Risk Score:</strong> Calculated composite risk (0-100)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Stage 4 -->
+        <div class="pipeline-step">
+            <h3><span class="step-number">4</span>Enhanced Topic → OCSF Service</h3>
+            
+            <div class="data-flow">
+                <strong>🔄 OCSF Transformation:</strong> Convert enriched data to OCSF standard
+            </div>
+            
+            <div class="code-block">
+// OCSF transformation
+const ocsfEvent = {
+    class_uid: 2001,                    // Security Finding
+    category_uid: 2,                    // Findings  
+    activity_id: 1,                     // Create
+    severity_id: 4,                     // Critical
+    time: Date.now(),
+    message: "Trojan detected on endpoint",
+    
+    // OCSF-standard fields with enriched data
+    src_endpoint: {
+        ip: "192.168.1.100",
+        hostname: "WORKSTATION-01",
+        location: {                     // ← From geo enrichment
+            country: "US",
+            city: "San Francisco"
+        }
+    },
+    actor: {
+        user: {
+            name: "john.doe",
+            type: "User",
+            domain: "company.com",
+            dept: "IT"                  // ← From user context
+        }
+    },
+    finding: {
+        title: "Malware Detection",
+        desc: "Trojan.Win32.Malware detected",
+        confidence: 95,                 // ← From threat intel
+        severity: "Critical"
+    },
+    resources: [{
+        name: "WORKSTATION-01",
+        type: "Endpoint",
+        criticality: "High"            // ← From asset context
+    }]
+};
+            </div>
+            
+            <div class="warning-box">
+                <strong>⚠️ No Database Update:</strong> OCSF data published to security.alerts.ocsf.ready topic
+            </div>
+        </div>
+
+        <div class="page-break"></div>
+
+        <!-- Stage 5 -->
+        <div class="pipeline-step no-break">
+            <h3><span class="step-number">5</span>OCSF Ready Topic → ML Model Processing</h3>
+            
+            <div class="data-flow">
+                <strong>🤖 ML Processing:</strong> Feature extraction and classification
+            </div>
+            
+            <div class="code-block">
+// ML feature extraction from OCSF event
+const mlFeatures = {
+    class_uid: 2001,
+    category_uid: 2, 
+    activity_id: 1,
+    severity_id: 4,
+    src_ip_encoded: encodeIP("192.168.1.100"),
+    dst_ip_encoded: null,
+    username_hash: hashString("john.doe"),
+    hostname_category: categorize("WORKSTATION-01"),
+    disposition_id: 2,                  // From threat intel
+    confidence_score: 95,               // From enrichment
+    product_name: "CrowdStrike Falcon",
+    vendor_name: "CrowdStrike"
+};
+
+// ML model prediction (99.58% accuracy)
+const prediction = await mlModel.classify(mlFeatures);
+// Result: { class: "malware", confidence: 0.97, probability: [0.01, 0.02, 0.97] }
+            </div>
+            
+            <div class="database-operation">
+                <strong>💾 Database Operation: INSERT into ml_predictions</strong>
+                <div class="code-block">
+INSERT INTO ml_predictions (
+    id, alert_id, model_version, features,
+    prediction_class, confidence_score, 
+    probability_scores, processed_at, created_at
+) VALUES (
+    UUID(), 'alert_001', '3.2M-params-v1.0',
+    '{"class_uid":2001,"severity_id":4...}',
+    'malware', 0.97, '[0.01,0.02,0.97]',
+    NOW(), NOW()
+);
+                </div>
+            </div>
+        </div>
+
+        <!-- Stage 6 -->
+        <div class="pipeline-step no-break">
+            <h3><span class="step-number">6</span>Final Database Storage → OCSF Events</h3>
+            
+            <div class="data-flow">
+                <strong>💾 Final Storage:</strong> Complete OCSF event with all enrichments
+            </div>
+            
+            <div class="database-operation">
+                <strong>💾 Database Operation: INSERT into ocsf_events</strong>
+                <div class="code-block">
+INSERT INTO ocsf_events (
+    id, class_uid, category_uid, activity_id, 
+    severity_id, time, message, raw_data,
+    src_ip, dst_ip, username, hostname,
+    disposition_id, confidence_score, 
+    product_name, vendor_name, created_at
+) VALUES (
+    'alert_001', 2001, 2, 1, 4,
+    '2025-08-11T10:00:00Z', 'Trojan detected on endpoint',
+    '{"class_uid":2001,"src_endpoint":{"ip":"192.168.1.100"...}}',
+    '192.168.1.100', NULL, 'john.doe', 'WORKSTATION-01',
+    2, 95, 'CrowdStrike Falcon', 'CrowdStrike', NOW()
+);
+                </div>
+            </div>
+            
+            <div class="highlight-box">
+                <strong>📊 Complete OCSF Data Stored:</strong>
+                <ul>
+                    <li><strong>OCSF Standard Fields:</strong> class_uid, category_uid, activity_id, severity_id</li>
+                    <li><strong>Enriched Network Data:</strong> src_ip with geo-location context</li>
+                    <li><strong>Enriched User Data:</strong> username with department and risk context</li>
+                    <li><strong>Enriched Asset Data:</strong> hostname with criticality and OS info</li>
+                    <li><strong>Threat Intelligence:</strong> disposition_id, confidence_score from enrichment</li>
+                    <li><strong>Source Attribution:</strong> product_name, vendor_name for ML compatibility</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Stage 7 -->
+        <div class="pipeline-step">
+            <h3><span class="step-number">7</span>Real-time WebSocket Broadcast</h3>
+            
+            <div class="data-flow">
+                <strong>📡 Real-time Update:</strong> Broadcast complete alert with ML prediction
+            </div>
+            
+            <div class="code-block">
+// WebSocket broadcast to connected clients
+const realtimeUpdate = {
+    type: "alert-processed",
+    data: {
+        alertId: "alert_001",
+        ocsfEvent: { /* complete OCSF data */ },
+        mlPrediction: {
+            class: "malware",
+            confidence: 0.97,
+            riskLevel: "critical"
+        },
+        enrichments: {
+            geoLocation: "San Francisco, US",
+            userDepartment: "IT", 
+            assetCriticality: "High",
+            threatRep: "Malicious"
+        },
+        timestamp: "2025-08-11T10:00:05Z"
+    }
+};
+
+websocket.broadcast(realtimeUpdate);
+            </div>
+            
+            <div class="warning-box">
+                <strong>⚠️ No Database Update:</strong> Real-time notification only - all data already stored
+            </div>
+        </div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <div class="section">
+        <h2>📈 Database Storage Summary</h2>
+        
+        <table class="table-schema">
+            <thead>
+                <tr>
+                    <th>Processing Stage</th>
+                    <th>Database Table</th>
+                    <th>Data Added/Updated</th>
+                    <th>Purpose</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Stage 1:</strong> API Ingestion</td>
+                    <td>raw_alerts</td>
+                    <td>Original alert data, source info, timestamps</td>
+                    <td>Audit trail, compliance, raw data preservation</td>
+                </tr>
+                <tr>
+                    <td><strong>Stage 3:</strong> Enhancement</td>
+                    <td>enhanced_normalized_alerts</td>
+                    <td>Geo-location, threat intel, user/asset context, risk scores</td>
+                    <td>Analyst context, investigation support, enriched analysis</td>
+                </tr>
+                <tr>
+                    <td><strong>Stage 5:</strong> ML Processing</td>
+                    <td>ml_predictions</td>
+                    <td>Classification results, confidence scores, feature vectors</td>
+                    <td>ML model results, accuracy tracking, automated decisions</td>
+                </tr>
+                <tr>
+                    <td><strong>Stage 6:</strong> Final Storage</td>
+                    <td>ocsf_events</td>
+                    <td>Complete OCSF-standard event with all enrichments</td>
+                    <td>ML training, compliance, standardized analysis, reporting</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>🎯 Key Benefits of This Database Strategy</h2>
+        
+        <div class="highlight-box">
+            <h3>📊 Complete Data Lineage</h3>
+            <ul>
+                <li><strong>Raw Preservation:</strong> Original alerts stored for audit and compliance</li>
+                <li><strong>Enhanced Context:</strong> Enriched data available for analyst investigation</li>
+                <li><strong>ML Compatibility:</strong> OCSF-standard data maintains 99.58% model accuracy</li>
+                <li><strong>Prediction Tracking:</strong> ML results stored for performance monitoring</li>
+            </ul>
+        </div>
+
+        <div class="highlight-box">
+            <h3>⚡ Performance Optimization</h3>
+            <ul>
+                <li><strong>Sequential Processing:</strong> Each stage builds on previous data</li>
+                <li><strong>Parallel Final Stage:</strong> ML and database operations run simultaneously</li>
+                <li><strong>Real-time Updates:</strong> WebSocket broadcasts provide immediate UI updates</li>
+                <li><strong>Sub-second Latency:</strong> Optimized Kafka configuration maintains speed</li>
+            </ul>
+        </div>
+
+        <div class="highlight-box">
+            <h3>🔍 Data Integrity & Analysis</h3>
+            <ul>
+                <li><strong>Multi-Format Storage:</strong> Raw, enhanced, and OCSF data for different use cases</li>
+                <li><strong>Enrichment Preservation:</strong> Context data available for manual analysis</li>
+                <li><strong>ML Feature Tracking:</strong> Feature vectors stored for model improvement</li>
+                <li><strong>Complete Attribution:</strong> Source tracking through entire pipeline</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>📋 Implementation Checklist</h2>
+        
+        <div class="pipeline-step">
+            <h3>Database Schema Requirements</h3>
+            <ul>
+                <li>☑️ <strong>raw_alerts</strong> - Basic alert storage with JSONB for flexible raw data</li>
+                <li>☑️ <strong>enhanced_normalized_alerts</strong> - Structured enrichment fields</li>
+                <li>☑️ <strong>ocsf_events</strong> - OCSF-compliant schema with ML-compatible attributes</li>
+                <li>☑️ <strong>ml_predictions</strong> - ML results with feature vector storage</li>
+            </ul>
+        </div>
+
+        <div class="pipeline-step">
+            <h3>Kafka Topic Configuration</h3>
+            <ul>
+                <li>☑️ <strong>security.alerts.raw</strong> - Raw alert ingestion</li>
+                <li>☑️ <strong>security.alerts.enhanced</strong> - Enhanced alerts with context</li>
+                <li>☑️ <strong>security.alerts.ocsf.ready</strong> - OCSF events ready for ML/DB</li>
+            </ul>
+        </div>
+
+        <div class="pipeline-step">
+            <h3>Processing Services</h3>
+            <ul>
+                <li>☑️ <strong>Enhancement Service</strong> - Geo, threat intel, user/asset enrichment</li>
+                <li>☑️ <strong>OCSF Service</strong> - OCSF transformation and validation</li>
+                <li>☑️ <strong>ML + Database Service</strong> - Parallel processing and storage</li>
+                <li>☑️ <strong>WebSocket Broadcast</strong> - Real-time UI updates</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="section">
+        <p><strong>Document Generated:</strong> August 11, 2025 | <strong>Pipeline Version:</strong> 3.0 | <strong>ML Model Accuracy:</strong> 99.58%</p>
+        <p><em>This document provides the complete data flow and database operations for the Alpha SOC Platform's Kafka-based processing pipeline.</em></p>
+    </div>
+
+</body>
+</html>
